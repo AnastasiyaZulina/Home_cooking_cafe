@@ -32,19 +32,19 @@ export const CartDrawer: React.FC<React.PropsWithChildren<Props>> = ({children, 
 
             <div className="mt-5 overflow-auto flex-1">
                 <div className="mb-2">
-                <CartDrawerItem id={1} image={'/logo.png'} name={"abb"} price={122} quantity={1}></CartDrawerItem>
+                <CartDrawerItem id={1} image={'/logo.png'} name={"abb"} weight={100} eValue={100} price={122} quantity={1}></CartDrawerItem>
                 </div>
                 <div className="mb-2">
-                <CartDrawerItem id={1} image={'/logo.png'} name={"abb"} price={122} quantity={1}></CartDrawerItem>
+                <CartDrawerItem id={1} image={'/logo.png'} name={"abb"} weight={100} eValue={100} price={122} quantity={1}></CartDrawerItem>
                 </div>
                 <div className="mb-2">
-                <CartDrawerItem id={1} image={'/logo.png'} name={"abb"} price={122} quantity={1}></CartDrawerItem>
+                <CartDrawerItem id={1} image={'/logo.png'} name={"abb"} weight={100} eValue={100} price={122} quantity={1}></CartDrawerItem>
                 </div>
                 <div className="mb-2">
-                <CartDrawerItem id={1} image={'/logo.png'} name={"abb"} price={122} quantity={1}></CartDrawerItem>
+                <CartDrawerItem id={1} image={'/logo.png'} name={"abb"} weight={100} eValue={100} price={122} quantity={1}></CartDrawerItem>
                 </div>
                 <div className="mb-2">
-                <CartDrawerItem id={1} image={'/logo.png'} name={"abb"} price={122} quantity={1}></CartDrawerItem>
+                <CartDrawerItem id={1} image={'/logo.png'} name={"abb"} weight={100} eValue={100} price={122} quantity={1}></CartDrawerItem>
                 </div>
             </div>
 

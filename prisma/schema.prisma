@@ -42,6 +42,9 @@ model Product {
   category   Category @relation(fields: [categoryId], references: [id])
   description String?
   price     Int
+  weight    Int   @default(0)
+  eValue    Int   @default(0)
+  isAvailable Boolean @default(true)
 
   cartItems CartItem[]
 

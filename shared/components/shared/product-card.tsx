@@ -10,10 +10,19 @@ interface Props {
     name: string;
     price: number;
     image: string;
+    isAvailable: boolean;
     className?: string;
 }
 
-export const ProductCard: React.FC<Props> = ({ id, name, price, image, className }) => {
+export const ProductCard: React.FC<Props> = ({ id, name, price, image, className, isAvailable }) => {
+    if (!isAvailable) {
+        return (
+            <div className="p-6 text-center text-xl font-bold text-red-500">
+                Товар не доступен для продажи
+            </div>
+        );
+    }
+
     return (
         <div className={className}>
             <Link href={`/product/${id}`}>

@@ -9,6 +9,8 @@ interface Props {
     name: string;
     description: string;
     price: number;
+    weight: number;
+    eValue: number;
     onClickAdd?: VoidFunction
 }
 
@@ -18,6 +20,8 @@ export const SeeProductForm: React.FC<Props> = ({
     name,
     description,
     price,
+    weight,
+    eValue,
     onClickAdd
     }) => {
     return <div className={cn(className, 'flex flex-1')}>
@@ -26,6 +30,7 @@ export const SeeProductForm: React.FC<Props> = ({
         </div>
         <div className="w-[490px] bg-[#FCFCFC] p-7">
             <Title text={name} size="md" className="font extrabold mb-1"/>
+            <p className="text-gray-400">{weight} г | {eValue} ккал</p>
             <p className="text-gray-400">{description}</p>
             <Button onClick={onClickAdd} className="h-[55px px-10 text-base rounded-[18px] w-full mt-10">Добавить в корзину за {price} ₽</Button>
         </div>

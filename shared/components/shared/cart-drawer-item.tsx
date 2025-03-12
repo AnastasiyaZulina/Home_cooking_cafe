@@ -15,6 +15,8 @@ export const CartDrawerItem: React.FC<React.PropsWithChildren<Props>> = ({
     image,
     name,
     price,
+    weight,
+    eValue,
     quantity,
     className
 }) => {
@@ -23,7 +25,7 @@ export const CartDrawerItem: React.FC<React.PropsWithChildren<Props>> = ({
         <CartItem.Image src={image}/>
 
         <div className="flex-1">
-            <CartItem.Info name={name}/>
+            <CartItem.Info name={name} weight={weight} eValue={eValue}/>
 
             <hr className="my-3" />
 

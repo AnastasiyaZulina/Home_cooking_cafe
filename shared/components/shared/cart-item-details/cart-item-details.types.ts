@@ -3,6 +3,8 @@ export interface CartItemProps {
   image: string;
   name: string;
   price: number;
+  weight: number;
+  eValue: number;
   quantity: number;
   className?: string;
 }
