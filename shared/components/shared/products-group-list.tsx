@@ -10,7 +10,13 @@ import { cn } from '@/shared/lib/utils';
 
 interface Props {
     title: string;
-    items: any[];
+    items: {
+        id: number;
+        name: string;
+        image: string;
+        price: number;
+        isAvailable: boolean;
+    }[];
     className?: string;
     listClassName?: string;
     categoryId: number;
