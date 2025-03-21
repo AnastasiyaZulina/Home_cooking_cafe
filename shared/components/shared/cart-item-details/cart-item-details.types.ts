@@ -7,4 +7,5 @@ export interface CartItemProps {
   eValue: number;
   quantity: number;
   className?: string;
+  disabled?: boolean;
 }

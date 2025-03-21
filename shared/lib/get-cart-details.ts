@@ -10,6 +10,7 @@ export type CartStateItem = {
   eValue: number;
   image: string;
   price: number;
+  disabled?: boolean;
 };
 
 type ReturnProps = {
@@ -26,7 +27,8 @@ export const getCartDetails = (data: CartDTO): ReturnProps => {
     eValue: item.product.eValue,
     image: item.product.image,
     price: calcCartItemTotalPrice(item),
-  }));
+    disabled: false,
+  })) as CartStateItem[];
 
   return {
     items,

@@ -8,7 +8,7 @@ async function up() {
             {
                 fullName: 'User',
                 email: 'user@test.com',
-                password: hashSync('password', 10),
+                password: hashSync('111111', 10),
                 verified: new Date(),
                 role: 'USER',
             },

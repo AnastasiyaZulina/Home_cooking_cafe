@@ -1,4 +1,4 @@
-import { Container, Title } from "@/shared/components/shared";
+import { Container, ProductForm, Title } from "@/shared/components/shared";
 import { prisma } from "@/prisma/prisma-client";
 import { notFound } from "next/navigation";
 
@@ -8,6 +8,14 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
     const product = await prisma.product.findFirst({
         where: {
             id: Number(id), // Приводим ID к числу
+        },
+        include: {
+            //Вынести отдельным useEffect
+            category: {
+                include:{
+                    products: true
+                },
+            },
         },
     });
 
@@ -21,18 +29,11 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
 
     return (
         <Container className="flex flex-col my-10">
-            <div className="flex flex-row gap-8">
-                <img className="w-[500px] h-[500px]" src={product.image} alt={product.name} />
-                <div className="sticky top-5 w-[490px] bg-[#FCFCFC] p-7 ml-auto">
-                    <Title text={product.name} size="md" className="font-extrabold mb-1" />
-                    <p className="text-gray-400">{product.weight} г | {product.eValue} ккал</p>
-                    <p className="text-gray-400">{product.description}</p>
-                    <p className="text-2xl font-bold mt-3">{product.price} ₽</p>
-                    <div className="mt-5">
-                        <button className="bg-primary text-white px-4 py-2 rounded-lg">Добавить в корзину</button>
-                    </div>
-                </div>
-            </div>
+        {product.isAvailable ? (
+            <ProductForm product={product}/>
+        ) : (
+            <div className="p-6 text-center text-xl font-bold text-red-500">Товар не доступен для продажи</div>
+        )}
         </Container>
     );
 }

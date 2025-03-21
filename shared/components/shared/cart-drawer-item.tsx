@@ -20,11 +20,12 @@ export const CartDrawerItem: React.FC<React.PropsWithChildren<Props>> = ({
     eValue,
     quantity,
     className,
+    disabled,
     onClickCountButton,
     onClickRemove
 }) => {
     return (
-    <div className={cn('flex bg-white p-5 gap-6', className)}>
+    <div className={cn('flex bg-white p-5 gap-6', {'opacity-50 pointer-events-none': disabled}, className)}>
         <CartItem.Image src={image}/>
 
         <div className="flex-1">

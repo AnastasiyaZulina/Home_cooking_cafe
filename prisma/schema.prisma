@@ -14,7 +14,7 @@ model User {
   fullName String
   email    String @unique
   password String
-  verified DateTime
+  verified DateTime?
 
   role             UserRole          @default(USER)
   orders           Order[]
@@ -89,7 +89,7 @@ model Order {
   userId Int?
   user   User? @relation(fields: [userId], references: [id])
 
-  items Json?
+  items Json
   token String
 
   status      OrderStatus @default(PENDING)
