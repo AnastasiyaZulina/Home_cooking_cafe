@@ -2,9 +2,9 @@
 
 import { CheckoutAddressForm, CheckoutCart, CheckoutItemDetails, CheckoutPersonalForm, Container, Title, WhiteBlock } from "@/shared/components";
 import { useCart } from '@/hooks/use-cart';
-import { Button, Input, Skeleton, Textarea } from "@/shared/components/ui";
+import { Button, Skeleton} from "@/shared/components/ui";
 import { ArrowRight, Package, Truck } from "lucide-react";
-import { FormProvider, useForm, SubmitHandler } from "react-hook-form";
+import { FormProvider, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CheckoutFormSchema, CheckoutFormValues } from "@/shared/constants";
 import { cn } from "@/shared/lib/utils";

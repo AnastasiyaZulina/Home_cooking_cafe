@@ -1,4 +1,4 @@
-import { Container, ProductForm, Title } from "@/shared/components/shared";
+import { Container, ProductForm } from "@/shared/components/shared";
 import { prisma } from "@/prisma/prisma-client";
 import { notFound } from "next/navigation";
 
@@ -10,7 +10,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
             id: Number(id), // Приводим ID к числу
         },
         include: {
-            //Вынести отдельным useEffect
+            //TODO: Вынести отдельным useEffect
             category: {
                 include:{
                     products: true

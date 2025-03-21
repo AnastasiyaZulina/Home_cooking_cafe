@@ -1,5 +1,4 @@
 import { Geist, Geist_Mono } from "next/font/google";
-import {Toaster} from 'react-hot-toast';
 import "./globals.css";
 import { Providers } from "@/shared/components/shared/providers";
 
