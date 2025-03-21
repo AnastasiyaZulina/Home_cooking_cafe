@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { Header } from "@/shared/components/shared";
+import { Suspense } from "react";
 
 export const metadata: Metadata = {
   title: "Скатерть-самобранка | Главная",
@@ -15,10 +16,12 @@ export default function HomeLayout({
   modal: React.ReactNode;
 }>) {
   return (
-     <main className='min-h-screen bg-white'>
-       <Header/>
-       {children}
-       {modal}
-     </main>
+    <main className='min-h-screen bg-white'>
+      <Suspense>
+        <Header />
+      </Suspense>
+      {children}
+      {modal}
+    </main>
   );
 }
