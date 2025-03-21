@@ -6,9 +6,15 @@ import { CartItemDTO } from "@/shared/services/dto/cart.dto";
 import { OrderStatus } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 
+interface OrderItem {
+    productId: number;
+    quantity: number;
+    price: number;
+    name: string;
+  }
+
 export async function POST(req: NextRequest) {
     try {
-        console.log('заходим на оплату!!!');
         const body = (await req.json()) as PaymentCallbackData;
 
         const order = await prisma.order.findFirst({
@@ -32,7 +38,14 @@ export async function POST(req: NextRequest) {
             },
         });
 
-        const items = order?.items as any as CartItemDTO[];
+        const items: CartItemDTO[] = JSON.parse(order?.items as string).map((item: OrderItem) => ({
+            productId: item.productId,
+            quantity: item.quantity,
+            price: item.price,
+            name: item.name
+        }));
+
+        //const items = order?.items as any as CartItemDTO[];
         
         const html = Promise.resolve(OrderSuccessTemplate({
             orderId: order.id,

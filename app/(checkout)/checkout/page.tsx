@@ -13,8 +13,17 @@ import toast from "react-hot-toast";
 import React from "react";
 import { useSession } from "next-auth/react";
 import { Api } from "@/shared/services/api-clients";
+import { Suspense } from "react";
 
 export default function CheckoutPage() {
+    return (
+        <Suspense fallback={<div>Загрузка...</div>}>
+            <CheckoutContent />
+        </Suspense>
+    );
+}
+
+function CheckoutContent() {
     const { totalAmount, updateItemQuantity, items, removeCartItem, loading } = useCart();
     const [submitting, setSubmitting] = React.useState(false);
     const { data: session } = useSession();
@@ -30,6 +39,8 @@ export default function CheckoutPage() {
         }
     });
 
+    const { setValue } = form;
+
     React.useEffect(() => {
         async function fetchUserInfo(){
             const data = await Api.auth.getMe();
@@ -43,7 +54,7 @@ export default function CheckoutPage() {
         if (session) {
             fetchUserInfo();
         }
-    }, [session])
+    }, [session, setValue])
 
     const DELIVERY_PRICE = 250;
     const totalPrice = totalAmount + DELIVERY_PRICE;
@@ -59,7 +70,7 @@ export default function CheckoutPage() {
             setSubmitting(true);
             const url = await createOrder(data);
 
-            toast.error('Заказ успешно оформлен! 📝 Переход на оплату...', {
+            toast.success('Заказ успешно оформлен! 📝 Переход на оплату...', {
                 icon: '✅',
             });
 
