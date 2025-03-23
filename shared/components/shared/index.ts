@@ -22,6 +22,7 @@ export {RequiredSymbol} from './required-symbol';
 export {ProfileButton} from './profile-button';
 export {InfoBlock} from './info-block';
 export {ProfileForm} from './profile-form';
+export {ProductView} from './product-view';
 export * from './form';
 export * from './checkout';
 export * from './email-templates';

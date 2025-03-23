@@ -14,6 +14,8 @@ import React from "react";
 import { useSession } from "next-auth/react";
 import { Api } from "@/shared/services/api-clients";
 import { Suspense } from "react";
+import { DeliveryType } from "@prisma/client";
+import { useRouter } from "next/navigation";
 
 export default function CheckoutPage() {
     return (
@@ -27,6 +29,7 @@ function CheckoutContent() {
     const { totalAmount, updateItemQuantity, items, removeCartItem, loading } = useCart();
     const [submitting, setSubmitting] = React.useState(false);
     const { data: session } = useSession();
+    const router = useRouter();
 
     const form = useForm<CheckoutFormValues>({
         resolver: zodResolver(CheckoutFormSchema),
@@ -36,10 +39,16 @@ function CheckoutContent() {
             lastname: '',
             address: '',
             comment: '',
+            deliveryType: 'DELIVERY' as DeliveryType
         }
     });
 
-    const { setValue } = form;
+    
+    React.useEffect(() => {
+        if (!loading && (!items || items.length === 0)) {
+            router.push('/checkout-empty');
+        }
+    }, [items, loading, router]);
 
     React.useEffect(() => {
         async function fetchUserInfo(){
@@ -54,11 +63,16 @@ function CheckoutContent() {
         if (session) {
             fetchUserInfo();
         }
-    }, [session, setValue])
+    }, [session, form])
 
-    const DELIVERY_PRICE = 250;
+    const [deliveryType, setDeliveryType] = React.useState<'DELIVERY' | 'PICKUP'>('DELIVERY');
+    const DELIVERY_PRICE = deliveryType === 'DELIVERY' ? 250 : 0;
     const totalPrice = totalAmount + DELIVERY_PRICE;
 
+    const onDeliveryTypeChange = (type: DeliveryType) => {
+        setDeliveryType(type);
+        form.setValue('deliveryType', type);
+    };
 
     const onClickCountButton = (id: number, quantity: number, type: 'plus' | 'minus') => {
         const newQuantity = type === 'plus' ? quantity + 1 : quantity - 1;
@@ -68,7 +82,11 @@ function CheckoutContent() {
     const onSubmit = async (data: CheckoutFormValues) => {
         try {
             setSubmitting(true);
-            const url = await createOrder(data);
+            const formData = {
+                ...data,
+                deliveryPrice: DELIVERY_PRICE // добавляем стоимость доставки
+            };
+            const url = await createOrder(formData);
 
             toast.success('Заказ успешно оформлен! 📝 Переход на оплату...', {
                 icon: '✅',
@@ -103,7 +121,11 @@ function CheckoutContent() {
 
                             <CheckoutPersonalForm className={cn({ 'opacity-40 pointer-events-none': loading })} />
 
-                            <CheckoutAddressForm className={cn({ 'opacity-40 pointer-events-none': loading })} />
+                            <CheckoutAddressForm
+                                className={cn({ 'opacity-40 pointer-events-none': loading })}
+                                deliveryType={deliveryType}
+                                onDeliveryTypeChange={onDeliveryTypeChange}
+                            />
                         </div>
 
                         <div className="w-[450px]">

@@ -96,8 +96,12 @@ model Order {
   totalAmount Int
   paymentId   String?
 
+  deliveryType   DeliveryType @default(DELIVERY)
+  deliveryTime   DateTime?
+  deliveryCost   Float?
+
   fullName String
-  address  String
+  address  String?
   email    String
   phone    String
   comment  String?
@@ -128,4 +132,9 @@ enum OrderStatus {
 enum UserRole {
   USER
   ADMIN
+}
+
+enum DeliveryType {
+  PICKUP
+  DELIVERY
 }

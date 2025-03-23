@@ -47,17 +47,20 @@ export async function createOrder(data: CheckoutFormValues) {
     /*Создаем заказ*/
     const order = await prisma.order.create({
       data: {
-        token: cartToken,
-        fullName: data.firstname + ' ' + data.lastname,
-        email: data.email,
-        phone: data.phone,
-        address: data.address,
-        comment: data.comment,
-        totalAmount: userCart.totalAmount,
-        status: OrderStatus.PENDING,
-        items: userCart.items,
+          token: cartToken,
+          fullName: data.firstname + ' ' + data.lastname,
+          email: data.email,
+          phone: data.phone,
+          address: data.deliveryType === 'DELIVERY' ? data.address : null,
+          comment: data.comment || null,
+          totalAmount: userCart.totalAmount, // добавляем стоимость доставки
+          status: OrderStatus.PENDING,
+          items: userCart.items,
+          deliveryType: data.deliveryType,
+          deliveryTime: new Date(),
+          deliveryCost: data.deliveryPrice, // сохраняем стоимость доставки
       },
-    });
+  });
 
     /*Очищаем корзину*/
     await prisma.cart.update({
@@ -98,14 +101,12 @@ export async function createOrder(data: CheckoutFormValues) {
 
     const paymentUrl = paymentData.confirmation.confirmation_url;
 
-    //const paymentUrl = 'http://localhost:3000/';
-
     await sendEmail(
       data.email, 
       'Скатерть-самобранка | Оплатите заказ #' + order.id, 
       Promise.resolve(PayOrderTemplate({
         orderId: order.id,
-        totalAmount: order.totalAmount,
+        totalPrice: order.totalAmount+data.deliveryPrice,
         paymentUrl
       })),
     );
