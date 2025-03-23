@@ -6,13 +6,6 @@ import { CartItemDTO } from "@/shared/services/dto/cart.dto";
 import { OrderStatus } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 
-interface OrderItem {
-    productId: number;
-    quantity: number;
-    price: number;
-    name: string;
-  }
-
 export async function POST(req: NextRequest) {
     try {
         const body = (await req.json()) as PaymentCallbackData;
@@ -38,14 +31,9 @@ export async function POST(req: NextRequest) {
             },
         });
 
-        const items: CartItemDTO[] = JSON.parse(order?.items as string).map((item: OrderItem) => ({
-            productId: item.productId,
-            quantity: item.quantity,
-            price: item.price,
-            name: item.name
-        }));
+        console.log("order.items перед парсингом:", order?.items);
 
-        //const items = order?.items as any as CartItemDTO[];
+        const items = order?.items as unknown as CartItemDTO[];
         
         const html = Promise.resolve(OrderSuccessTemplate({
             orderId: order.id,
