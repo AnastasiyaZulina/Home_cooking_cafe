@@ -31,8 +31,6 @@ export async function POST(req: NextRequest) {
             },
         });
 
-        console.log("order.items перед парсингом:", order?.items);
-
         const items = order?.items as unknown as CartItemDTO[];
         
         const html = Promise.resolve(OrderSuccessTemplate({
@@ -40,9 +38,8 @@ export async function POST(req: NextRequest) {
             items,
         }));
 
-        if (isSucceeded) { await sendEmail(order.email, 'Скатерть-самобранка / Ваш заказ оплачен!', html); console.log('Оплата удалась');}
+        if (isSucceeded) { await sendEmail(order.email, 'Скатерть-самобранка / Ваш заказ оплачен!', html);}
         else {
-            console.log('Оплата не удалась');
             return NextResponse.json({ error: 'Server error' });
         }
     } catch (error) {
