@@ -13,23 +13,41 @@ import toast from "react-hot-toast";
 import React from "react";
 import { useSession } from "next-auth/react";
 import { Api } from "@/shared/services/api-clients";
-import { Suspense } from "react";
 import { DeliveryType } from "@prisma/client";
 import { useRouter } from "next/navigation";
 
 export default function CheckoutPage() {
-    return (
-        <Suspense fallback={<div>Загрузка...</div>}>
-            <CheckoutContent />
-        </Suspense>
-    );
+    const { items, loading } = useCart();
+    const router = useRouter();
+    const [isInitialLoad, setIsInitialLoad] = React.useState(true);
+
+    React.useEffect(() => {
+        if (!loading && (!items || items.length === 0)) {
+            router.push('/checkout-empty');
+        }
+        
+        // После первой загрузки данных корзины
+        if (!loading && items) {
+            setIsInitialLoad(false);
+        }
+    }, [items, loading, router]);
+
+    // Показываем загрузку только при первичной загрузке
+    if (isInitialLoad && loading) {
+        return <div>Загрузка...</div>;
+    }
+
+    if (!items || items.length === 0) {
+        return null;
+    }
+
+    return <CheckoutContent />;
 }
 
 function CheckoutContent() {
     const { totalAmount, updateItemQuantity, items, removeCartItem, loading } = useCart();
     const [submitting, setSubmitting] = React.useState(false);
     const { data: session } = useSession();
-    const router = useRouter();
 
     const form = useForm<CheckoutFormValues>({
         resolver: zodResolver(CheckoutFormSchema),
@@ -42,13 +60,6 @@ function CheckoutContent() {
             deliveryType: 'DELIVERY' as DeliveryType
         }
     });
-
-    
-    React.useEffect(() => {
-        if (!loading && (!items || items.length === 0)) {
-            router.push('/checkout-empty');
-        }
-    }, [items, loading, router]);
 
     React.useEffect(() => {
         async function fetchUserInfo(){
@@ -84,7 +95,8 @@ function CheckoutContent() {
             setSubmitting(true);
             const formData = {
                 ...data,
-                deliveryPrice: DELIVERY_PRICE // добавляем стоимость доставки
+                address: data.deliveryType === 'PICKUP' ? undefined : data.address,
+                deliveryPrice: DELIVERY_PRICE
             };
             const url = await createOrder(formData);
 
@@ -105,7 +117,7 @@ function CheckoutContent() {
         }
     };
 
-    return (
+        return (
         <Container className="mt-10">
             <Title text="Оформление заказа" className="font-extrabold mb-8 text-[36px]" />
             <FormProvider {...form}>
@@ -176,3 +188,4 @@ function CheckoutContent() {
         </Container>
     );
 }
+

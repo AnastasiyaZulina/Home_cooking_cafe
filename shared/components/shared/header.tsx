@@ -10,6 +10,7 @@ import toast from 'react-hot-toast';
 import { useSession } from 'next-auth/react';
 import { ProfileButton } from './profile-button';
 import { AuthModal } from './modals';
+import Link from 'next/link';
 
 interface Props {
     hasCart?: boolean;
@@ -26,11 +27,13 @@ export const Header: React.FC<Props> = ({ hasCart = true, className }) => {
             <Container className="flex items-center justify-between py-8">
                 {/* Левая часть */}
                 <div className="flex items-center gap-4">
-                    <Image src="/logobig.png" alt="Logo" width={55} height={55} />
-                    <div>
-                        <h1 className="text-xl uppercase font-black">Скатерь-самобранка</h1>
-                        <p className="text-sm text-gray-400 leading-3">по-домашнему вкусно!</p>
-                    </div>
+                    <Link href="/" className="flex items-center gap-4">
+                        <Image src="/logobig.png" alt="Logo" width={55} height={55} />
+                        <div>
+                            <h1 className="text-xl uppercase font-black">Скатерь-самобранка</h1>
+                            <p className="text-sm text-gray-400 leading-3">по-домашнему вкусно!</p>
+                        </div>
+                    </Link>
                 </div>
 
                 {/* Правая часть */}
