@@ -36,6 +36,21 @@ export const Header: React.FC<Props> = ({ hasCart = true, className }) => {
                     </Link>
                 </div>
 
+                {/* Центральная часть - навигация */}
+                <nav className="flex items-center gap-6">
+                    <Link href="/about" className="text-[18px] font-bold text-gray-400 hover:text-primary transition-colors">
+                        О нас
+                    </Link>
+                    <Link href="/delivery" className="text-[18px] font-bold text-gray-400 hover:text-primary transition-colors">
+                        Доставка
+                    </Link>
+                    <Link href="/reviews" className="text-[18px] font-bold text-gray-400 hover:text-primary transition-colors">
+                        Отзывы
+                    </Link>
+                    <Link href="/corporate" className="text-[18px] font-bold text-gray-400 hover:text-primary transition-colors">
+                        Корпоративным клиентам
+                    </Link>
+                </nav>
                 {/* Правая часть */}
                 <div className="flex items-center gap-3">
                     <AuthModal open={openAuthModal} onClose={() => setOpenAuthModal(false)} />
