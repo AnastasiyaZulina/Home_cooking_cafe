@@ -1,3 +1,5 @@
+import { useBreakpoint } from '@/hooks';
+import { useScrollDirection } from '@/hooks/use-scroll-direction';
 import { cn } from '@/shared/lib/utils';
 import { useCategoryStore } from '@/shared/store/category';
 import { Category } from '@prisma/client';
@@ -13,7 +15,7 @@ interface Props {
 export const Categories: React.FC<Props> = ({ items, className }) => {
     const categoryActiveId = useCategoryStore((state) => state.activeId);
 
-    const isMobile = window.innerWidth < 640; // Если ширина экрана меньше 640px (sm)
+    const isMobile = useBreakpoint('sm');
 
     const content = (
         <div className="flex gap-2 px-1 text-[15px] sm:text-[16px] h-10 sm:h-13">
@@ -38,9 +40,9 @@ export const Categories: React.FC<Props> = ({ items, className }) => {
                 'flex bg-gray-50 rounded-2xl',
                 className
             )}
-            style={{ padding: '4px', overflowY: isMobile ? 'auto' : 'hidden' }}  // Для мобильных экранов добавляем авто-скролл
+            style={{ padding: '4px', overflowY: isMobile ? 'auto' : 'hidden' }}
         >
-            {isMobile ? (
+            {!isMobile ? (
                 content
             ) : (
                 <SimpleBar autoHide={false} style={{ maxHeight: '100vh', width: '100%' }}>
