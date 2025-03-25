@@ -1,6 +1,6 @@
 import { prisma } from "@/prisma/prisma-client";
 import { SeeProductModal } from "@/shared/components/shared";
-import { notFound, redirect } from "next/navigation";
+import { notFound} from "next/navigation";
 
 export default async function ProductModalPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params; // Ждём params перед использованием
