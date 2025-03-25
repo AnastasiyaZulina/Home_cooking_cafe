@@ -25,27 +25,29 @@ export const SeeProductModal: React.FC<Props> = ({ product, className }) => {
   };
 
   return (
-    <Dialog 
-      open={Boolean(product)} 
-      onOpenChange={onCloseModal}
-    >
-      <DialogContent
-        className={cn(
-          "p-0 w-[1060px] max-w-[2060px] min-h-[500px] bg-white overflow-hidden",
-          className
-        )}
-      >
-        <VisuallyHidden>
-          <DialogTitle>{product.name}</DialogTitle>
-        </VisuallyHidden>
+<Dialog 
+  open={Boolean(product)} 
+  onOpenChange={onCloseModal}
+>
+  <DialogContent
+    className={cn(
+      "p-0 w-[90vw] max-w-[1060px] min-h-[500px] max-h-[90vh] bg-white overflow-auto",
+      "sm:w-[80vw] md:w-[70vw] lg:w-[60vw]",
+      className
+    )}
+  >
+    <VisuallyHidden>
+      <DialogTitle>{product.name}</DialogTitle>
+    </VisuallyHidden>
 
-        <ProductForm 
-          product={product} 
-          onAddProduct={() => router.back()}
-          onSubmitStarted={() => setIsSubmitting(true)}
-          onSubmitFinished={() => setIsSubmitting(false)}
-        />
-      </DialogContent>
-    </Dialog>
+    <ProductForm 
+      product={product} 
+      onAddProduct={() => router.back()}
+      onSubmitStarted={() => setIsSubmitting(true)}
+      onSubmitFinished={() => setIsSubmitting(false)}
+    />
+  </DialogContent>
+</Dialog>
+
   );
 };

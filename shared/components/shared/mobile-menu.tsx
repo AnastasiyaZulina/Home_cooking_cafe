@@ -20,11 +20,8 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, onSignI
         <div className="fixed inset-0 bg-white z-50 min-h-screen">
             <div className="flex flex-col h-full">
                 {/* Верхняя часть с кнопкой назад и логотипом */}
-                <div className="border-b p-4">
-                    <div className="flex items-center gap-4">
-                        <button onClick={onClose} className="p-2">
-                            <X className="w-6 h-6" />
-                        </button>
+                <div className="border-b p-4 relative">
+                    <div className="flex items-center gap-4 ">
                         <Link href="/" className="flex items-center gap-x-4" onClick={onClose}>
                             <Image
                                 src="/logobig.png"
@@ -34,12 +31,19 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, onSignI
                                 className="w-12 h-12"
                             />
                             <div>
-                                <h1 className="text-xl uppercase font-black">Скатерь-самобранка</h1>
+                                <h1 className="text-[16px] lg:text-xl uppercase font-black">Скатерь-самобранка</h1>
                                 <p className="text-sm text-gray-400 leading-3">по-домашнему вкусно!</p>
                             </div>
                         </Link>
                     </div>
+                    <button
+                        onClick={onClose}
+                        className="absolute top-2 right-2 p-2"
+                    >
+                        <X className="w-8 h-8" />
+                    </button>
                 </div>
+
 
                 {/* Навигация */}
                 <div className="flex flex-col p-4 gap-6">

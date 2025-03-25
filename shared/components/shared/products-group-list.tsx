@@ -13,6 +13,7 @@ interface Props {
     items: {
         id: number;
         name: string;
+        weight: number;
         image: string;
         price: number;
         isAvailable: boolean;
@@ -51,7 +52,7 @@ export const ProductsGroupList: React.FC<Props> = ({
             />
             <div className={cn(
                 'grid gap-4 sm:gap-[50px]',
-                'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4',
+                'grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4',
                 listClassName
             )}>
                 {items
@@ -63,6 +64,7 @@ export const ProductsGroupList: React.FC<Props> = ({
                             name={product.name}
                             image={product.image}
                             price={product.price}
+                            weight={product.weight}
                             isAvailable={product.isAvailable}
                         />
                     ))}
