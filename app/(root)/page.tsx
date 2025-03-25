@@ -19,16 +19,16 @@ export default async function Home() {
 
   return (
     <>
-      <Container className="mt-5">
+      <Container className="mt-1 sm:mt-5">
         <Title text="Все блюда" size="lg" className="font-extrabold" />
       </Container>
       <TopBar categories={availableCategories} />
 
-      <Container className="md-10 pb-14">
-        <div className="flex gap-[60px]">
+      <Container className="mt-4 sm:mt-10 pb-10 sm:pb-14">
+        <div className="flex gap-6 sm:gap-[60px]">
           {/* Список товаров */}
           <div className="flex-1">
-            <div className="flex flex-col gap-16">
+            <div className="flex flex-col gap-8 sm:gap-16">
               {availableCategories.map((category) => (
                 <ProductsGroupList
                   key={category.id}
@@ -36,8 +36,7 @@ export default async function Home() {
                   items={category.products}
                   categoryId={category.id}
                 />
-              ),
-              )}
+              ))}
             </div>
           </div>
         </div>

@@ -61,6 +61,24 @@ html {
   background: #dbdadd;
 }
 
+.simplebar-scrollbar::before {
+  background-color: #cbd5e1;
+  opacity: 0.4;
+  border-radius: 8px;
+  border: 1px solid white;
+}
+
+.simplebar-scrollbar.simplebar-visible::before {
+  opacity: 0.6;
+}
+
+.simplebar-track.simplebar-horizontal {
+  height: 7px;
+}
+
+.simplebar-track {
+  background-color: transparent;
+}
 
 @theme inline {
   --color-background: var(--background);

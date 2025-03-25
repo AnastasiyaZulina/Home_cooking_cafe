@@ -1,34 +1,28 @@
-'use client'
-
-import { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react';
 
 export const useScrollDirection = () => {
-  const [scrollDirection, setScrollDirection] = useState<'up' | 'down'>('up')
-  const [scrolledPastHeader, setScrolledPastHeader] = useState(false)
-  const threshold = 100 // height of header
+  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
   
   useEffect(() => {
-    let lastScrollY = window.scrollY
+    // Assuming header height is 80px - adjust this value to match your header height
+    const HEADER_HEIGHT = 73;
     
-    const updateScrollDirection = () => {
-      const scrollY = window.scrollY
-      const direction = scrollY > lastScrollY ? 'down' : 'up'
-      const passedThreshold = scrollY > threshold
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
       
-      if (direction !== scrollDirection) {
-        setScrollDirection(direction)
+      if (currentScrollY > HEADER_HEIGHT) {
+        setIsHeaderVisible(false);
+      } else {
+        setIsHeaderVisible(true);
       }
       
-      if (passedThreshold !== scrolledPastHeader) {
-        setScrolledPastHeader(passedThreshold)
-      }
-      
-      lastScrollY = scrollY > 0 ? scrollY : 0
-    }
+      setLastScrollY(currentScrollY);
+    };
 
-    window.addEventListener('scroll', updateScrollDirection)
-    return () => window.removeEventListener('scroll', updateScrollDirection)
-  }, [scrollDirection, scrolledPastHeader])
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [lastScrollY]);
 
-  return { scrollDirection, scrolledPastHeader }
-}
+  return isHeaderVisible;
+};

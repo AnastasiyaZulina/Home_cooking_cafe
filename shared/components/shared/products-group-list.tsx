@@ -30,7 +30,7 @@ export const ProductsGroupList: React.FC<Props> = ({
     className,
   }) => {
     const setActiveCategoryId = useCategoryStore((state) => state.setActiveId);
-    const intersectionRef = React.useRef(null!); //! Изменила React.useRef(null);
+    const intersectionRef = React.useRef(null!);
 
     const intersection = useIntersection(intersectionRef, {
         threshold: 0.4,
@@ -44,20 +44,28 @@ export const ProductsGroupList: React.FC<Props> = ({
 
     return (
         <div className={className} id={title} ref={intersectionRef}>
-            <Title text={title} size="lg" className="font-extrabold mb-5"/>
-            <div className={cn('grid grid-cols-4 gap-[50px]', listClassName)}>
-            {items
-                .filter(product => product.isAvailable)
-                .map((product, i) => (
-                    <ProductCard
-                        key={product.id}
-                        id={product.id}
-                        name={product.name}
-                        image={product.image}
-                        price={product.price}
-                        isAvailable={product.isAvailable}
-                    />
-                ))}
+            <Title 
+                text={title} 
+                size="lg" 
+                className="font-extrabold mb-3 sm:mb-5"
+            />
+            <div className={cn(
+                'grid gap-4 sm:gap-[50px]',
+                'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4',
+                listClassName
+            )}>
+                {items
+                    .filter(product => product.isAvailable)
+                    .map((product, i) => (
+                        <ProductCard
+                            key={product.id}
+                            id={product.id}
+                            name={product.name}
+                            image={product.image}
+                            price={product.price}
+                            isAvailable={product.isAvailable}
+                        />
+                    ))}
             </div>
         </div>
     );

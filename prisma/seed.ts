@@ -32,12 +32,56 @@ async function up() {
             { name: 'Закуски' },
             { name: 'Выпечка' },
             { name: 'Десерты' },
-            { name: 'Напитки' }
+            { name: 'Напитки' },
+            { name: 'Тест1' },
+            { name: 'Тест2' },
+            { name: 'Тест3' },
+            { name: 'Тест4' },
         ]
     });
 
     await prisma.product.createMany({
         data: [
+            {
+                name: 'Борщ',
+                description: 'Суп',
+                image: '/images/items/Борщ.png',
+                price: 100,
+                categoryId: 10,
+                weight: 300,
+                eValue: 250,
+                isAvailable: true
+            },
+            {
+                name: 'Борщ',
+                description: 'Суп',
+                image: '/images/items/Борщ.png',
+                price: 100,
+                categoryId: 11,
+                weight: 300,
+                eValue: 250,
+                isAvailable: true
+            },
+            {
+                name: 'Борщ',
+                description: 'Суп',
+                image: '/images/items/Борщ.png',
+                price: 100,
+                categoryId: 12,
+                weight: 300,
+                eValue: 250,
+                isAvailable: true
+            },
+            {
+                name: 'Борщ',
+                description: 'Суп',
+                image: '/images/items/Борщ.png',
+                price: 100,
+                categoryId: 13,
+                weight: 300,
+                eValue: 250,
+                isAvailable: true
+            },
             {
                 name: 'Борщ',
                 description: 'Суп',
