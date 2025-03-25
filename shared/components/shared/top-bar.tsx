@@ -27,7 +27,6 @@ export const TopBar: React.FC<Props> = ({ categories, className }) => {
       if (containerRef.current) {
         const containerWidth = containerRef.current.offsetWidth;
         const buttonsWidth = buttonsRef.current?.offsetWidth ?? 0;
-        // Увеличиваем отступ для мобильных устройств
         const gap = window.innerWidth < 640 ? 20 : 40;
         const availableWidth = containerWidth - buttonsWidth - gap;
         setCategoriesWidth(`${availableWidth}px`);
