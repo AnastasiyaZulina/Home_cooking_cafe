@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import {useIntersection} from 'react-use';
 import { Title } from './title';
 import { ProductCard } from './product-card';
 import { useCategoryStore } from '@/shared/store/category';
@@ -29,21 +28,48 @@ export const ProductsGroupList: React.FC<Props> = ({
     listClassName,
     categoryId,
     className,
-  }) => {
+}) => {
     const setActiveCategoryId = useCategoryStore((state) => state.setActiveId);
-    const intersectionRef = React.useRef(null!);
+    const intersectionRef = React.useRef<HTMLDivElement>(null);
 
-    const intersection = useIntersection(intersectionRef, {
-        threshold: 0.3,
-    });
+    const checkCenterIntersection = React.useCallback(() => {
+        if (!intersectionRef.current) return false;
+        
+        const rect = intersectionRef.current.getBoundingClientRect();
+        const viewportCenter = window.innerHeight / 2;
+        
+        return rect.top <= viewportCenter && rect.bottom >= viewportCenter;
+    }, []);
 
-    React.useEffect(() => {
-        if (intersection?.isIntersecting) {
+    const handleIntersection = React.useCallback((entry: IntersectionObserverEntry) => {
+        if (checkCenterIntersection()) {
             setActiveCategoryId(categoryId);
-            // Добавьте это для обновления URL
+            // Опционально: обновляем URL
             window.history.replaceState(null, '', `/#${title}`);
         }
-    }, [categoryId, intersection?.isIntersecting, title]);
+    }, [categoryId, title, checkCenterIntersection, setActiveCategoryId]);
+
+    React.useEffect(() => {
+        const observer = new IntersectionObserver(
+            (entries) => {
+                entries.forEach(handleIntersection);
+            },
+            {
+                threshold: 0,
+                rootMargin: '-50% 0px -50% 0px'
+            }
+        );
+
+        if (intersectionRef.current) {
+            observer.observe(intersectionRef.current);
+        }
+
+        return () => {
+            if (intersectionRef.current) {
+                observer.unobserve(intersectionRef.current);
+            }
+        };
+    }, [handleIntersection]);
 
     return (
         <div className={className} id={title} ref={intersectionRef}>
@@ -59,15 +85,10 @@ export const ProductsGroupList: React.FC<Props> = ({
             )}>
                 {items
                     .filter(product => product.isAvailable)
-                    .map((product, i) => (
+                    .map((product) => (
                         <ProductCard
                             key={product.id}
-                            id={product.id}
-                            name={product.name}
-                            image={product.image}
-                            price={product.price}
-                            weight={product.weight}
-                            isAvailable={product.isAvailable}
+                            {...product}
                         />
                     ))}
             </div>

@@ -44,19 +44,19 @@ export const Categories: React.FC<Props> = ({ items, className }) => {
     return (
         <div
             className={cn(
-                'flex bg-gray-50 rounded-2xl',
+                'inline-flex min-w-full bg-gray-50 rounded-2xl ',
                 className
             )}
             style={{ padding: '4px'}}
         >
-            {content}
-            {/*!isMobile ? (
+
+            {!isMobile ? (
                 content
             ) : (
                 <SimpleBar autoHide={false} style={{ maxHeight: '100vh', width: '100%' }}>
                     {content}
                 </SimpleBar>
-            )*/}
+            )}
         </div>
     );
 };
