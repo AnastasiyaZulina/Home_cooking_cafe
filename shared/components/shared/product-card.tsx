@@ -1,8 +1,12 @@
+'use client'
+
 import Link from 'next/link';
-import React from 'react';
+import React, { useState } from 'react';
 import { Title } from './title';
 import { Button } from '../ui';
 import { Plus } from 'lucide-react';
+import { useCartStore } from '@/shared/store';
+import toast from 'react-hot-toast';
 
 
 interface Props {
@@ -15,7 +19,36 @@ interface Props {
     className?: string;
 }
 
-export const ProductCard: React.FC<Props> = ({ id, name, price, image, className, isAvailable, weight }) => {
+export const ProductCard: React.FC<Props> = ({
+    id,
+    name,
+    price,
+    image,
+    className,
+    isAvailable,
+    weight,
+}) => {
+    const addCartItem = useCartStore(state => state.addCartItem);
+    const [isLoading, setIsLoading] = useState(false);
+
+    const onAddProduct = async () => {
+        try {
+            setIsLoading(true);
+            await addCartItem({
+                productId: id,
+            });
+            toast.success('Добавлено в корзину!');
+        }
+        catch (e) {
+            toast.error('Не удалось добавить в корзину!');
+            console.error(e);
+        }
+        finally {
+            setIsLoading(false);
+        }
+    };
+
+
     if (!isAvailable) {
         return (
             <div className="p-6 text-center text-base sm:text-xl font-bold text-red-500">
@@ -59,16 +92,17 @@ export const ProductCard: React.FC<Props> = ({ id, name, price, image, className
                     {price} ₽ &nbsp;|&nbsp; {weight} г.
                 </span>
 
-                {/* Вариант для больших экранов (цена и вес на разных строках) */}
                 <span className="text-[18px] hidden 2xl:block">
                     {price} ₽ <br /> {weight} г.
                 </span>
                 <Button
                     variant="secondary"
                     className="text-sm sm:text-base px-3 sm:px-4 py-2"
+                    onClick={onAddProduct}
+                    disabled={isLoading}
                 >
                     <Plus size={16} className="mr-1 sm:mr-2" />
-                    Добавить
+                    {isLoading ? 'Добавляем...' : 'Добавить'}
                 </Button>
             </div>
         </div>
