@@ -34,13 +34,14 @@ export const ProductsGroupList: React.FC<Props> = ({
     const intersectionRef = React.useRef(null!);
 
     const intersection = useIntersection(intersectionRef, {
-        threshold: 0.4,
+        threshold: 0.3,
     });
 
     React.useEffect(() => {
         if (intersection?.isIntersecting) {
             setActiveCategoryId(categoryId);
-            window.history.replaceState(null, '', `#${title}`);
+            // Добавьте это для обновления URL
+            window.history.replaceState(null, '', `/#${title}`);
         }
     }, [categoryId, intersection?.isIntersecting, title]);
 

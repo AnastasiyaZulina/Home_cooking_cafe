@@ -27,6 +27,13 @@ export const Categories: React.FC<Props> = ({ items, className }) => {
                     )}
                     key={index}
                     href={`/#${name}`}
+                    onClick={(e) => {
+                        e.preventDefault();
+                        window.history.pushState(null, '', `/#${name}`);
+                        document.getElementById(name)?.scrollIntoView({
+                            behavior: 'smooth'
+                        });
+                    }}
                 >
                     <button>{name}</button>
                 </a>
@@ -40,15 +47,16 @@ export const Categories: React.FC<Props> = ({ items, className }) => {
                 'flex bg-gray-50 rounded-2xl',
                 className
             )}
-            style={{ padding: '4px', overflowY: isMobile ? 'auto' : 'hidden' }}
+            style={{ padding: '4px'}}
         >
-            {!isMobile ? (
+            {content}
+            {/*!isMobile ? (
                 content
             ) : (
                 <SimpleBar autoHide={false} style={{ maxHeight: '100vh', width: '100%' }}>
                     {content}
                 </SimpleBar>
-            )}
+            )*/}
         </div>
     );
 };
