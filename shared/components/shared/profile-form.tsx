@@ -12,6 +12,7 @@ import { Title } from './title';
 import { FormInput } from './form';
 import { Button } from '../ui';
 import { updateUserInfo } from '@/app/actions';
+import { cn } from '@/shared/lib/utils';
 
 interface Props {
   data: User;
@@ -30,8 +31,6 @@ export const ProfileForm: React.FC<Props> = ({ data }) => {
 
   const onSubmit = async (data: TFormRegisterValues) => {
     try {
-      console.log('submit!!!!!!!!!!!!!');
-
       await updateUserInfo({
         email: data.email,
         fullName: data.fullName,
@@ -55,18 +54,25 @@ export const ProfileForm: React.FC<Props> = ({ data }) => {
   };
 
   return (
-    <Container className="my-10">
-      <Title text="Личные данные" size="md" className="font-bold" />
+    <Container className="my-6 md:my-10 px-4">
+      <Title text="Личные данные" size="md" className="font-bold text-center sm:text-left" />
 
       <FormProvider {...form}>
-        <form className="flex flex-col gap-5 w-96 mt-10" onSubmit={form.handleSubmit(onSubmit)}>
+        <form 
+          className="flex flex-col gap-4 w-full max-w-[384px] mx-auto mt-6 md:mt-10" 
+          onSubmit={form.handleSubmit(onSubmit)}
+        >
           <FormInput name="email" label="E-Mail" required />
           <FormInput name="fullName" label="Полное имя" required />
 
           <FormInput type="password" name="password" label="Новый пароль" required />
           <FormInput type="password" name="confirmPassword" label="Повторите пароль" required />
 
-          <Button disabled={form.formState.isSubmitting} className="text-base mt-10" type="submit">
+          <Button 
+            disabled={form.formState.isSubmitting} 
+            className="text-base mt-6 md:mt-10 w-full" 
+            type="submit"
+          >
             Сохранить
           </Button>
 
@@ -74,8 +80,9 @@ export const ProfileForm: React.FC<Props> = ({ data }) => {
             onClick={onClickSignOut}
             variant="secondary"
             disabled={form.formState.isSubmitting}
-            className="text-base"
-            type="button">
+            className="text-base w-full"
+            type="button"
+          >
             Выйти
           </Button>
         </form>
@@ -83,4 +90,3 @@ export const ProfileForm: React.FC<Props> = ({ data }) => {
     </Container>
   );
 };
-
