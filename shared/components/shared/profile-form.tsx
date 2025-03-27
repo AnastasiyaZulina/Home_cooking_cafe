@@ -55,7 +55,7 @@ export const ProfileForm: React.FC<Props> = ({ data }) => {
 
   return (
     <Container className="my-6 md:my-10 px-4">
-      <Title text="Личные данные" size="md" className="font-bold text-center sm:text-left" />
+      <Title text="Личные данные" size="md" className="font-bold text-center" />
 
       <FormProvider {...form}>
         <form 
