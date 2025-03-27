@@ -25,19 +25,34 @@ export const CheckoutItem: React.FC<Props> = ({
   onClickRemove,
 }) => {
   return (
-    <div className={cn('flex items-center justify-between', {'opacity-50 pointer-events-none': disabled}, className)}>
-      <div className="flex items-center gap-5 flex-1">
-        <CartItemDetails.Image src={image} />
-        <CartItemDetails.Info name={name} weight={weight} eValue={eValue}/>
+    <div className={cn(
+      'flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0',
+      {'opacity-50 pointer-events-none': disabled},
+      className
+    )}>
+      <div className="flex items-center gap-3 sm:gap-5 flex-1">
+        <CartItemDetails.Image src={image} className="w-12 h-12 sm:w-16 sm:h-16" />
+        <CartItemDetails.Info 
+          name={name} 
+          weight={weight} 
+          eValue={eValue}
+          className="text-sm sm:text-base"
+        />
       </div>
 
-      <CartItemDetails.Price value={price} />
-
-      <div className="flex items-center gap-5 ml-20">
-        <CartItemDetails.CountButton onClick={onClickCountButton} value={quantity} />
-        <button type="button" onClick={onClickRemove}>
-          <X className="text-gray-400 cursor-pointer hover:text-gray-600" size={20} />
-        </button>
+      <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-5 w-full sm:w-auto">
+        <CartItemDetails.Price value={price} className="text-base sm:text-lg" />
+        
+        <div className="flex items-center gap-3 sm:gap-5">
+          <CartItemDetails.CountButton 
+            onClick={onClickCountButton} 
+            value={quantity} 
+            size="sm"
+          />
+          <button type="button" onClick={onClickRemove}>
+            <X className="text-gray-400 cursor-pointer hover:text-gray-600" size={18} />
+          </button>
+        </div>
       </div>
     </div>
   );

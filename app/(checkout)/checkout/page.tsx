@@ -2,7 +2,7 @@
 
 import { CheckoutAddressForm, CheckoutCart, CheckoutItemDetails, CheckoutPersonalForm, Container, Title, WhiteBlock } from "@/shared/components";
 import { useCart } from '@/hooks/use-cart';
-import { Button, Skeleton} from "@/shared/components/ui";
+import { Button, Skeleton } from "@/shared/components/ui";
 import { ArrowRight, Package, Truck } from "lucide-react";
 import { FormProvider, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -25,16 +25,14 @@ export default function CheckoutPage() {
         if (!loading && (!items || items.length === 0)) {
             router.push('/checkout-empty');
         }
-        
-        // После первой загрузки данных корзины
+
         if (!loading && items) {
             setIsInitialLoad(false);
         }
     }, [items, loading, router]);
 
-    // Показываем загрузку только при первичной загрузке
     if (isInitialLoad && loading) {
-        return <div>Загрузка...</div>;
+        return <div className="p-4 text-center">Загрузка...</div>;
     }
 
     if (!items || items.length === 0) {
@@ -62,10 +60,10 @@ function CheckoutContent() {
     });
 
     React.useEffect(() => {
-        async function fetchUserInfo(){
+        async function fetchUserInfo() {
             const data = await Api.auth.getMe();
             const [firstName, lastName] = data.fullName.split(' ');
-      
+
             form.setValue('firstname', firstName);
             form.setValue('lastname', lastName);
             form.setValue('email', data.email);
@@ -117,13 +115,16 @@ function CheckoutContent() {
         }
     };
 
-        return (
-        <Container className="mt-10">
-            <Title text="Оформление заказа" className="font-extrabold mb-8 text-[36px]" />
+    return (
+        <Container className="mt-6 md:mt-10 px-4 sm:px-6">
+            <Title
+                text="Оформление заказа"
+                className="font-extrabold mb-6 md:mb-8 text-2xl sm:text-3xl md:text-[36px] text-center sm:text-left"
+            />
             <FormProvider {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)}>
-                    <div className="flex gap-10">
-                        <div className="flex flex-col gap-10 flex-1 mb-20">
+                    <div className="flex flex-col lg:flex-row gap-4 md:gap-6 lg:gap-10">
+                        <div className="flex flex-col gap-4 md:gap-6 lg:gap-10 flex-1 mb-6 md:mb-10 lg:mb-20">
                             <CheckoutCart
                                 onClickCountButton={onClickCountButton}
                                 removeCartItem={removeCartItem}
@@ -140,45 +141,46 @@ function CheckoutContent() {
                             />
                         </div>
 
-                        <div className="w-[450px]">
-                            <WhiteBlock className='p-6 sticky top-4'>
+                        <div className="w-full lg:w-[450px] -mt-6 lg:mt-0">
+                            <WhiteBlock className='p-4 sm:p-6 lg:sticky lg:top-4'>
                                 <div className="flex flex-col gap-1">
-                                    <span className="text-xl">Итого:</span>
+                                    <span className="text-lg md:text-xl">Итого:</span>
                                     {
-                                        loading ? <Skeleton className="h-11 w-48" /> : <span className="h-11 text-[34px] font-extrabold">{`${totalPrice} ₽`}</span>
+                                        loading ? <Skeleton className="h-8 md:h-11 w-32 md:w-48" /> :
+                                            <span className="h-8 md:h-11 text-2xl md:text-[34px] font-extrabold">{`${totalPrice} ₽`}</span>
                                     }
                                 </div>
 
                                 <CheckoutItemDetails title={
                                     <>
                                         <div className="flex items-center">
-                                            <Package size={18} className="mr-2 text-gray-400" />
-                                            Стоимость товаров:
+                                            <Package size={16} className="mr-2 text-gray-400" />
+                                            <span className="text-sm md:text-base">Стоимость товаров:</span>
                                         </div>
                                     </>
                                 }
                                     value={
-                                        loading ? <Skeleton className="h-6 w-16 rounded-[6px]" /> : `${totalAmount} ₽`
+                                        loading ? <Skeleton className="h-5 md:h-6 w-12 md:w-16 rounded-[6px]" /> : `${totalAmount} ₽`
                                     } />
 
                                 <CheckoutItemDetails title={
                                     <>
                                         <div className="flex items-center">
-                                            <Truck size={18} className="mr-2 text-gray-400" />
-                                            Доставка:
+                                            <Truck size={16} className="mr-2 text-gray-400" />
+                                            <span className="text-sm md:text-base">Доставка:</span>
                                         </div>
                                     </>
                                 }
                                     value={
-                                        loading ? <Skeleton className="h-6 w-16 rounded-[6px]" /> : `${DELIVERY_PRICE} ₽`
+                                        loading ? <Skeleton className="h-5 md:h-6 w-12 md:w-16 rounded-[6px]" /> : `${DELIVERY_PRICE} ₽`
                                     } />
 
                                 <Button
                                     loading={loading || submitting}
                                     type="submit"
-                                    className="w-full h-14 rounded-2xl mt-6 text-base font-bold">
+                                    className="w-full h-12 md:h-14 rounded-xl md:rounded-2xl mt-4 md:mt-6 text-sm md:text-base font-bold">
                                     Перейти к оплате
-                                    <ArrowRight className="w-5 ml-2" />
+                                    <ArrowRight className="w-4 md:w-5 ml-2" />
                                 </Button>
                             </WhiteBlock>
                         </div>
@@ -188,4 +190,3 @@ function CheckoutContent() {
         </Container>
     );
 }
-
