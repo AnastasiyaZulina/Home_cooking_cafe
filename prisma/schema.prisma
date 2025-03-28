@@ -15,6 +15,7 @@ model User {
   email    String @unique
   password String
   verified DateTime?
+  bonusBalance Int @default(0)
 
   role             UserRole          @default(USER)
   orders           Order[]
@@ -95,6 +96,7 @@ model Order {
   status      OrderStatus @default(PENDING)
   totalAmount Int
   paymentId   String?
+  bonusDelta  Int       @default(0)
 
   deliveryType   DeliveryType @default(DELIVERY)
   deliveryTime   DateTime?

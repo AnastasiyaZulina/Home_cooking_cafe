@@ -15,6 +15,7 @@ import { useSession } from "next-auth/react";
 import { Api } from "@/shared/services/api-clients";
 import { DeliveryType } from "@prisma/client";
 import { useRouter } from "next/navigation";
+import * as RadioGroup from '@radix-ui/react-radio-group';
 
 export default function CheckoutPage() {
     const { items, loading } = useCart();
@@ -75,8 +76,9 @@ function CheckoutContent() {
     }, [session, form])
 
     const [deliveryType, setDeliveryType] = React.useState<'DELIVERY' | 'PICKUP'>('DELIVERY');
+    const BONUS_MULTIPLIER = 0.05; // 5% бонусов от суммы заказа
+    const DELIVERY_COST = 250; // Стоимость доставки
     const DELIVERY_PRICE = deliveryType === 'DELIVERY' ? 250 : 0;
-    const totalPrice = totalAmount + DELIVERY_PRICE;
 
     const onDeliveryTypeChange = (type: DeliveryType) => {
         setDeliveryType(type);
@@ -88,14 +90,68 @@ function CheckoutContent() {
         updateItemQuantity(id, newQuantity);
     }
 
+    const [bonusOption, setBonusOption] = React.useState<'earn' | 'spend'>('earn');
+    const [userBonuses, setUserBonuses] = React.useState(0); // Начинаем с 0
+
+    // Загружаем бонусы пользователя при авторизации
+    React.useEffect(() => {
+        async function loadUserBonuses() {
+            if (session) {
+                try {
+                    const userData = await Api.auth.getMe();
+                    setUserBonuses(userData.bonusBalance || 0);
+                } catch (error) {
+                    console.error('Failed to load user bonuses', error);
+                }
+            }
+        }
+        loadUserBonuses();
+    }, [session]);
+
+    // Расчет итоговой суммы
+    const calculateTotal = () => {
+        const deliveryPrice = deliveryType === 'DELIVERY' ? DELIVERY_COST : 0;
+        const isAuthenticated = !!session;
+
+        if (!isAuthenticated || bonusOption === 'earn') {
+            // Для неавторизованных или при начислении бонусов
+            const calculatedBonuses = isAuthenticated ? Math.round(totalAmount * BONUS_MULTIPLIER) : 0;
+            return {
+                totalPrice: totalAmount + deliveryPrice,
+                bonusDelta: calculatedBonuses,
+                canUseBonuses: false
+            };
+        } else {
+            // Списание бонусов только для авторизованных
+            const maxAvailableToSpend = Math.min(userBonuses, totalAmount);
+            return {
+                totalPrice: totalAmount + deliveryPrice - maxAvailableToSpend,
+                bonusDelta: -maxAvailableToSpend,
+                canUseBonuses: true
+            };
+        }
+    };
+
+    const { totalPrice, bonusDelta, canUseBonuses } = calculateTotal();
+
+    const handleBonusOptionChange = (value: string) => {
+        if (!session) {
+            toast.error('Для работы с бонусами необходимо авторизоваться');
+            return;
+        }
+        setBonusOption(value as 'earn' | 'spend');
+    };
+
     const onSubmit = async (data: CheckoutFormValues) => {
         try {
             setSubmitting(true);
             const formData = {
                 ...data,
                 address: data.deliveryType === 'PICKUP' ? undefined : data.address,
-                deliveryPrice: DELIVERY_PRICE
+                deliveryPrice: deliveryType === 'DELIVERY' ? DELIVERY_COST : 0,
+                bonusDelta,
             };
+            console.log('Submitting with bonusDelta:', bonusDelta);
             const url = await createOrder(formData);
 
             toast.success('Заказ успешно оформлен! 📝 Переход на оплату...', {
@@ -175,6 +231,55 @@ function CheckoutContent() {
                                         loading ? <Skeleton className="h-5 md:h-6 w-12 md:w-16 rounded-[6px]" /> : `${DELIVERY_PRICE} ₽`
                                     } />
 
+                                <div className="mb-5">
+                                    {session ? (
+                                        <RadioGroup.Root
+                                            value={bonusOption}
+                                            onValueChange={handleBonusOptionChange}
+                                            className="flex items-center gap-4"
+                                        >
+                                            <div className="flex items-center gap-2">
+                                                <RadioGroup.Item
+                                                    value="earn"
+                                                    id="earnBonuses"
+                                                    className="flex items-center justify-center w-6 h-6 rounded-full border border-gray-400"
+                                                >
+                                                    <RadioGroup.Indicator className="w-4 h-4 rounded-full bg-primary" />
+                                                </RadioGroup.Item>
+                                                <label htmlFor="earnBonuses">
+                                                    Начислить бонусы <br /> (+{Math.round(totalAmount * BONUS_MULTIPLIER)} ₽)
+                                                </label>
+                                            </div>
+
+                                            <div className="flex items-center gap-2">
+                                                <RadioGroup.Item
+                                                    value="spend"
+                                                    id="spendBonuses"
+                                                    className={`flex items-center justify-center w-6 h-6 rounded-full border ${userBonuses <= 0 ? 'border-gray-300 opacity-50' : 'border-gray-400'
+                                                        }`}
+                                                    disabled={userBonuses <= 0}
+                                                >
+                                                    <RadioGroup.Indicator className="w-4 h-4 rounded-full bg-primary" />
+                                                </RadioGroup.Item>
+                                                <label
+                                                    htmlFor="spendBonuses"
+                                                    className={userBonuses <= 0 ? 'opacity-50' : ''}
+                                                >
+                                                    Списать бонусы <br /> {userBonuses > 0 && `(до ${Math.min(userBonuses, totalAmount)} ₽)`}
+                                                </label>
+                                            </div>
+                                        </RadioGroup.Root>
+                                    ) : (
+                                        <div className="p-3 bg-yellow-50 rounded-md text-sm text-yellow-800">
+                                            Авторизуйтесь, чтобы получать и тратить бонусные баллы
+                                        </div>
+                                    )}
+                                </div>
+                                {bonusOption === 'spend' && (
+                                    <div className="text-sm text-gray-600 mb-4">
+                                        Будет списано: {Math.min(userBonuses, totalAmount)} ₽ из доступных {userBonuses} ₽
+                                    </div>
+                                )}
                                 <Button
                                     loading={loading || submitting}
                                     type="submit"

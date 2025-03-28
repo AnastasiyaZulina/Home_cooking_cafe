@@ -18,6 +18,11 @@ export async function createOrder(data: CheckoutFormValues) {
     if (!cartToken) {
       throw new Error('Cart token not found');
     }
+    const session = await getUserSession();
+
+    if (data.bonusDelta !== 0 && !session) {
+      throw new Error('Unauthorized bonus operation');
+    }
 
     /*Находим корзину по токену*/
     const userCart = await prisma.cart.findFirst({
@@ -35,7 +40,7 @@ export async function createOrder(data: CheckoutFormValues) {
     });
 
     /*Если корзина не найдена, возвращаем ошибку*/
-    if (userCart?.totalAmount===0) {
+    if (userCart?.totalAmount === 0) {
       throw new Error('Cart is empty');
     }
 
@@ -47,20 +52,21 @@ export async function createOrder(data: CheckoutFormValues) {
     /*Создаем заказ*/
     const order = await prisma.order.create({
       data: {
-          token: cartToken,
-          fullName: data.firstname + ' ' + data.lastname,
-          email: data.email,
-          phone: data.phone,
-          address: data.deliveryType === 'DELIVERY' ? data.address : null,
-          comment: data.comment || null,
-          totalAmount: userCart.totalAmount, // добавляем стоимость доставки
-          status: OrderStatus.PENDING,
-          items: userCart.items,
-          deliveryType: data.deliveryType,
-          deliveryTime: new Date(),
-          deliveryCost: data.deliveryPrice, // сохраняем стоимость доставки
+        token: cartToken,
+        fullName: data.firstname + ' ' + data.lastname,
+        email: data.email,
+        phone: data.phone,
+        address: data.deliveryType === 'DELIVERY' ? data.address : null,
+        comment: data.comment || null,
+        totalAmount: userCart.totalAmount,
+        status: OrderStatus.PENDING,
+        items: userCart.items,
+        deliveryType: data.deliveryType,
+        deliveryTime: new Date(),
+        deliveryCost: data.deliveryPrice,
+        bonusDelta: data.bonusDelta
       },
-  });
+    });
 
     /*Очищаем корзину*/
     await prisma.cart.update({
@@ -78,35 +84,33 @@ export async function createOrder(data: CheckoutFormValues) {
       },
     });
 
-    //TODO: Сделать создание ссылки оплаты
-
     const paymentData = await createPayment({
       amount: order.totalAmount,
       orderId: order.id,
-      description: 'Оплата заказа #'+ order.id,
+      description: 'Оплата заказа #' + order.id,
     });
 
-    if (!paymentData){
+    if (!paymentData) {
       throw new Error('Payment data not found');
     }
 
-      await prisma.order.update({
-        where: {
-          id: order.id,
-        },
-        data: {
-          paymentId: paymentData.id, //await
-        },
-      });
+    await prisma.order.update({
+      where: {
+        id: order.id,
+      },
+      data: {
+        paymentId: paymentData.id, //await
+      },
+    });
 
     const paymentUrl = paymentData.confirmation.confirmation_url;
 
     await sendEmail(
-      data.email, 
-      'Скатерть-самобранка | Оплатите заказ #' + order.id, 
+      data.email,
+      'Скатерть-самобранка | Оплатите заказ #' + order.id,
       Promise.resolve(PayOrderTemplate({
         orderId: order.id,
-        totalPrice: order.totalAmount+data.deliveryPrice,
+        totalPrice: order.totalAmount + data.deliveryPrice,
         paymentUrl
       })),
     );
@@ -127,7 +131,7 @@ export async function updateUserInfo(body: Prisma.UserUpdateInput) {
     }
 
     const findUser = await prisma.user.findFirst({
-      where:{
+      where: {
         id: Number(currentUser.id),
       },
     })
@@ -168,7 +172,7 @@ export async function registerUser(body: Prisma.UserCreateInput) {
     const createdUser = await prisma.user.create({
       data: {
         fullName: body.fullName,
-        email: body. email,
+        email: body.email,
         password: hashSync(body.password, 10),
       },
     });
@@ -183,7 +187,7 @@ export async function registerUser(body: Prisma.UserCreateInput) {
     });
 
     console.log(createdUser);
-    await sendEmail(createdUser.email, 'Скатерть-самобранка / 📝 Подтверждение регистрации', Promise.resolve(VerificationUserTemplate({code})));
+    await sendEmail(createdUser.email, 'Скатерть-самобранка / 📝 Подтверждение регистрации', Promise.resolve(VerificationUserTemplate({ code })));
   } catch (error) {
     console.log('Error [CREATE_USER]', error);
     throw error;
