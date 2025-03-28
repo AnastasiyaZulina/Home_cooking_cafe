@@ -77,7 +77,10 @@ export interface CartState {
     addCartItem: async (values: CreateCartItemValues) => {
       try {
         set({ loading: true, error: false });
-        const data = await Api.cart.addCartItem(values);
+        const data = await Api.cart.addCartItem({
+          productId: values.productId,
+          quantity: values.quantity || 1 // Явно передаём quantity
+        });
         set(getCartDetails(data));
       } catch (error) {
         console.error(error);

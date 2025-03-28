@@ -1,15 +1,21 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { OrderStatus, DeliveryType, Order, PaymentMethod } from '@prisma/client';
 import { cn } from '@/shared/lib/utils';
 import { MyOrdersBlock } from './my-orders-block';
+import { Button } from '../ui';
+import toast from 'react-hot-toast';
+import { useCart } from '@/hooks';
 
 interface MyOrdersProps {
   orders: Order[];
 }
 
 export const MyOrders = ({ orders }: MyOrdersProps) => {
+  const { addCartItem, fetchCartItems } = useCart(false);
+  const [isReordering, setIsReordering] = useState<Record<number, boolean>>({});
+
   const getStatusText = (status: OrderStatus, deliveryType: DeliveryType, paymentMethod: PaymentMethod) => {
     switch (status) {
       case 'PENDING':
@@ -26,6 +32,66 @@ export const MyOrders = ({ orders }: MyOrdersProps) => {
         return 'Отменён';
       default:
         return status;
+    }
+  };
+
+  const handleRepeatOrder = async (orderId: number, items: any[]) => {
+    setIsReordering(prev => ({ ...prev, [orderId]: true }));
+    
+    const toastId = toast.loading('Добавляем товары в корзину...');
+    let successCount = 0;
+    const failedProducts: string[] = [];
+  
+    try {
+      for (const item of items) {
+        const productId = item.product?.id || item.productId;
+        const productName = item.product?.name || item.name;
+        
+        try {
+          // Проверяем доступность товара
+          const checkResponse = await fetch(`/api/products/${productId}`);
+          if (!checkResponse.ok) {
+            failedProducts.push(productName);
+            continue;
+          }
+  
+          const product = await checkResponse.json();
+          if (!product.isAvailable) {
+            failedProducts.push(productName);
+            continue;
+          }
+  
+          // Используем метод из стора вместо прямого fetch
+          await addCartItem({
+            productId: product.id,
+            quantity: item.quantity || 1
+          });
+          
+          successCount++;
+        } catch (error) {
+          console.error(`Error adding product ${productId} to cart:`, error);
+          failedProducts.push(productName);
+        }
+      }
+  
+      // Формируем финальное уведомление
+      if (successCount > 0 && failedProducts.length > 0) {
+        toast.success(
+          `Успешно добавлено ${successCount} товаров. Не добавлено: ${failedProducts.join(', ')}`,
+          { id: toastId }
+        );
+      } else if (successCount > 0) {
+        toast.success(`Все товары (${successCount}) успешно добавлены в корзину`, { id: toastId });
+      } else {
+        toast.error(`Не удалось добавить товары: ${failedProducts.join(', ')}`, { id: toastId });
+      }
+    } catch (error) {
+      console.error('Error repeating order:', error);
+      toast.error('Произошла ошибка при добавлении товаров', { id: toastId });
+    } finally {
+      setIsReordering(prev => ({ ...prev, [orderId]: false }));
+      // Обновляем данные корзины после всех операций
+      fetchCartItems();
     }
   };
 
@@ -76,6 +142,7 @@ export const MyOrders = ({ orders }: MyOrdersProps) => {
   };
 
   return (
+
     <div className="space-y-4">
       {orders.map((order) => {
         const items = parseOrderItems(order.items);
@@ -185,6 +252,28 @@ export const MyOrders = ({ orders }: MyOrdersProps) => {
                 </div>
               </div>
             </div>
+            {order.status === 'COMPLETED' && (
+              <div className="border-t border-gray-100 pt-4">
+                <Button
+                  onClick={() => handleRepeatOrder(order.id, items)}
+                  disabled={isReordering[order.id]}
+                  className="w-full"
+                  variant="default"
+                >
+                  {isReordering[order.id] ? (
+                    <span className="flex items-center gap-2">
+                      <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Добавление...
+                    </span>
+                  ) : (
+                    'Повторить заказ'
+                  )}
+                </Button>
+              </div>
+            )}
           </MyOrdersBlock>
         );
       })}

@@ -14,12 +14,18 @@ export default async function ProfileDataPage() {
     where: {
       id: Number(session?.id),
     },
+    include: {
+      orders: {
+        orderBy: {
+          createdAt: 'desc',
+        },
+      },
+    },
   });
 
   if (!user) {
     redirect('/not-auth');
   }
 
-  // Возвращаем React-компонент
-  return <ProfileLayout user={user} />;
+  return <ProfileLayout user={user} orders={user.orders} />;
 }
