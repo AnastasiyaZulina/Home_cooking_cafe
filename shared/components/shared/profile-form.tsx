@@ -12,7 +12,7 @@ import { Title } from './title';
 import { FormInput } from './form';
 import { Button } from '../ui';
 import { updateUserInfo } from '@/app/actions';
-import { cn } from '@/shared/lib/utils';
+import { Gift } from 'lucide-react';
 
 interface Props {
   data: User;
@@ -29,19 +29,26 @@ export const ProfileForm: React.FC<Props> = ({ data }) => {
     },
   });
 
-  const onSubmit = async (data: TFormRegisterValues) => {
+  const onSubmit = async (formData: TFormRegisterValues) => {
     try {
       await updateUserInfo({
-        email: data.email,
-        fullName: data.fullName,
-        password: data.password,
+        email: formData.email,
+        fullName: formData.fullName,
+        password: formData.password,
       });
 
-      toast.error('Данные обновлены 📝', {
+      toast.success('Данные обновлены 📝', {
         icon: '✅',
       });
+
+      // Сбрасываем поля паролей после успешного обновления
+      form.reset({
+        ...form.getValues(),
+        password: '',
+        confirmPassword: ''
+      });
     } catch (error) {
-      return toast.error('Ошибка при обновлении данных', {
+      toast.error('Ошибка при обновлении данных', {
         icon: '❌',
       });
     }
@@ -55,25 +62,46 @@ export const ProfileForm: React.FC<Props> = ({ data }) => {
 
   return (
     <Container className="my-6 md:my-10 px-4">
-      <Title text="Личные данные" size="md" className="font-bold text-center" />
+      <Title text="Личные данные" size="md" className="font-bold text-center mb-2" />
+
+      {/* Блок с информацией о бонусах */}
+      <div className="bg-gray-100 rounded-lg shadow-sm p-4 mb-6 max-w-[384px] mx-auto">
+        <div className="flex items-center">
+          <Gift className="w-5 h-5 text-primary" />&nbsp;
+          <span className="text-gray-600 font-bold">Ваши бонусы:</span>&nbsp;&nbsp;<span className="text-lg font-bold text-primary">{data.bonusBalance || 0} ₽</span>
+        </div>
+        <p className="text-sm text-gray-500 mt-2">
+          Бонусы можно использовать при следующих покупках
+        </p>
+      </div>
 
       <FormProvider {...form}>
-        <form 
-          className="flex flex-col gap-4 w-full max-w-[384px] mx-auto mt-6 md:mt-10" 
+        <form
+          className="flex flex-col gap-4 w-full max-w-[384px] mx-auto"
           onSubmit={form.handleSubmit(onSubmit)}
         >
           <FormInput name="email" label="E-Mail" required />
           <FormInput name="fullName" label="Полное имя" required />
 
-          <FormInput type="password" name="password" label="Новый пароль" required />
-          <FormInput type="password" name="confirmPassword" label="Повторите пароль" required />
+          <FormInput
+            type="password"
+            name="password"
+            label="Новый пароль"
+            required
+          />
+          <FormInput
+            type="password"
+            name="confirmPassword"
+            label="Повторите пароль"
+            required
+          />
 
-          <Button 
-            disabled={form.formState.isSubmitting} 
-            className="text-base mt-6 md:mt-10 w-full" 
+          <Button
+            disabled={form.formState.isSubmitting}
+            className="text-base mt-6 md:mt-6 w-full"
             type="submit"
           >
-            Сохранить
+            {form.formState.isSubmitting ? 'Сохранение...' : 'Сохранить'}
           </Button>
 
           <Button

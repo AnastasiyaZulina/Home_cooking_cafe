@@ -1,7 +1,8 @@
+// components/profile-layout.tsx
 'use client';
 
 import React from 'react';
-import { User } from '@prisma/client';
+import { User, Order } from '@prisma/client';
 import { ProfileForm } from './profile-form';
 import { Container } from './container';
 import { Title } from './title';
@@ -12,15 +13,22 @@ import { MyOrders } from './my-orders';
 
 interface ProfileLayoutProps {
   user: User;
+  orders: Order[]; // Добавляем orders в пропсы
 }
 
-export const ProfileLayout: React.FC<ProfileLayoutProps> = ({ user }) => {
+export const ProfileLayout: React.FC<ProfileLayoutProps> = ({ user, orders }) => {
   const pathname = usePathname();
 
   return (
-    <Container className="my-6 md:my-10 px-4 ">
+    <Container className="my-6 md:my-10 px-4">
+      <Title 
+        text={pathname === '/profile/data' ? 'Личные данные' : 'Мои заказы'} 
+        size="md" 
+        className="font-bold mb-6 md:mb-8" 
+      />
+
       <div className="flex flex-col md:flex-row gap-6 md:gap-10">
-        {/* Боковое меню - видно только на десктопе */}
+        {/* Боковое меню */}
         <div className="hidden md:flex flex-col w-64 gap-2">
           <Link
             href="/profile"
@@ -44,13 +52,7 @@ export const ProfileLayout: React.FC<ProfileLayoutProps> = ({ user }) => {
 
         {/* Основное содержимое */}
         <div className="flex-1">
-          {pathname === '/profile' && (
-            <div>
-              <Title text="Мои заказы" size="md" className="font-bold text-center mb-2" />
-              <MyOrders />
-            </div>
-          )}
-
+          {pathname === '/profile' && <MyOrders orders={orders} />}
           {pathname === '/profile/data' && <ProfileForm data={user} />}
         </div>
       </div>

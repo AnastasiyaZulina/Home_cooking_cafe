@@ -3,12 +3,11 @@ import { ProfileLayout } from '@/shared/components/shared/profile-layout';
 import { getUserSession } from '@/shared/lib/get-user-session';
 import { redirect } from 'next/navigation';
 
-
-export default async function ProfilePage() {
+export default async function ProfileDataPage() {
   const session = await getUserSession();
 
   if (!session) {
-    return redirect('/not-auth');
+    redirect('/not-auth');
   }
 
   const user = await prisma.user.findFirst({
@@ -18,17 +17,9 @@ export default async function ProfilePage() {
   });
 
   if (!user) {
-    return redirect('/not-auth');
+    redirect('/not-auth');
   }
 
-  const orders = await prisma.order.findMany({
-    where: {
-      userId: user.id,
-    },
-    orderBy: {
-      createdAt: 'desc',
-    },
-  });
-
-  return <ProfileLayout user={user} orders={orders} />;
+  // Возвращаем React-компонент
+  return <ProfileLayout user={user} />;
 }

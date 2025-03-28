@@ -3,6 +3,7 @@ import { X } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useSession } from 'next-auth/react'
+import { usePathname } from 'next/navigation'
 
 interface MobileMenuProps {
     isOpen: boolean
@@ -12,15 +13,19 @@ interface MobileMenuProps {
 
 export const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, onSignInClick }) => {
     const { data: session } = useSession()
+    const pathname = usePathname()
 
     if (!isOpen) return null
+
+    // Функция для проверки активного пути
+    const isActive = (href: string) => pathname === href
 
     return (
         <div className="fixed inset-0 bg-white z-50 min-h-screen">
             <div className="flex flex-col h-full">
                 {/* Верхняя часть с кнопкой назад и логотипом */}
                 <div className="border-b p-4 relative">
-                    <div className="flex items-center gap-4 ">
+                    <div className="flex items-center gap-4">
                         <Link href="/" className="flex items-center gap-x-4" onClick={onClose}>
                             <Image
                                 src="/logobig.png"
@@ -51,7 +56,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, onSignI
                             <div className="flex flex-col gap-2">
                                 <Link
                                     href="/profile"
-                                    className="text-lg font-bold"
+                                    className={`text-lg font-bold ${isActive('/profile') ? 'text-primary' : ''}`}
                                     onClick={onClose}
                                 >
                                     Личный кабинет
@@ -59,14 +64,14 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, onSignI
                                 <div className="flex flex-col pl-4 gap-2">
                                     <Link
                                         href="/profile"
-                                        className="text-base"
+                                        className={`text-base ${isActive('/profile') ? 'text-primary font-medium' : ''}`}
                                         onClick={onClose}
                                     >
                                         Мои заказы
                                     </Link>
                                     <Link
                                         href="/profile/data"
-                                        className="text-base"
+                                        className={`text-base ${isActive('/profile/data') ? 'text-primary font-medium' : ''}`}
                                         onClick={onClose}
                                     >
                                         Данные профиля
@@ -87,34 +92,19 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, onSignI
                     </div>
 
                     {/* Основные ссылки */}
-                    <Link
-                        href="/about"
-                        className="text-lg font-bold"
-                        onClick={onClose}
-                    >
-                        О нас
-                    </Link>
-                    <Link
-                        href="/delivery"
-                        className="text-lg font-bold"
-                        onClick={onClose}
-                    >
-                        Доставка
-                    </Link>
-                    <Link
-                        href="/reviews"
-                        className="text-lg font-bold"
-                        onClick={onClose}
-                    >
-                        Отзывы
-                    </Link>
-                    <Link
-                        href="/corporate"
-                        className="text-lg font-bold"
-                        onClick={onClose}
-                    >
-                        Корпоративным клиентам
-                    </Link>
+                    {['/about', '/delivery', '/reviews', '/corporate'].map((href) => (
+                        <Link
+                            key={href}
+                            href={href}
+                            className={`text-lg font-bold ${isActive(href) ? 'text-primary' : ''}`}
+                            onClick={onClose}
+                        >
+                            {href === '/about' && 'О нас'}
+                            {href === '/delivery' && 'Доставка'}
+                            {href === '/reviews' && 'Отзывы'}
+                            {href === '/corporate' && 'Корпоративным клиентам'}
+                        </Link>
+                    ))}
                 </div>
             </div>
         </div>
