@@ -1,5 +1,4 @@
 'use client'
-
 import { X } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -44,19 +43,36 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, onSignI
                     </button>
                 </div>
 
-
                 {/* Навигация */}
                 <div className="flex flex-col p-4 gap-6">
                     {/* Кнопка входа или профиля */}
                     <div className="pb-4 border-b">
                         {session ? (
-                            <Link
-                                href="/profile"
-                                className="text-lg font-bold"
-                                onClick={onClose}
-                            >
-                                Личный кабинет
-                            </Link>
+                            <div className="flex flex-col gap-2">
+                                <Link
+                                    href="/profile"
+                                    className="text-lg font-bold"
+                                    onClick={onClose}
+                                >
+                                    Личный кабинет
+                                </Link>
+                                <div className="flex flex-col pl-4 gap-2">
+                                    <Link
+                                        href="/profile"
+                                        className="text-base"
+                                        onClick={onClose}
+                                    >
+                                        Мои заказы
+                                    </Link>
+                                    <Link
+                                        href="/profile/data"
+                                        className="text-base"
+                                        onClick={onClose}
+                                    >
+                                        Данные профиля
+                                    </Link>
+                                </div>
+                            </div>
                         ) : (
                             <button
                                 onClick={() => {

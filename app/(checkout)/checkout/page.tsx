@@ -13,7 +13,7 @@ import toast from "react-hot-toast";
 import React from "react";
 import { useSession } from "next-auth/react";
 import { Api } from "@/shared/services/api-clients";
-import { DeliveryType } from "@prisma/client";
+import { DeliveryType, PaymentMethod } from "@prisma/client";
 import { useRouter } from "next/navigation";
 import * as RadioGroup from '@radix-ui/react-radio-group';
 
@@ -56,7 +56,8 @@ function CheckoutContent() {
             lastname: '',
             address: '',
             comment: '',
-            deliveryType: 'DELIVERY' as DeliveryType
+            deliveryType: 'DELIVERY' as DeliveryType,
+            paymentMethod: 'ONLINE'
         }
     });
 
@@ -76,13 +77,19 @@ function CheckoutContent() {
     }, [session, form])
 
     const [deliveryType, setDeliveryType] = React.useState<'DELIVERY' | 'PICKUP'>('DELIVERY');
-    const BONUS_MULTIPLIER = 0.05; // 5% бонусов от суммы заказа
-    const DELIVERY_COST = 250; // Стоимость доставки
+    const [paymentMethod, setPaymentMethod] = React.useState<PaymentMethod>('ONLINE'); // Новое состояние для способа оплаты
+
+    const BONUS_MULTIPLIER = 0.05;
+    const DELIVERY_COST = 250;
     const DELIVERY_PRICE = deliveryType === 'DELIVERY' ? 250 : 0;
 
     const onDeliveryTypeChange = (type: DeliveryType) => {
         setDeliveryType(type);
         form.setValue('deliveryType', type);
+        // Сбрасываем способ оплаты на ONLINE при выборе доставки
+        if (type === 'DELIVERY') {
+            setPaymentMethod('ONLINE');
+        }
     };
 
     const onClickCountButton = (id: number, quantity: number, type: 'plus' | 'minus') => {
@@ -119,7 +126,6 @@ function CheckoutContent() {
             return {
                 totalPrice: totalAmount + deliveryPrice,
                 bonusDelta: calculatedBonuses,
-                canUseBonuses: false
             };
         } else {
             // Списание бонусов только для авторизованных
@@ -127,12 +133,11 @@ function CheckoutContent() {
             return {
                 totalPrice: totalAmount + deliveryPrice - maxAvailableToSpend,
                 bonusDelta: -maxAvailableToSpend,
-                canUseBonuses: true
             };
         }
     };
 
-    const { totalPrice, bonusDelta, canUseBonuses } = calculateTotal();
+    const { totalPrice, bonusDelta } = calculateTotal();
 
     const handleBonusOptionChange = (value: string) => {
         if (!session) {
@@ -145,21 +150,30 @@ function CheckoutContent() {
     const onSubmit = async (data: CheckoutFormValues) => {
         try {
             setSubmitting(true);
+            console.log('Form data:', data);
             const formData = {
                 ...data,
                 address: data.deliveryType === 'PICKUP' ? undefined : data.address,
                 deliveryPrice: deliveryType === 'DELIVERY' ? DELIVERY_COST : 0,
+                paymentMethod,
                 bonusDelta,
             };
-            console.log('Submitting with bonusDelta:', bonusDelta);
+
             const url = await createOrder(formData);
 
-            toast.success('Заказ успешно оформлен! 📝 Переход на оплату...', {
-                icon: '✅',
-            });
-
+            if (paymentMethod == "ONLINE") {
+                toast.success('Заказ успешно оформлен! 📝 Переходим на оплату...', {
+                    icon: '✅',
+                });
+            }
+            else{
+                toast.success('Заказ успешно оформлен!', {
+                    icon: '✅',
+                });
+            }
+            
             if (url) {
-                location.href = url;
+                if (paymentMethod == "ONLINE") {location.href = url; } else {await new Promise(resolve => setTimeout(resolve, 2000)); location.href = url;}
             }
         }
         catch (err) {
@@ -280,11 +294,48 @@ function CheckoutContent() {
                                         Будет списано: {Math.min(userBonuses, totalAmount)} ₽ из доступных {userBonuses} ₽
                                     </div>
                                 )}
+
+                                {deliveryType === 'PICKUP' && (
+                                    <div className="mb-5">
+                                        <h4 className="text-sm font-medium mb-3">Способ оплаты:</h4>
+                                        <RadioGroup.Root
+                                            value={paymentMethod}
+                                            onValueChange={(value) => setPaymentMethod(value as PaymentMethod)}
+                                            className="flex flex-col gap-3"
+                                        >
+                                            <div className="flex items-center gap-2">
+                                                <RadioGroup.Item
+                                                    value="ONLINE"
+                                                    id="onlinePayment"
+                                                    className="flex items-center justify-center w-6 h-6 rounded-full border border-gray-400"
+                                                >
+                                                    <RadioGroup.Indicator className="w-4 h-4 rounded-full bg-primary" />
+                                                </RadioGroup.Item>
+                                                <label htmlFor="onlinePayment" className="flex-1">
+                                                    Оплата на сайте
+                                                </label>
+                                            </div>
+
+                                            <div className="flex items-center gap-2">
+                                                <RadioGroup.Item
+                                                    value="OFFLINE"
+                                                    id="offlinePayment"
+                                                    className="flex items-center justify-center w-6 h-6 rounded-full border border-gray-400"
+                                                >
+                                                    <RadioGroup.Indicator className="w-4 h-4 rounded-full bg-primary" />
+                                                </RadioGroup.Item>
+                                                <label htmlFor="offlinePayment" className="flex-1">
+                                                    Оплата при получении
+                                                </label>
+                                            </div>
+                                        </RadioGroup.Root>
+                                    </div>
+                                )}
                                 <Button
                                     loading={loading || submitting}
                                     type="submit"
                                     className="w-full h-12 md:h-14 rounded-xl md:rounded-2xl mt-4 md:mt-6 text-sm md:text-base font-bold">
-                                    Перейти к оплате
+                                    Оформить заказ
                                     <ArrowRight className="w-4 md:w-5 ml-2" />
                                 </Button>
                             </WhiteBlock>

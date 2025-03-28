@@ -96,6 +96,8 @@ model Order {
   status      OrderStatus @default(PENDING)
   totalAmount Int
   paymentId   String?
+  paymentMethod PaymentMethod @default(ONLINE)
+  
   bonusDelta  Int       @default(0)
 
   deliveryType   DeliveryType @default(DELIVERY)
@@ -127,6 +129,8 @@ model VerificationCode {
 enum OrderStatus {
   PENDING
   SUCCEEDED
+  READY
+  DELIVERY
   CANCELLED
   COMPLETED
 }
@@ -139,4 +143,9 @@ enum UserRole {
 enum DeliveryType {
   PICKUP
   DELIVERY
+}
+
+enum PaymentMethod {
+  ONLINE
+  OFFLINE
 }

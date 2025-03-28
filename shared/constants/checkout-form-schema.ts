@@ -1,4 +1,4 @@
-import { DeliveryType } from '@prisma/client';
+import { DeliveryType, PaymentMethod } from '@prisma/client';
 import { z } from 'zod';
 
 export const CheckoutFormSchema = z.object({
@@ -9,6 +9,7 @@ export const CheckoutFormSchema = z.object({
     address: z.string().optional(),
     comment: z.string().optional(),
     deliveryType: z.nativeEnum(DeliveryType),
+    paymentMethod: z.nativeEnum(PaymentMethod).default('ONLINE'),
     deliveryPrice: z.number().optional().default(0),
     bonusDelta: z.number().default(0),
 }).superRefine((data, ctx) => {

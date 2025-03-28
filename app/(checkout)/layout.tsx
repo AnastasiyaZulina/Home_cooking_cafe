@@ -13,7 +13,7 @@ export default async function CheckoutLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <main className="min-h-screen bg-[#F4F1EE]">
+    <main className="min-h-screen bg-[#f5f5f5]">
       <Container>
       <Header hasCart={false} className="border-b-gray-200" />
       {children}

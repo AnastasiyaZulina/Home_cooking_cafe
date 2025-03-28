@@ -6,7 +6,7 @@ import { OrderStatus, Prisma } from '@prisma/client';
 import { createPayment, sendEmail } from '@/shared/lib';
 import { hashSync } from 'bcrypt';
 import { getUserSession } from '@/shared/lib/get-user-session';
-import { PayOrderTemplate, VerificationUserTemplate } from '@/shared/components';
+import { OrderCreatedTemplate, PayOrderTemplate, VerificationUserTemplate } from '@/shared/components';
 
 export async function createOrder(data: CheckoutFormValues) {
   try {
@@ -48,10 +48,13 @@ export async function createOrder(data: CheckoutFormValues) {
     if (!userCart) {
       throw new Error('Cart not found');
     }
-
+    if (data.deliveryType === 'DELIVERY' && data.paymentMethod === 'OFFLINE') {
+      throw new Error("Оплата при получении недоступна для доставки");
+  }
     /*Создаем заказ*/
     const order = await prisma.order.create({
       data: {
+        userId: session?.id ? Number(session.id) : null,
         token: cartToken,
         fullName: data.firstname + ' ' + data.lastname,
         email: data.email,
@@ -64,6 +67,7 @@ export async function createOrder(data: CheckoutFormValues) {
         deliveryType: data.deliveryType,
         deliveryTime: new Date(),
         deliveryCost: data.deliveryPrice,
+        paymentMethod: data.paymentMethod,
         bonusDelta: data.bonusDelta
       },
     });
@@ -83,6 +87,17 @@ export async function createOrder(data: CheckoutFormValues) {
         cartId: userCart.id,
       },
     });
+
+    if (data.paymentMethod === 'OFFLINE') {
+      await sendEmail(
+        data.email,
+        `Скатерть-самобранка | Заказ #${order.id} принят`,
+        Promise.resolve(OrderCreatedTemplate({
+          orderId: order.id,
+        }))
+      );
+      return '/';
+    }
 
     const paymentData = await createPayment({
       amount: order.totalAmount,
