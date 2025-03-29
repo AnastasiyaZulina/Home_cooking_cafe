@@ -7,5 +7,8 @@ const WORKING_HOURS = {
     CLOSED_MESSAGE: 'Прием заказов с 10:00 до 20:00. Сейчас заказы не принимаются.'
   };
   
+  const BONUS_MULTIPLIER = 0.05;
+  const DELIVERY_COST = 250;
+
   // Таймзона Новосибирска (UTC+7)
   const NOVOSIBIRSK_TIMEZONE_OFFSET = 7 * 60; // минуты

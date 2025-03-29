@@ -1,12 +1,15 @@
 import * as RadioGroup from '@radix-ui/react-radio-group';
 import React from 'react';
+import { Slider } from '@/shared/components/ui/slider'; // Предполагается, что у вас есть компонент Slider
 
 interface BonusOptionsProps {
-  session: any; // Замените на правильный тип сессии
+  session: any;
   bonusOption: 'earn' | 'spend';
   onBonusOptionChange: (value: 'earn' | 'spend') => void;
   userBonuses: number;
   totalAmount: number;
+  spentBonuses: number;
+  onSpentBonusesChange: (value: number) => void;
 }
 
 export const BonusOptions = ({
@@ -15,8 +18,10 @@ export const BonusOptions = ({
   onBonusOptionChange,
   userBonuses,
   totalAmount,
+  spentBonuses,
+  onSpentBonusesChange,
 }: BonusOptionsProps) => {
-  const BONUS_MULTIPLIER = 0.05;
+  const maxAvailableToSpend = Math.min(userBonuses, totalAmount);
 
   return (
     <>
@@ -55,7 +60,7 @@ export const BonusOptions = ({
                 htmlFor="spendBonuses"
                 className={userBonuses <= 0 ? 'opacity-50' : ''}
               >
-                Списать бонусы <br /> {userBonuses > 0 && `(до ${Math.min(userBonuses, totalAmount)} ₽)`}
+                Списать бонусы <br /> {userBonuses > 0 && `(до ${maxAvailableToSpend} ₽)`}
               </label>
             </div>
           </RadioGroup.Root>
@@ -65,9 +70,26 @@ export const BonusOptions = ({
           </div>
         )}
       </div>
-      {bonusOption === 'spend' && (
-        <div className="text-sm text-gray-600 mb-4">
-          Будет списано: {Math.min(userBonuses, totalAmount)} ₽ из доступных {userBonuses} ₽
+      
+      {bonusOption === 'spend' && userBonuses > 0 && (
+        <div className="mb-4">
+          <div className="flex justify-between text-sm text-gray-600 mb-2">
+            <span>Будет списано: {spentBonuses} ₽</span>
+            <span>Доступно: {userBonuses} ₽</span>
+          </div>
+          
+          <Slider
+            value={[spentBonuses]}
+            max={maxAvailableToSpend}
+            step={1}
+            onValueChange={(value) => onSpentBonusesChange(value[0])}
+            className="w-full mb-2"
+          />
+          
+          <div className="flex justify-between text-xs text-gray-500">
+            <span>0 ₽</span>
+            <span>{maxAvailableToSpend} ₽</span>
+          </div>
         </div>
       )}
     </>

@@ -49,6 +49,7 @@ function CheckoutContent() {
     const { totalAmount, updateItemQuantity, items, removeCartItem, loading } = useCart();
     const [submitting, setSubmitting] = React.useState(false);
     const { data: session } = useSession();
+    const [spentBonuses, setSpentBonuses] = React.useState(0);
 
     const form = useForm<CheckoutFormValues>({
         resolver: zodResolver(CheckoutFormSchema),
@@ -81,9 +82,7 @@ function CheckoutContent() {
     const [deliveryType, setDeliveryType] = React.useState<'DELIVERY' | 'PICKUP'>('DELIVERY');
     const [paymentMethod, setPaymentMethod] = React.useState<PaymentMethod>('ONLINE'); // Новое состояние для способа оплаты
 
-    const BONUS_MULTIPLIER = 0.05;
-    const DELIVERY_COST = 250;
-    const DELIVERY_PRICE = deliveryType === 'DELIVERY' ? 250 : 0;
+    const DELIVERY_PRICE = deliveryType === 'DELIVERY' ? DELIVERY_COST : 0;
 
     const onDeliveryTypeChange = (type: DeliveryType) => {
         setDeliveryType(type);
@@ -122,24 +121,28 @@ function CheckoutContent() {
         loadUserBonuses();
     }, [session]);
 
+    React.useEffect(() => {
+        if (bonusOption === 'earn') {
+            setSpentBonuses(0);
+        } else {
+            setSpentBonuses(Math.min(userBonuses, totalAmount));
+        }
+    }, [bonusOption, userBonuses, totalAmount]);
+
     // Расчет итоговой суммы
     const calculateTotal = () => {
         const deliveryPrice = deliveryType === 'DELIVERY' ? DELIVERY_COST : 0;
         const isAuthenticated = !!session;
 
         if (!isAuthenticated || bonusOption === 'earn') {
-            // Для неавторизованных или при начислении бонусов
-            const calculatedBonuses = isAuthenticated ? Math.round(totalAmount * BONUS_MULTIPLIER) : 0;
             return {
                 totalPrice: totalAmount + deliveryPrice,
-                bonusDelta: calculatedBonuses,
+                bonusDelta: isAuthenticated ? Math.round(totalAmount * BONUS_MULTIPLIER) : 0,
             };
         } else {
-            // Списание бонусов только для авторизованных
-            const maxAvailableToSpend = Math.min(userBonuses, totalAmount);
             return {
-                totalPrice: totalAmount + deliveryPrice - maxAvailableToSpend,
-                bonusDelta: -maxAvailableToSpend,
+                totalPrice: totalAmount + deliveryPrice - spentBonuses,
+                bonusDelta: -spentBonuses,
             };
         }
     };
@@ -258,6 +261,8 @@ function CheckoutContent() {
                                     onBonusOptionChange={handleBonusOptionChange}
                                     userBonuses={userBonuses}
                                     totalAmount={totalAmount}
+                                    spentBonuses={spentBonuses}
+                                    onSpentBonusesChange={setSpentBonuses}
                                 />
 
                                 <PaymentMethodOptions
