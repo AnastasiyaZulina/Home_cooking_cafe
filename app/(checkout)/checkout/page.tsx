@@ -16,6 +16,8 @@ import { Api } from "@/shared/services/api-clients";
 import { DeliveryType, PaymentMethod } from "@prisma/client";
 import { useRouter } from "next/navigation";
 import * as RadioGroup from '@radix-ui/react-radio-group';
+import { PaymentMethodOptions } from "@/shared/components/shared/payment-method-options";
+import { BonusOptions } from "@/shared/components/shared/bonus-options";
 
 export default function CheckoutPage() {
     const { items, loading } = useCart();
@@ -92,6 +94,11 @@ function CheckoutContent() {
         }
     };
 
+    const onPaymentMethodChange = (method: PaymentMethod) => {
+        setPaymentMethod(method);
+        form.setValue('paymentMethod', method); // Добавьте эту строку
+    };
+
     const onClickCountButton = (id: number, quantity: number, type: 'plus' | 'minus') => {
         const newQuantity = type === 'plus' ? quantity + 1 : quantity - 1;
         updateItemQuantity(id, newQuantity);
@@ -166,14 +173,14 @@ function CheckoutContent() {
                     icon: '✅',
                 });
             }
-            else{
+            else {
                 toast.success('Заказ успешно оформлен!', {
                     icon: '✅',
                 });
             }
-            
+
             if (url) {
-                if (paymentMethod == "ONLINE") {location.href = url; } else {await new Promise(resolve => setTimeout(resolve, 2000)); location.href = url;}
+                if (paymentMethod == "ONLINE") { location.href = url; } else { await new Promise(resolve => setTimeout(resolve, 2000)); location.href = url; }
             }
         }
         catch (err) {
@@ -245,92 +252,20 @@ function CheckoutContent() {
                                         loading ? <Skeleton className="h-5 md:h-6 w-12 md:w-16 rounded-[6px]" /> : `${DELIVERY_PRICE} ₽`
                                     } />
 
-                                <div className="mb-5">
-                                    {session ? (
-                                        <RadioGroup.Root
-                                            value={bonusOption}
-                                            onValueChange={handleBonusOptionChange}
-                                            className="flex items-center gap-4"
-                                        >
-                                            <div className="flex items-center gap-2">
-                                                <RadioGroup.Item
-                                                    value="earn"
-                                                    id="earnBonuses"
-                                                    className="flex items-center justify-center w-6 h-6 rounded-full border border-gray-400"
-                                                >
-                                                    <RadioGroup.Indicator className="w-4 h-4 rounded-full bg-primary" />
-                                                </RadioGroup.Item>
-                                                <label htmlFor="earnBonuses">
-                                                    Начислить бонусы <br /> (+{Math.round(totalAmount * BONUS_MULTIPLIER)} ₽)
-                                                </label>
-                                            </div>
+                                <BonusOptions
+                                    session={session}
+                                    bonusOption={bonusOption}
+                                    onBonusOptionChange={handleBonusOptionChange}
+                                    userBonuses={userBonuses}
+                                    totalAmount={totalAmount}
+                                />
 
-                                            <div className="flex items-center gap-2">
-                                                <RadioGroup.Item
-                                                    value="spend"
-                                                    id="spendBonuses"
-                                                    className={`flex items-center justify-center w-6 h-6 rounded-full border ${userBonuses <= 0 ? 'border-gray-300 opacity-50' : 'border-gray-400'
-                                                        }`}
-                                                    disabled={userBonuses <= 0}
-                                                >
-                                                    <RadioGroup.Indicator className="w-4 h-4 rounded-full bg-primary" />
-                                                </RadioGroup.Item>
-                                                <label
-                                                    htmlFor="spendBonuses"
-                                                    className={userBonuses <= 0 ? 'opacity-50' : ''}
-                                                >
-                                                    Списать бонусы <br /> {userBonuses > 0 && `(до ${Math.min(userBonuses, totalAmount)} ₽)`}
-                                                </label>
-                                            </div>
-                                        </RadioGroup.Root>
-                                    ) : (
-                                        <div className="p-3 bg-yellow-50 rounded-md text-sm text-yellow-800">
-                                            Авторизуйтесь, чтобы получать и тратить бонусные баллы
-                                        </div>
-                                    )}
-                                </div>
-                                {bonusOption === 'spend' && (
-                                    <div className="text-sm text-gray-600 mb-4">
-                                        Будет списано: {Math.min(userBonuses, totalAmount)} ₽ из доступных {userBonuses} ₽
-                                    </div>
-                                )}
+                                <PaymentMethodOptions
+                                    deliveryType={deliveryType}
+                                    paymentMethod={paymentMethod}
+                                    setPaymentMethod={onPaymentMethodChange}
+                                />
 
-                                {deliveryType === 'PICKUP' && (
-                                    <div className="mb-5">
-                                        <h4 className="text-sm font-medium mb-3">Способ оплаты:</h4>
-                                        <RadioGroup.Root
-                                            value={paymentMethod}
-                                            onValueChange={(value) => setPaymentMethod(value as PaymentMethod)}
-                                            className="flex flex-col gap-3"
-                                        >
-                                            <div className="flex items-center gap-2">
-                                                <RadioGroup.Item
-                                                    value="ONLINE"
-                                                    id="onlinePayment"
-                                                    className="flex items-center justify-center w-6 h-6 rounded-full border border-gray-400"
-                                                >
-                                                    <RadioGroup.Indicator className="w-4 h-4 rounded-full bg-primary" />
-                                                </RadioGroup.Item>
-                                                <label htmlFor="onlinePayment" className="flex-1">
-                                                    Оплата на сайте
-                                                </label>
-                                            </div>
-
-                                            <div className="flex items-center gap-2">
-                                                <RadioGroup.Item
-                                                    value="OFFLINE"
-                                                    id="offlinePayment"
-                                                    className="flex items-center justify-center w-6 h-6 rounded-full border border-gray-400"
-                                                >
-                                                    <RadioGroup.Indicator className="w-4 h-4 rounded-full bg-primary" />
-                                                </RadioGroup.Item>
-                                                <label htmlFor="offlinePayment" className="flex-1">
-                                                    Оплата при получении
-                                                </label>
-                                            </div>
-                                        </RadioGroup.Root>
-                                    </div>
-                                )}
                                 <Button
                                     loading={loading || submitting}
                                     type="submit"
