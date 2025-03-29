@@ -15,7 +15,6 @@ import { useSession } from "next-auth/react";
 import { Api } from "@/shared/services/api-clients";
 import { DeliveryType, PaymentMethod } from "@prisma/client";
 import { useRouter } from "next/navigation";
-import * as RadioGroup from '@radix-ui/react-radio-group';
 import { PaymentMethodOptions } from "@/shared/components/shared/payment-method-options";
 import { BonusOptions } from "@/shared/components/shared/bonus-options";
 
