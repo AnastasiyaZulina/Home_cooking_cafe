@@ -17,6 +17,8 @@ import { DeliveryType, PaymentMethod } from "@prisma/client";
 import { useRouter } from "next/navigation";
 import { PaymentMethodOptions } from "@/shared/components/shared/payment-method-options";
 import { BonusOptions } from "@/shared/components/shared/bonus-options";
+import { CHECKOUT_CONSTANTS } from '@/shared/constants';
+import { DeliveryTimePicker } from "@/shared/components/shared/delivery-time-picker";
 
 export default function CheckoutPage() {
     const { items, loading } = useCart();
@@ -59,7 +61,8 @@ function CheckoutContent() {
             address: '',
             comment: '',
             deliveryType: 'DELIVERY' as DeliveryType,
-            paymentMethod: 'ONLINE'
+            paymentMethod: 'ONLINE',
+            deliveryTime: undefined,
         }
     });
 
@@ -81,7 +84,7 @@ function CheckoutContent() {
     const [deliveryType, setDeliveryType] = React.useState<'DELIVERY' | 'PICKUP'>('DELIVERY');
     const [paymentMethod, setPaymentMethod] = React.useState<PaymentMethod>('ONLINE'); // Новое состояние для способа оплаты
 
-    const DELIVERY_PRICE = deliveryType === 'DELIVERY' ? DELIVERY_COST : 0;
+    const DELIVERY_PRICE = deliveryType === 'DELIVERY' ? CHECKOUT_CONSTANTS.DELIVERY_COST : 0;
 
     const onDeliveryTypeChange = (type: DeliveryType) => {
         setDeliveryType(type);
@@ -130,13 +133,13 @@ function CheckoutContent() {
 
     // Расчет итоговой суммы
     const calculateTotal = () => {
-        const deliveryPrice = deliveryType === 'DELIVERY' ? DELIVERY_COST : 0;
+        const deliveryPrice = deliveryType === 'DELIVERY' ? CHECKOUT_CONSTANTS.DELIVERY_COST : 0;
         const isAuthenticated = !!session;
 
         if (!isAuthenticated || bonusOption === 'earn') {
             return {
                 totalPrice: totalAmount + deliveryPrice,
-                bonusDelta: isAuthenticated ? Math.round(totalAmount * BONUS_MULTIPLIER) : 0,
+                bonusDelta: isAuthenticated ? Math.round(totalAmount * CHECKOUT_CONSTANTS.BONUS_MULTIPLIER) : 0,
             };
         } else {
             return {
@@ -156,16 +159,26 @@ function CheckoutContent() {
         setBonusOption(value as 'earn' | 'spend');
     };
 
+    const [deliveryTime, setDeliveryTime] = React.useState<Date | null>(null);
+    React.useEffect(() => {
+        console.log('DeliveryTime changed:', deliveryTime);
+    }, [deliveryTime]);
+
     const onSubmit = async (data: CheckoutFormValues) => {
         try {
+            if (!deliveryTime) {
+                toast.error('Пожалуйста, выберите время доставки/самовывоза');
+                return;
+            }
             setSubmitting(true);
-            console.log('Form data:', data);
+
             const formData = {
                 ...data,
                 address: data.deliveryType === 'PICKUP' ? undefined : data.address,
-                deliveryPrice: deliveryType === 'DELIVERY' ? DELIVERY_COST : 0,
+                deliveryPrice: deliveryType === 'DELIVERY' ? CHECKOUT_CONSTANTS.DELIVERY_COST : 0,
                 paymentMethod,
                 bonusDelta,
+                deliveryTime,
             };
 
             const url = await createOrder(formData);
@@ -184,6 +197,7 @@ function CheckoutContent() {
             if (url) {
                 if (paymentMethod == "ONLINE") { location.href = url; } else { await new Promise(resolve => setTimeout(resolve, 2000)); location.href = url; }
             }
+                
         }
         catch (err) {
             console.log(err);
@@ -269,7 +283,13 @@ function CheckoutContent() {
                                     paymentMethod={paymentMethod}
                                     setPaymentMethod={onPaymentMethodChange}
                                 />
-
+                                <DeliveryTimePicker
+                                    deliveryTime={deliveryTime}
+                                    setDeliveryTime={(time: Date) => {
+                                        setDeliveryTime(time);
+                                        form.setValue('deliveryTime', time); // Обновляем значение в форме
+                                    }}
+                                />
                                 <Button
                                     loading={loading || submitting}
                                     type="submit"

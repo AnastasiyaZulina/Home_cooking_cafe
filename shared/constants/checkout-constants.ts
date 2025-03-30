@@ -1,14 +1,19 @@
-// Константы времени работы
-const WORKING_HOURS = {
-    START: 10, // 10:00
-    END: 20,   // 20:00
-    MIN_DELIVERY_HOURS: 2, // Минимальное время на подготовку заказа (часы)
-    TIME_SLOT_DURATION: 30, // Длительность слота в минутах
-    CLOSED_MESSAGE: 'Прием заказов с 10:00 до 20:00. Сейчас заказы не принимаются.'
-  };
-  
-  const BONUS_MULTIPLIER = 0.05;
-  const DELIVERY_COST = 250;
+// Константы времени доставки
+export const CHECKOUT_CONSTANTS = {
+  WORKING_HOURS: {
+    START: 10, // Начало приема заказов (10:00)
+    END: 23,   // Последний саказ до (20:00)
+    MIN_DELIVERY_TIME_HOURS: 1, // Минимальное время доставки (1 час)
+    TIME_SLOT_DURATION: 30,     // Длительность слота в минутах
+  },
 
-  // Таймзона Новосибирска (UTC+7)
-  const NOVOSIBIRSK_TIMEZONE_OFFSET = 7 * 60; // минуты
+  // Сообщения 20:00-1:30=18:30
+  MESSAGES: {
+    OUT_OF_HOURS: 'Заказы принимаются с 10:00 до 21:30. Сейчас прием заказов закрыт.',
+    SELECT_DELIVERY_TIME: 'Выберите время доставки/самовывоза:',
+  },
+
+  BONUS_MULTIPLIER: 0.05,
+  TIMEZONE_OFFSET: 7 * 60 * 60 * 1000,
+  DELIVERY_COST: 250
+};

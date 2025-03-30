@@ -65,7 +65,7 @@ export async function createOrder(data: CheckoutFormValues) {
         status: OrderStatus.PENDING,
         items: userCart.items,
         deliveryType: data.deliveryType,
-        deliveryTime: new Date(),
+        deliveryTime: data.deliveryTime,
         deliveryCost: data.deliveryPrice,
         paymentMethod: data.paymentMethod,
         bonusDelta: data.bonusDelta

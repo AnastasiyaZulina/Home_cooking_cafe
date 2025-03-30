@@ -12,6 +12,7 @@ export const CheckoutFormSchema = z.object({
     paymentMethod: z.nativeEnum(PaymentMethod).default('ONLINE'),
     deliveryPrice: z.number().optional().default(0),
     bonusDelta: z.number().optional().default(0),
+    deliveryTime: z.date(),
 }).superRefine((data, ctx) => {
     if (data.deliveryType === 'DELIVERY') {
         if (!data.address || data.address.length < 5) {
