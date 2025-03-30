@@ -8,12 +8,78 @@ import { hashSync } from 'bcrypt';
 import { getUserSession } from '@/shared/lib/get-user-session';
 import { OrderCreatedTemplate, PayOrderTemplate, VerificationUserTemplate } from '@/shared/components';
 
+export async function updateProductStock(cartToken: string) {
+  const userCart = await prisma.cart.findFirst({
+    include: {
+      user: true,
+      items: {
+        include: {
+          product: true,
+        },
+      },
+    },
+    where: {
+      token: cartToken,
+    },
+  });
+
+  /*Если корзина не найдена, возвращаем ошибку*/
+  if (userCart?.totalAmount === 0) {
+    throw new Error('Cart is empty');
+  }
+
+  /*Если корзина пустая, возвращаем ошибку*/
+  if (!userCart) {
+    throw new Error('Cart not found');
+  }
+
+  for (const item of userCart.items) {
+    const updatedProduct = await prisma.product.update({
+      where: { id: item.productId },
+      data: {
+        stockQuantity: {
+          decrement: item.quantity
+        },
+        isAvailable: {
+          // Устанавливаем isAvailable в false, если stockQuantity после обновления <= 0
+          set: item.product.stockQuantity - item.quantity > 0
+        }
+      }
+    });
+
+    // Дополнительная проверка на отрицательный остаток (на всякий случай)
+    if (updatedProduct.stockQuantity < 0) {
+      await prisma.product.update({
+        where: { id: item.productId },
+        data: {
+          isAvailable: false
+        }
+      });
+      console.warn(`Negative stock quantity for product ${item.productId}`);
+    }
+  }
+
+  /*Очищаем корзину*/
+  await prisma.cart.update({
+    where: {
+      id: userCart.id,
+    },
+    data: {
+      totalAmount: 0,
+    },
+  });
+
+  await prisma.cartItem.deleteMany({
+    where: {
+      cartId: userCart.id,
+    },
+  });
+}
+
 export async function createOrder(data: CheckoutFormValues) {
   try {
-    //const currentUser = await getUserSession();
-    //const userId = Number(currentUser?.id);
     const cookieStore = cookies();
-    const cartToken = (await cookieStore).get('cartToken')?.value; //await!
+    const cartToken = (await cookieStore).get('cartToken')?.value;
 
     if (!cartToken) {
       throw new Error('Cart token not found');
@@ -22,6 +88,10 @@ export async function createOrder(data: CheckoutFormValues) {
 
     if (data.bonusDelta !== 0 && !session) {
       throw new Error('Unauthorized bonus operation');
+    }
+
+    if (data.deliveryType === 'DELIVERY' && data.paymentMethod === 'OFFLINE') {
+      throw new Error("Оплата при получении недоступна для доставки");
     }
 
     /*Находим корзину по токену*/
@@ -48,9 +118,22 @@ export async function createOrder(data: CheckoutFormValues) {
     if (!userCart) {
       throw new Error('Cart not found');
     }
-    if (data.deliveryType === 'DELIVERY' && data.paymentMethod === 'OFFLINE') {
-      throw new Error("Оплата при получении недоступна для доставки");
-  }
+
+    for (const item of userCart.items) {
+      const product = await prisma.product.findUnique({
+        where: { id: item.productId }
+      });
+
+      if (!product) {
+        throw new Error(`Product ${item.productId} not found`);
+      }
+
+      if (product.stockQuantity < item.quantity) {
+        throw new Error(`Not enough stock for product ${product.name}. Available: ${product.stockQuantity}, requested: ${item.quantity}`);
+      }
+    }
+
+
     /*Создаем заказ*/
     const order = await prisma.order.create({
       data: {
@@ -72,23 +155,11 @@ export async function createOrder(data: CheckoutFormValues) {
       },
     });
 
-    /*Очищаем корзину*/
-    await prisma.cart.update({
-      where: {
-        id: userCart.id,
-      },
-      data: {
-        totalAmount: 0,
-      },
-    });
-
-    await prisma.cartItem.deleteMany({
-      where: {
-        cartId: userCart.id,
-      },
-    });
-
+    // Обновляем количество товаров на складе (только для OFFLINE оплаты)
     if (data.paymentMethod === 'OFFLINE') {
+
+      updateProductStock(cartToken);
+
       await sendEmail(
         data.email,
         `Скатерть-самобранка | Заказ #${order.id} принят`,
@@ -102,6 +173,7 @@ export async function createOrder(data: CheckoutFormValues) {
     const paymentData = await createPayment({
       amount: order.totalAmount,
       orderId: order.id,
+      cartToken: cartToken,
       description: 'Оплата заказа #' + order.id,
     });
 
@@ -114,7 +186,7 @@ export async function createOrder(data: CheckoutFormValues) {
         id: order.id,
       },
       data: {
-        paymentId: paymentData.id, //await
+        paymentId: paymentData.id,
       },
     });
 

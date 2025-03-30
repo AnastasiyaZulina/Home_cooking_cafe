@@ -33,10 +33,6 @@ async function up() {
             { name: 'Выпечка' },
             { name: 'Десерты' },
             { name: 'Напитки' },
-            { name: 'Тест1' },
-            { name: 'Тест2' },
-            { name: 'Тест3' },
-            { name: 'Тест4' },
         ]
     });
 
@@ -47,49 +43,10 @@ async function up() {
                 description: 'Суп',
                 image: '/images/items/Борщ.png',
                 price: 100,
-                categoryId: 10,
-                weight: 300,
-                eValue: 250,
-                isAvailable: true
-            },
-            {
-                name: 'Борщ',
-                description: 'Суп',
-                image: '/images/items/Борщ.png',
-                price: 100,
-                categoryId: 11,
-                weight: 300,
-                eValue: 250,
-                isAvailable: true
-            },
-            {
-                name: 'Борщ',
-                description: 'Суп',
-                image: '/images/items/Борщ.png',
-                price: 100,
-                categoryId: 12,
-                weight: 300,
-                eValue: 250,
-                isAvailable: true
-            },
-            {
-                name: 'Борщ',
-                description: 'Суп',
-                image: '/images/items/Борщ.png',
-                price: 100,
-                categoryId: 13,
-                weight: 300,
-                eValue: 250,
-                isAvailable: true
-            },
-            {
-                name: 'Борщ',
-                description: 'Суп',
-                image: '/images/items/Борщ.png',
-                price: 100,
                 categoryId: 1,
                 weight: 300,
                 eValue: 250,
+                stockQuantity: 50,
                 isAvailable: false
             },
             {
@@ -100,6 +57,7 @@ async function up() {
                 categoryId: 1,
                 weight: 300,
                 eValue: 230,
+                stockQuantity: 1,
                 isAvailable: true
             },
             {
@@ -110,6 +68,7 @@ async function up() {
                 categoryId: 1,
                 weight: 300,
                 eValue: 280,
+                stockQuantity: 50,
                 isAvailable: true
             },
             {
@@ -130,6 +89,7 @@ async function up() {
                 categoryId: 1,
                 weight: 300,
                 eValue: 200,
+                stockQuantity: 50,
                 isAvailable: true
             },
             {
@@ -140,6 +100,7 @@ async function up() {
                 categoryId: 2,
                 weight: 200,
                 eValue: 350,
+                stockQuantity: 50,
                 isAvailable: true
             },
             {
@@ -150,6 +111,7 @@ async function up() {
                 categoryId: 2,
                 weight: 250,
                 eValue: 400,
+                stockQuantity: 50,
                 isAvailable: true
             },
             {
@@ -160,6 +122,7 @@ async function up() {
                 categoryId: 2,
                 weight: 200,
                 eValue: 320,
+                stockQuantity: 50,
                 isAvailable: true
             },
             {
@@ -170,6 +133,7 @@ async function up() {
                 categoryId: 2,
                 weight: 180,
                 eValue: 280,
+                stockQuantity: 50,
                 isAvailable: true
             },
             {
@@ -180,6 +144,7 @@ async function up() {
                 categoryId: 2,
                 weight: 250,
                 eValue: 300,
+                stockQuantity: 50,
                 isAvailable: true
             },
             {
@@ -190,6 +155,7 @@ async function up() {
                 categoryId: 3,
                 weight: 150,
                 eValue: 180,
+                stockQuantity: 50,
                 isAvailable: true
             },
             {

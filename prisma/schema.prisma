@@ -46,7 +46,7 @@ model Product {
   weight    Int   @default(0)
   eValue    Int   @default(0)
   isAvailable Boolean @default(true)
-
+  stockQuantity Int @default(0)
   cartItems CartItem[]
 
   createdAt DateTime @default(now())
@@ -101,7 +101,7 @@ model Order {
   bonusDelta  Int       @default(0)
 
   deliveryType   DeliveryType @default(DELIVERY)
-  deliveryTime   DateTime?
+  deliveryTime   DateTime
   deliveryCost   Float?
 
   fullName String

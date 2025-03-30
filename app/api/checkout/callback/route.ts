@@ -1,4 +1,5 @@
 import { PaymentCallbackData } from "@/@types/yookassa";
+import { updateProductStock } from "@/app/actions";
 import { prisma } from "@/prisma/prisma-client";
 import { OrderSuccessTemplate } from "@/shared/components/shared/email-templates/order-success";
 import { sendEmail } from "@/shared/lib";
@@ -9,6 +10,11 @@ import { NextRequest, NextResponse } from "next/server";
 export async function POST(req: NextRequest) {
     try {
         const body = (await req.json()) as PaymentCallbackData;
+        const cartToken = String(body.object.metadata.cartToken);
+
+        if (!cartToken) {
+          throw new Error('Cart token not found');
+        }
 
         const order = await prisma.order.findFirst({
             where: {
@@ -38,7 +44,10 @@ export async function POST(req: NextRequest) {
             items,
         }));
 
-        if (isSucceeded) { await sendEmail(order.email, 'Скатерть-самобранка / Ваш заказ оплачен!', html);}
+        if (isSucceeded) { 
+            await updateProductStock(cartToken);
+            await sendEmail(order.email, 'Скатерть-самобранка / Ваш заказ оплачен!', html);
+        }
         else {
             return NextResponse.json({ error: 'Server error' });
         }
