@@ -3,12 +3,12 @@
 import { CheckoutAddressForm, CheckoutCart, CheckoutItemDetails, CheckoutPersonalForm, Container, Title, WhiteBlock } from "@/shared/components";
 import { useCart } from '@/hooks/use-cart';
 import { Button, Skeleton } from "@/shared/components/ui";
-import { ArrowRight, Package, Truck } from "lucide-react";
+import { ArrowRight, Package, Truck} from "lucide-react";
 import { FormProvider, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CheckoutFormSchema, CheckoutFormValues } from "@/shared/constants";
 import { cn } from "@/shared/lib/utils";
-import { createOrder } from "@/app/actions";
+import { createOrder, validateCart } from "@/app/actions";
 import toast from "react-hot-toast";
 import React from "react";
 import { useSession } from "next-auth/react";
@@ -24,27 +24,71 @@ export default function CheckoutPage() {
     const { items, loading } = useCart();
     const router = useRouter();
     const [isInitialLoad, setIsInitialLoad] = React.useState(true);
-
+  
     React.useEffect(() => {
-        if (!loading && (!items || items.length === 0)) {
+      const validateAndNotify = async () => {
+        try {
+          const { adjustments } = await validateCart();
+          
+          if (adjustments.length > 0) {
+            // Группируем изменения по типу
+            const removedItems = adjustments.filter(a => a.type === 'removed');
+            const reducedItems = adjustments.filter(a => a.type === 'reduced');
+            
+            // Уведомление об удаленных товарах
+            if (removedItems.length > 0) {
+              const productNames = removedItems.map(i => i.productName).join(', ');
+              toast(
+                <div className="flex items-start">
+                  <span>
+                  ⚠️Некоторые товары закончились и были удалены из корзины: <strong>{productNames}</strong>
+                  </span>
+                </div>,
+                { duration: 5000 }
+              );
+            }
+            
+            // Уведомления об уменьшенных количествах
+            reducedItems.forEach(item => {
+              toast(
+                <div className="flex items-start">
+                  <span>
+                  ⚠️Количество <strong>{item.productName}</strong> уменьшено до {item.newQuantity} (максимально доступное)
+                  </span>
+                </div>,
+                { duration: 5000 }
+              );
+            });
+            
+            // Обновляем данные корзины после изменений
+            router.refresh();
+          }
+        } catch (error) {
+          console.error('Cart validation failed:', error);
+        } finally {
+          if (!items || items.length === 0) {
             router.push('/checkout-empty');
-        }
-
-        if (!loading && items) {
+          } else {
             setIsInitialLoad(false);
+          }
         }
+      };
+  
+      if (!loading) {
+        validateAndNotify();
+      }
     }, [items, loading, router]);
-
+  
     if (isInitialLoad && loading) {
-        return <div className="p-4 text-center">Загрузка...</div>;
+      return <div className="p-4 text-center">Загрузка...</div>;
     }
-
+  
     if (!items || items.length === 0) {
-        return null;
+      return null;
     }
-
+  
     return <CheckoutContent />;
-}
+  }
 
 function CheckoutContent() {
     const { totalAmount, updateItemQuantity, items, removeCartItem, loading } = useCart();
@@ -171,7 +215,7 @@ function CheckoutContent() {
                 return;
             }
             setSubmitting(true);
-    
+
             const formData = {
                 ...data,
                 address: data.deliveryType === 'PICKUP' ? undefined : data.address,
@@ -180,9 +224,9 @@ function CheckoutContent() {
                 bonusDelta,
                 deliveryTime,
             };
-    
+
             const url = await createOrder(formData);
-    
+
             if (url) {
                 if (paymentMethod == "ONLINE") {
                     toast.success('Заказ успешно оформлен! 📝 Переходим на оплату...', { icon: '✅' });
@@ -195,21 +239,21 @@ function CheckoutContent() {
             }
         } catch (err) {
             setSubmitting(false);
-            
+
             if (err instanceof Error) {
-                if (err.message.includes('закончились') || 
+                if (err.message.includes('закончились') ||
                     err.message.includes('уменьшено до') ||
                     err.message.includes('недостаточно')) {
-                    
+
                     console.log('Обновление данных корзины:', err.message);
-                    toast.error(err.message, { 
+                    toast.error(err.message, {
                         duration: 2000,
                         icon: '⚠️'
                     });
                     setTimeout(() => window.location.reload(), 2000);
                 } else {
-                    toast.error(err.message || 'Не удалось создать заказ', { 
-                        icon: '❌' 
+                    toast.error(err.message || 'Не удалось создать заказ', {
+                        icon: '❌'
                     });
                 }
             } else {

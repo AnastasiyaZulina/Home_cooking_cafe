@@ -29,7 +29,7 @@ export async function validateCart() {
   const cookieStore = cookies();
   const cartToken = (await cookieStore).get('cartToken')?.value;
 
-  if (!cartToken) return { message: null, corrected: false };
+  if (!cartToken) return { adjustments: [] };
 
   const userCart = await prisma.cart.findFirst({
     include: {
@@ -43,11 +43,14 @@ export async function validateCart() {
   });
 
   if (!userCart || userCart.items.length === 0) {
-    return { message: null, corrected: false };
+    return { adjustments: [] };
   }
 
-  let message = '';
-  let corrected = false;
+  const adjustments: Array<{
+    type: 'removed' | 'reduced';
+    productName: string;
+    newQuantity?: number;
+  }> = [];
 
   // Удаляем недоступные товары
   const unavailableItems = userCart.items.filter(item => !item.product.isAvailable);
@@ -56,10 +59,12 @@ export async function validateCart() {
       where: { id: { in: unavailableItems.map(item => item.id) } }
     });
     
-    message += `Удалены недоступные товары: ${
-      unavailableItems.map(item => item.product.name).join(', ')
-    }\n`;
-    corrected = true;
+    unavailableItems.forEach(item => {
+      adjustments.push({
+        type: 'removed',
+        productName: item.product.name
+      });
+    });
   }
 
   // Корректируем количество
@@ -80,15 +85,16 @@ export async function validateCart() {
         data: { quantity: item.product.stockQuantity }
       });
 
-      message += `Количество "${item.product.name}" уменьшено до ${
-        item.product.stockQuantity
-      } (максимально доступное)\n`;
-      corrected = true;
+      adjustments.push({
+        type: 'reduced',
+        productName: item.product.name,
+        newQuantity: item.product.stockQuantity
+      });
     }
   }
 
   // Обновляем общую сумму если были изменения
-  if (corrected) {
+  if (adjustments.length > 0) {
     const newItems = await prisma.cartItem.findMany({
       where: { cartId: userCart.id },
       include: { product: true }
@@ -105,10 +111,7 @@ export async function validateCart() {
     });
   }
 
-  return { 
-    message: corrected ? message.trim() : null,
-    corrected 
-  };
+  return { adjustments };
 }
 
 export async function updateProductStock(cartToken: string) {
