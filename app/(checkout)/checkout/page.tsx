@@ -171,7 +171,7 @@ function CheckoutContent() {
                 return;
             }
             setSubmitting(true);
-
+    
             const formData = {
                 ...data,
                 address: data.deliveryType === 'PICKUP' ? undefined : data.address,
@@ -180,31 +180,41 @@ function CheckoutContent() {
                 bonusDelta,
                 deliveryTime,
             };
-
+    
             const url = await createOrder(formData);
-
-            if (paymentMethod == "ONLINE") {
-                toast.success('Заказ успешно оформлен! 📝 Переходим на оплату...', {
-                    icon: '✅',
-                });
-            }
-            else {
-                toast.success('Заказ успешно оформлен!', {
-                    icon: '✅',
-                });
-            }
-
+    
             if (url) {
-                if (paymentMethod == "ONLINE") { location.href = url; } else { await new Promise(resolve => setTimeout(resolve, 2000)); location.href = url; }
+                if (paymentMethod == "ONLINE") {
+                    toast.success('Заказ успешно оформлен! 📝 Переходим на оплату...', { icon: '✅' });
+                    location.href = url;
+                } else {
+                    toast.success('Заказ успешно оформлен!', { icon: '✅' });
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                    location.href = url;
+                }
             }
-                
-        }
-        catch (err) {
-            console.log(err);
+        } catch (err) {
             setSubmitting(false);
-            toast.error('Не удалось создать заказ', {
-                icon: '❌',
-            });
+            
+            if (err instanceof Error) {
+                if (err.message.includes('закончились') || 
+                    err.message.includes('уменьшено до') ||
+                    err.message.includes('недостаточно')) {
+                    
+                    console.log('Обновление данных корзины:', err.message);
+                    toast.error(err.message, { 
+                        duration: 2000,
+                        icon: '⚠️'
+                    });
+                    setTimeout(() => window.location.reload(), 2000);
+                } else {
+                    toast.error(err.message || 'Не удалось создать заказ', { 
+                        icon: '❌' 
+                    });
+                }
+            } else {
+                toast.error('Произошла неизвестная ошибка', { icon: '❌' });
+            }
         }
     };
 

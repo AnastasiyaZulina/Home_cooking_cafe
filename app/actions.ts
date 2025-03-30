@@ -8,6 +8,109 @@ import { hashSync } from 'bcrypt';
 import { getUserSession } from '@/shared/lib/get-user-session';
 import { OrderCreatedTemplate, PayOrderTemplate, VerificationUserTemplate } from '@/shared/components';
 
+async function clearCart(Cartid: number) {
+  await prisma.cart.update({
+    where: {
+      id: Cartid,
+    },
+    data: {
+      totalAmount: 0,
+    },
+  });
+
+  await prisma.cartItem.deleteMany({
+    where: {
+      cartId: Cartid,
+    },
+  });
+}
+
+export async function validateCart() {
+  const cookieStore = cookies();
+  const cartToken = (await cookieStore).get('cartToken')?.value;
+
+  if (!cartToken) return { message: null, corrected: false };
+
+  const userCart = await prisma.cart.findFirst({
+    include: {
+      items: {
+        include: {
+          product: true,
+        },
+      },
+    },
+    where: { token: cartToken },
+  });
+
+  if (!userCart || userCart.items.length === 0) {
+    return { message: null, corrected: false };
+  }
+
+  let message = '';
+  let corrected = false;
+
+  // Удаляем недоступные товары
+  const unavailableItems = userCart.items.filter(item => !item.product.isAvailable);
+  if (unavailableItems.length > 0) {
+    await prisma.cartItem.deleteMany({
+      where: { id: { in: unavailableItems.map(item => item.id) } }
+    });
+    
+    message += `Удалены недоступные товары: ${
+      unavailableItems.map(item => item.product.name).join(', ')
+    }\n`;
+    corrected = true;
+  }
+
+  // Корректируем количество
+  const remainingItems = await prisma.cartItem.findMany({
+    where: { cartId: userCart.id },
+    include: { product: true }
+  });
+
+  let totalAdjustment = 0;
+  
+  for (const item of remainingItems) {
+    if (item.quantity > item.product.stockQuantity) {
+      const adjustment = item.quantity - item.product.stockQuantity;
+      totalAdjustment += adjustment * item.product.price;
+      
+      await prisma.cartItem.update({
+        where: { id: item.id },
+        data: { quantity: item.product.stockQuantity }
+      });
+
+      message += `Количество "${item.product.name}" уменьшено до ${
+        item.product.stockQuantity
+      } (максимально доступное)\n`;
+      corrected = true;
+    }
+  }
+
+  // Обновляем общую сумму если были изменения
+  if (corrected) {
+    const newItems = await prisma.cartItem.findMany({
+      where: { cartId: userCart.id },
+      include: { product: true }
+    });
+
+    const newTotal = newItems.reduce(
+      (sum, item) => sum + (item.product.price * item.quantity), 
+      0
+    );
+
+    await prisma.cart.update({
+      where: { id: userCart.id },
+      data: { totalAmount: newTotal }
+    });
+  }
+
+  return { 
+    message: corrected ? message.trim() : null,
+    corrected 
+  };
+}
+
 export async function updateProductStock(cartToken: string) {
   const userCart = await prisma.cart.findFirst({
     include: {
@@ -60,20 +163,7 @@ export async function updateProductStock(cartToken: string) {
   }
 
   /*Очищаем корзину*/
-  await prisma.cart.update({
-    where: {
-      id: userCart.id,
-    },
-    data: {
-      totalAmount: 0,
-    },
-  });
-
-  await prisma.cartItem.deleteMany({
-    where: {
-      cartId: userCart.id,
-    },
-  });
+  clearCart(userCart.id);
 }
 
 export async function createOrder(data: CheckoutFormValues) {
@@ -119,17 +209,60 @@ export async function createOrder(data: CheckoutFormValues) {
       throw new Error('Cart not found');
     }
 
+    const unavailableItems = userCart.items.filter(item => !item.product.isAvailable);
+    
+    if (unavailableItems.length > 0) {
+      // Удаляем недоступные товары из корзины
+      await prisma.cartItem.deleteMany({
+        where: {
+          id: {
+            in: unavailableItems.map(item => item.id)
+          }
+        }
+      });
+
+      // Обновляем общую сумму корзины
+      const remainingItems = userCart.items.filter(item => item.product.isAvailable);
+      const newTotal = remainingItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
+
+      await prisma.cart.update({
+        where: { id: userCart.id },
+        data: { totalAmount: newTotal }
+      });
+
+      throw new Error(`Некоторые товары закончились и были удалены из корзины. Перезагрузка страницы...`);
+    }
+
     for (const item of userCart.items) {
       const product = await prisma.product.findUnique({
         where: { id: item.productId }
       });
-
+    
       if (!product) {
-        throw new Error(`Product ${item.productId} not found`);
+        throw new Error(`Продукт ${item.productId} не найден`);
       }
-
+    
       if (product.stockQuantity < item.quantity) {
-        throw new Error(`Not enough stock for product ${product.name}. Available: ${product.stockQuantity}, requested: ${item.quantity}`);
+        // Автоматически уменьшаем количество до доступного
+        await prisma.cartItem.update({
+          where: { id: item.id },
+          data: { quantity: product.stockQuantity }
+        });
+    
+        // Обновляем общую сумму корзины
+        const updatedCart = await prisma.cart.update({
+          where: { id: userCart.id },
+          data: { 
+            totalAmount: {
+              decrement: (item.product.price * (item.quantity - product.stockQuantity))
+            }
+          },
+          include: { items: true }
+        });
+    
+        throw new Error(
+          `Количество "${product.name}" уменьшено до ${product.stockQuantity} (максимально доступное). Перезагрузка страницы...`
+        );
       }
     }
 
@@ -205,7 +338,7 @@ export async function createOrder(data: CheckoutFormValues) {
     return paymentUrl;
   } catch (err) {
     console.error('[CREATE_ORDER_ERROR]:', err);
-    throw new Error('Failed to create order');
+    throw err;
   }
 }
 
