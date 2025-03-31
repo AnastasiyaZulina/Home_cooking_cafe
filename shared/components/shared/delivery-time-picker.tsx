@@ -8,7 +8,7 @@ interface DeliveryTimePickerProps {
 }
 
 
-const generateTimeSlots = () => {
+export const generateTimeSlots = () => {
     // Получаем текущее время в UTC
     const now = new Date();
     const utcTime = now.getTime() + now.getTimezoneOffset() * 60 * 1000;
@@ -93,14 +93,6 @@ export const DeliveryTimePicker = React.memo(function DeliveryTimePicker({
             setDeliveryTime(new Date(timeSlots[0].start));
         }
     }, [timeSlots, deliveryTime, setDeliveryTime]);
-
-    if (!isWorkingHours) {
-        return (
-            <div className="p-3 bg-red-50 rounded-md text-sm text-red-800 mb-4">
-                {CHECKOUT_CONSTANTS.MESSAGES.OUT_OF_HOURS}
-            </div>
-        );
-    }
 
     const formatTime = (date: Date) => {
         const hours = date.getHours().toString().padStart(2, '0');

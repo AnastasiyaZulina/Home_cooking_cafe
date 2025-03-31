@@ -3,7 +3,7 @@
 import { CheckoutAddressForm, CheckoutCart, CheckoutItemDetails, CheckoutPersonalForm, Container, Title, WhiteBlock } from "@/shared/components";
 import { useCart } from '@/hooks/use-cart';
 import { Button, Skeleton } from "@/shared/components/ui";
-import { ArrowRight, Package, Truck} from "lucide-react";
+import { ArrowRight, Package, Truck } from "lucide-react";
 import { FormProvider, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CheckoutFormSchema, CheckoutFormValues } from "@/shared/constants";
@@ -18,83 +18,85 @@ import { useRouter } from "next/navigation";
 import { PaymentMethodOptions } from "@/shared/components/shared/payment-method-options";
 import { BonusOptions } from "@/shared/components/shared/bonus-options";
 import { CHECKOUT_CONSTANTS } from '@/shared/constants';
-import { DeliveryTimePicker } from "@/shared/components/shared/delivery-time-picker";
+import { DeliveryTimePicker, generateTimeSlots } from "@/shared/components/shared/delivery-time-picker";
 
 export default function CheckoutPage() {
     const { items, loading } = useCart();
     const router = useRouter();
     const [isInitialLoad, setIsInitialLoad] = React.useState(true);
-  
+
     React.useEffect(() => {
-      const validateAndNotify = async () => {
-        try {
-          const { adjustments } = await validateCart();
-          
-          if (adjustments.length > 0) {
-            // Группируем изменения по типу
-            const removedItems = adjustments.filter(a => a.type === 'removed');
-            const reducedItems = adjustments.filter(a => a.type === 'reduced');
-            
-            // Уведомление об удаленных товарах
-            if (removedItems.length > 0) {
-              const productNames = removedItems.map(i => i.productName).join(', ');
-              toast(
-                <div className="flex items-start">
-                  <span>
-                  ⚠️Некоторые товары закончились и были удалены из корзины: <strong>{productNames}</strong>
-                  </span>
-                </div>,
-                { duration: 5000 }
-              );
+        const validateAndNotify = async () => {
+            try {
+                const { adjustments } = await validateCart();
+
+                if (adjustments.length > 0) {
+                    // Группируем изменения по типу
+                    const removedItems = adjustments.filter(a => a.type === 'removed');
+                    const reducedItems = adjustments.filter(a => a.type === 'reduced');
+
+                    // Уведомление об удаленных товарах
+                    if (removedItems.length > 0) {
+                        const productNames = removedItems.map(i => i.productName).join(', ');
+                        toast(
+                            <div className="flex items-start">
+                                <span>
+                                    ⚠️Некоторые товары закончились и были удалены из корзины: <strong>{productNames}</strong>
+                                </span>
+                            </div>,
+                            { duration: 5000 }
+                        );
+                    }
+
+                    // Уведомления об уменьшенных количествах
+                    reducedItems.forEach(item => {
+                        toast(
+                            <div className="flex items-start">
+                                <span>
+                                    ⚠️Количество <strong>{item.productName}</strong> уменьшено до {item.newQuantity} (максимально доступное)
+                                </span>
+                            </div>,
+                            { duration: 5000 }
+                        );
+                    });
+
+                    // Обновляем данные корзины после изменений
+                    router.refresh();
+                }
+            } catch (error) {
+                console.error('Cart validation failed:', error);
+            } finally {
+                if (!items || items.length === 0) {
+                    router.push('/checkout-empty');
+                } else {
+                    setIsInitialLoad(false);
+                }
             }
-            
-            // Уведомления об уменьшенных количествах
-            reducedItems.forEach(item => {
-              toast(
-                <div className="flex items-start">
-                  <span>
-                  ⚠️Количество <strong>{item.productName}</strong> уменьшено до {item.newQuantity} (максимально доступное)
-                  </span>
-                </div>,
-                { duration: 5000 }
-              );
-            });
-            
-            // Обновляем данные корзины после изменений
-            router.refresh();
-          }
-        } catch (error) {
-          console.error('Cart validation failed:', error);
-        } finally {
-          if (!items || items.length === 0) {
-            router.push('/checkout-empty');
-          } else {
-            setIsInitialLoad(false);
-          }
+        };
+
+        if (!loading) {
+            validateAndNotify();
         }
-      };
-  
-      if (!loading) {
-        validateAndNotify();
-      }
     }, [items, loading, router]);
-  
+
     if (isInitialLoad && loading) {
-      return <div className="p-4 text-center">Загрузка...</div>;
+        return <div className="p-4 text-center">Загрузка...</div>;
     }
-  
+
     if (!items || items.length === 0) {
-      return null;
+        return null;
     }
-  
+
     return <CheckoutContent />;
-  }
+}
 
 function CheckoutContent() {
     const { totalAmount, updateItemQuantity, items, removeCartItem, loading } = useCart();
     const [submitting, setSubmitting] = React.useState(false);
     const { data: session } = useSession();
     const [spentBonuses, setSpentBonuses] = React.useState(0);
+    const timeSlots = React.useMemo(() => generateTimeSlots(), []);
+    const isWorkingHours = timeSlots.length > 0;
 
     const form = useForm<CheckoutFormValues>({
         resolver: zodResolver(CheckoutFormSchema),
@@ -344,13 +346,19 @@ function CheckoutContent() {
                                         form.setValue('deliveryTime', time); // Обновляем значение в форме
                                     }}
                                 />
-                                <Button
-                                    loading={loading || submitting}
-                                    type="submit"
-                                    className="w-full h-12 md:h-14 rounded-xl md:rounded-2xl mt-4 md:mt-6 text-sm md:text-base font-bold">
-                                    Оформить заказ
-                                    <ArrowRight className="w-4 md:w-5 ml-2" />
-                                </Button>
+                                {isWorkingHours ? (
+                                    <Button
+                                        loading={loading || submitting}
+                                        type="submit"
+                                        className="w-full h-12 md:h-14 rounded-xl md:rounded-2xl mt-4 md:mt-6 text-sm md:text-base font-bold">
+                                        Оформить заказ
+                                        <ArrowRight className="w-4 md:w-5 ml-2" />
+                                    </Button>
+                                ) : (
+                                    <div className="p-3 bg-red-50 rounded-md text-sm text-red-800 mt-4 md:mt-6">
+                                        {CHECKOUT_CONSTANTS.MESSAGES.OUT_OF_HOURS}
+                                    </div>
+                                )}
                             </WhiteBlock>
                         </div>
                     </div>

@@ -1,4 +1,4 @@
-import {Prisma, PrismaClient } from '@prisma/client'
+import {PrismaClient } from '@prisma/client'
 import { hashSync } from 'bcrypt';
 const prisma = new PrismaClient()
 
@@ -46,7 +46,7 @@ async function up() {
                 categoryId: 1,
                 weight: 300,
                 eValue: 250,
-                stockQuantity: 50,
+                stockQuantity: 0,
                 isAvailable: false
             },
             {
@@ -68,7 +68,7 @@ async function up() {
                 categoryId: 1,
                 weight: 300,
                 eValue: 280,
-                stockQuantity: 50,
+                stockQuantity: 2,
                 isAvailable: true
             },
             {
@@ -79,7 +79,8 @@ async function up() {
                 categoryId: 1,
                 weight: 300,
                 eValue: 220,
-                isAvailable: true
+                stockQuantity: 0,
+                isAvailable: false
             },
             {
                 name: 'Грибной суп',
@@ -89,8 +90,8 @@ async function up() {
                 categoryId: 1,
                 weight: 300,
                 eValue: 200,
-                stockQuantity: 50,
-                isAvailable: true
+                stockQuantity: 0,
+                isAvailable: false
             },
             {
                 name: 'Котлеты',
@@ -100,7 +101,7 @@ async function up() {
                 categoryId: 2,
                 weight: 200,
                 eValue: 350,
-                stockQuantity: 50,
+                stockQuantity: 2,
                 isAvailable: true
             },
             {
@@ -111,7 +112,7 @@ async function up() {
                 categoryId: 2,
                 weight: 250,
                 eValue: 400,
-                stockQuantity: 50,
+                stockQuantity: 3,
                 isAvailable: true
             },
             {
@@ -122,8 +123,8 @@ async function up() {
                 categoryId: 2,
                 weight: 200,
                 eValue: 320,
-                stockQuantity: 50,
-                isAvailable: true
+                stockQuantity: 1,
+                isAvailable: false
             },
             {
                 name: 'Рыба жареная',
@@ -133,8 +134,8 @@ async function up() {
                 categoryId: 2,
                 weight: 180,
                 eValue: 280,
-                stockQuantity: 50,
-                isAvailable: true
+                stockQuantity: 0,
+                isAvailable: false
             },
             {
                 name: 'Голубцы',
@@ -144,7 +145,7 @@ async function up() {
                 categoryId: 2,
                 weight: 250,
                 eValue: 300,
-                stockQuantity: 50,
+                stockQuantity: 2,
                 isAvailable: true
             },
             {
@@ -155,7 +156,7 @@ async function up() {
                 categoryId: 3,
                 weight: 150,
                 eValue: 180,
-                stockQuantity: 50,
+                stockQuantity: 1,
                 isAvailable: true
             },
             {
@@ -166,6 +167,7 @@ async function up() {
                 categoryId: 3,
                 weight: 150,
                 eValue: 200,
+                stockQuantity: 3,
                 isAvailable: true
             },
             {
@@ -176,6 +178,7 @@ async function up() {
                 categoryId: 3,
                 weight: 150,
                 eValue: 190,
+                stockQuantity: 2,
                 isAvailable: true
             },
             {
@@ -186,6 +189,7 @@ async function up() {
                 categoryId: 3,
                 weight: 150,
                 eValue: 210,
+                stockQuantity: 1,
                 isAvailable: true
             },
             {
@@ -196,7 +200,8 @@ async function up() {
                 categoryId: 3,
                 weight: 150,
                 eValue: 100,
-                isAvailable: true
+                stockQuantity: 0,
+                isAvailable: false
             },
             {
                 name: 'Оливье',
@@ -206,6 +211,7 @@ async function up() {
                 categoryId: 4,
                 weight: 150,
                 eValue: 230,
+                stockQuantity: 3,
                 isAvailable: true
             },
             {
@@ -216,6 +222,7 @@ async function up() {
                 categoryId: 4,
                 weight: 150,
                 eValue: 250,
+                stockQuantity: 2,
                 isAvailable: true
             },
             {
@@ -226,6 +233,7 @@ async function up() {
                 categoryId: 4,
                 weight: 150,
                 eValue: 180,
+                stockQuantity: 1,
                 isAvailable: true
             },
             {
@@ -236,7 +244,8 @@ async function up() {
                 categoryId: 4,
                 weight: 150,
                 eValue: 200,
-                isAvailable: true
+                stockQuantity: 0,
+                isAvailable: false
             },
             {
                 name: 'Винегрет',
@@ -246,6 +255,7 @@ async function up() {
                 categoryId: 4,
                 weight: 150,
                 eValue: 160,
+                stockQuantity: 3,
                 isAvailable: true
             },
             {
@@ -256,6 +266,7 @@ async function up() {
                 categoryId: 5,
                 weight: 150,
                 eValue: 220,
+                stockQuantity: 2,
                 isAvailable: true
             },
             {
@@ -266,6 +277,7 @@ async function up() {
                 categoryId: 5,
                 weight: 200,
                 eValue: 250,
+                stockQuantity: 1,
                 isAvailable: true
             },
             {
@@ -276,7 +288,8 @@ async function up() {
                 categoryId: 5,
                 weight: 250,
                 eValue: 210,
-                isAvailable: true
+                stockQuantity: 0,
+                isAvailable: false
             },
             {
                 name: 'Сырники',
@@ -286,6 +299,7 @@ async function up() {
                 categoryId: 5,
                 weight: 200,
                 eValue: 280,
+                stockQuantity: 3,
                 isAvailable: true
             },
             {
@@ -296,6 +310,7 @@ async function up() {
                 categoryId: 5,
                 weight: 200,
                 eValue: 260,
+                stockQuantity: 2,
                 isAvailable: true
             },
             {
@@ -306,6 +321,7 @@ async function up() {
                 categoryId: 6,
                 weight: 100,
                 eValue: 250,
+                stockQuantity: 1,
                 isAvailable: true
             },
             {
@@ -316,7 +332,8 @@ async function up() {
                 categoryId: 6,
                 weight: 150,
                 eValue: 350,
-                isAvailable: true
+                stockQuantity: 0,
+                isAvailable: false
             },
             {
                 name: 'Нарезка сырная',
@@ -326,6 +343,7 @@ async function up() {
                 categoryId: 6,
                 weight: 150,
                 eValue: 400,
+                stockQuantity: 3,
                 isAvailable: true
             },
             {
@@ -336,6 +354,7 @@ async function up() {
                 categoryId: 6,
                 weight: 100,
                 eValue: 150,
+                stockQuantity: 2,
                 isAvailable: true
             },
             {
@@ -346,6 +365,7 @@ async function up() {
                 categoryId: 6,
                 weight: 100,
                 eValue: 120,
+                stockQuantity: 1,
                 isAvailable: true
             },
             {
@@ -356,7 +376,8 @@ async function up() {
                 categoryId: 7,
                 weight: 75,
                 eValue: 200,
-                isAvailable: true
+                stockQuantity: 0,
+                isAvailable: false
             },
             {
                 name: 'Пирожки с мясом',
@@ -366,6 +387,7 @@ async function up() {
                 categoryId: 7,
                 weight: 75,
                 eValue: 250,
+                stockQuantity: 3,
                 isAvailable: true
             },
             {
@@ -376,6 +398,7 @@ async function up() {
                 categoryId: 7,
                 weight: 100,
                 eValue: 220,
+                stockQuantity: 0,
                 isAvailable: false
             },
             {
@@ -386,6 +409,7 @@ async function up() {
                 categoryId: 7,
                 weight: 75,
                 eValue: 230,
+                stockQuantity: 0,
                 isAvailable: false
             },
             {
@@ -396,6 +420,7 @@ async function up() {
                 categoryId: 7,
                 weight: 85,
                 eValue: 280,
+                stockQuantity: 0,
                 isAvailable: false
             },
             {
@@ -406,6 +431,7 @@ async function up() {
                 categoryId: 8,
                 weight: 150,
                 eValue: 380,
+                stockQuantity: 0,
                 isAvailable: false
             },
             {
@@ -416,6 +442,7 @@ async function up() {
                 categoryId: 8,
                 weight: 150,
                 eValue: 350,
+                stockQuantity: 0,
                 isAvailable: false
             },
             {
@@ -426,6 +453,7 @@ async function up() {
                 categoryId: 8,
                 weight: 150,
                 eValue: 320,
+                stockQuantity: 0,
                 isAvailable: false
             },
             {
@@ -436,6 +464,7 @@ async function up() {
                 categoryId: 8,
                 weight: 100,
                 eValue: 200,
+                stockQuantity: 0,
                 isAvailable: false
             },
             {
@@ -446,6 +475,7 @@ async function up() {
                 categoryId: 8,
                 weight: 150,
                 eValue: 280,
+                stockQuantity: 0,
                 isAvailable: false
             },
             {
@@ -456,6 +486,7 @@ async function up() {
                 categoryId: 9,
                 weight: 200,
                 eValue: 0,
+                stockQuantity: 3,
                 isAvailable: true
             },
             {
@@ -466,6 +497,7 @@ async function up() {
                 categoryId: 9,
                 weight: 200,
                 eValue: 0,
+                stockQuantity: 2,
                 isAvailable: true
             },
             {
@@ -476,6 +508,7 @@ async function up() {
                 categoryId: 9,
                 weight: 200,
                 eValue: 90,
+                stockQuantity: 1,
                 isAvailable: true
             },
             {
@@ -486,7 +519,8 @@ async function up() {
                 categoryId: 9,
                 weight: 200,
                 eValue: 80,
-                isAvailable: true
+                stockQuantity: 0,
+                isAvailable: false
             },
             {
                 name: 'Морс',
@@ -496,40 +530,10 @@ async function up() {
                 categoryId: 9,
                 weight: 200,
                 eValue: 70,
+                stockQuantity: 3,
                 isAvailable: true
             }
         ]
-    });
-
-
-    await prisma.cart.createMany({
-        data: [
-        {
-            userId: 1,
-            totalAmount: 0,
-            token: '1111',
-        },
-        {
-            userId: 2,
-            totalAmount: 0,
-            token: '2222',
-        },
-        ],
-    });
-
-    await prisma.cartItem.createMany({
-        data: [
-        {
-        productId: 1,
-        cartId: 1,
-        quantity: 2,
-        },
-        {
-         productId: 32,
-        cartId: 1,
-        quantity: 5,
-        },
-        ],
     });
 }
 
