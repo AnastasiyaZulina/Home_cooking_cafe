@@ -6,8 +6,8 @@ import { Dialog, DialogContent, DialogTitle } from '../../ui/dialog';
 import { useRouter } from 'next/navigation';
 import { TProduct } from '@/@types/prisma';
 import { cn } from '@/shared/lib/utils';
-import { ProductForm } from '../product-form';
 import { X } from 'lucide-react';
+import { SeeProductForm } from '../see-product-form';
 
 
 interface Props {
@@ -20,11 +20,9 @@ export const SeeProductModal: React.FC<Props> = ({ product, className }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const onCloseModal = () => {
-    if (!isSubmitting) {
-      router.back();
-    }
+    router.back();
   };
-
+  if (!product) return null;
   return (
     <Dialog
       open={Boolean(product)}
@@ -51,11 +49,14 @@ export const SeeProductModal: React.FC<Props> = ({ product, className }) => {
           <DialogTitle>{product.name}</DialogTitle>
         </VisuallyHidden>
 
-        <ProductForm
-          product={product}
-          onAddProduct={() => router.back()}
-          onSubmitStarted={() => setIsSubmitting(true)}
-          onSubmitFinished={() => setIsSubmitting(false)}
+        <SeeProductForm 
+          image={product.image}
+          name={product.name}
+          description={product.description ?? ''}
+          price={product.price}
+          weight={product.weight}
+          eValue={product.eValue}
+          productId={product.id}
         />
       </DialogContent>
     </Dialog>

@@ -6,7 +6,7 @@ import { Loader2 } from 'lucide-react';
 export interface CountButtonProductProps {
   value?: number;
   size?: 'sm' | 'lg';
-  isLoading: boolean;
+  isLoading?: boolean;
   className?: string;
   onClick?: (type: 'plus' | 'minus') => void;
   onReachZero?: () => void; // Новый пропс для обработки нуля

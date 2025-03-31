@@ -1,6 +1,6 @@
 'use client';
 
-import { Container, ProductForm } from "@/shared/components/shared";
+import { Container, SeeProductForm } from "@/shared/components/shared";
 import { TProduct } from "@/@types/prisma";
 
 interface ProductViewProps {
@@ -10,11 +10,15 @@ interface ProductViewProps {
 export const ProductView = ({ product }: ProductViewProps) => {
     return (
         <Container className="flex flex-col my-10">
-            <ProductForm 
-                product={product}
-                onSubmitStarted={() => {}}
-                onSubmitFinished={() => {}}
-            />
+        <SeeProductForm 
+          image={product.image}
+          name={product.name}
+          description={product.description ?? ''}
+          price={product.price}
+          weight={product.weight}
+          eValue={product.eValue}
+          productId={product.id}
+        />
         </Container>
     );
 };

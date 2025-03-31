@@ -37,7 +37,9 @@ export const ProductCard: React.FC<Props> = ({
     // Находим элемент корзины для этого продукта
     const cartItem = items.find(item => item.productId === productId);
 
-    const isUpdating = cartItem ? updatingItems[cartItem.id] : false;
+    const isUpdating = cartItem ? 
+    updatingItems[cartItem.id] || cartItem.disabled 
+    : false;
 
     const showSkeleton = !initialized && loading;
     if (showSkeleton) {
