@@ -8,4 +8,5 @@ export interface CartItemProps {
   quantity: number;
   className?: string;
   disabled?: boolean;
+  stockQuantity: number;
 }

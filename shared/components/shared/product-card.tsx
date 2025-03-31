@@ -11,6 +11,13 @@ import { CartButton } from './cart-button';
 import { CountButton } from './count-button';
 import { CountButtonProduct } from './count-button-product';
 
+interface CartItem {
+    id: number;
+    productId: number;
+    quantity: number;
+    stockQuantity: number;
+    disabled?: boolean;
+}
 
 interface Props {
     id: number;
@@ -34,12 +41,11 @@ export const ProductCard: React.FC<Props> = ({
     const { updatingItems, items, loading, initialized, addCartItem, updateItemQuantity, removeCartItem } = useCartStore();
     const [localLoading, setLocalLoading] = useState(false);
 
-    // Находим элемент корзины для этого продукта
-    const cartItem = items.find(item => item.productId === productId);
+    const cartItem: CartItem | undefined = items.find(item => item.productId === productId);
 
-    const isUpdating = cartItem ? 
-    updatingItems[cartItem.id] || cartItem.disabled 
-    : false;
+    const isUpdating = cartItem ?
+        updatingItems[cartItem.id] || cartItem.disabled
+        : false;
 
     const showSkeleton = !initialized && loading;
     if (showSkeleton) {
@@ -56,13 +62,13 @@ export const ProductCard: React.FC<Props> = ({
 
     const handleReachZero = async () => {
         if (!cartItem) return;
-        
+
         try {
-          await removeCartItem(cartItem.id);
+            await removeCartItem(cartItem.id);
         } catch (error) {
-          toast.error('Не удалось удалить товар');
+            toast.error('Не удалось удалить товар');
         }
-      };
+    };
 
 
     if (!isAvailable) {
@@ -115,13 +121,23 @@ export const ProductCard: React.FC<Props> = ({
                     <CountButtonProduct
                         value={cartItem.quantity}
                         onClick={(type) => {
+                            if (!cartItem) return;
+
                             const newQuantity = type === 'plus'
                                 ? cartItem.quantity + 1
                                 : cartItem.quantity - 1;
+
+                            // Проверка на максимальное количество
+                            if (type === 'plus' && cartItem.stockQuantity !== undefined && newQuantity > cartItem.stockQuantity) {
+                                toast.error('Больше порций добавить нельзя');
+                                return;
+                            }
+
                             updateItemQuantity(cartItem.id, newQuantity);
                         }}
                         onReachZero={handleReachZero}
                         isLoading={isUpdating}
+                        max={cartItem.stockQuantity} // Теперь TypeScript знает о stockQuantity
                     />
                 ) : (
                     <Button

@@ -3,5 +3,5 @@ import * as auth from './auth'
 
 export const Api ={
     cart,
-    auth
+    auth,
 }

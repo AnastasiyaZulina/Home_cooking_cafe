@@ -26,6 +26,7 @@ export const CheckoutCart: React.FC<Props> = ({ className, loading, items, onCli
 
                         items.map((item) => (
                             <CheckoutItem key={item.id}
+                                stockQuantity={item.stockQuantity}
                                 id={item.id}
                                 image={item.image}
                                 name={item.name}

@@ -72,13 +72,9 @@ export async function validateCart() {
     where: { cartId: userCart.id },
     include: { product: true }
   });
-
-  let totalAdjustment = 0;
   
   for (const item of remainingItems) {
     if (item.quantity > item.product.stockQuantity) {
-      const adjustment = item.quantity - item.product.stockQuantity;
-      totalAdjustment += adjustment * item.product.price;
       
       await prisma.cartItem.update({
         where: { id: item.id },
@@ -250,17 +246,6 @@ export async function createOrder(data: CheckoutFormValues) {
         await prisma.cartItem.update({
           where: { id: item.id },
           data: { quantity: product.stockQuantity }
-        });
-    
-        // Обновляем общую сумму корзины
-        const updatedCart = await prisma.cart.update({
-          where: { id: userCart.id },
-          data: { 
-            totalAmount: {
-              decrement: (item.product.price * (item.quantity - product.stockQuantity))
-            }
-          },
-          include: { items: true }
         });
     
         throw new Error(

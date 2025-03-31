@@ -33,7 +33,7 @@ export const SeeProductForm: React.FC<Props> = ({
     const [localLoading, setLocalLoading] = useState(false);
 
     const cartItem = items.find(item => item.productId === productId);
-   // const isUpdating = cartItem ? updatingItems[cartItem.id] : false;
+    // const isUpdating = cartItem ? updatingItems[cartItem.id] : false;
 
     const handleReachZero = async () => {
         if (!cartItem) return;
@@ -47,21 +47,27 @@ export const SeeProductForm: React.FC<Props> = ({
 
     const handleQuantityChange = (type: 'plus' | 'minus') => {
         if (!cartItem || cartItem.disabled) return;
-      
-        const newQuantity = type === 'plus' 
-          ? cartItem.quantity + 1 
-          : cartItem.quantity - 1;
-      
-        if (newQuantity === 0) {
-          removeCartItem(cartItem.id);
-          return;
+
+        const newQuantity = type === 'plus'
+            ? cartItem.quantity + 1
+            : cartItem.quantity - 1;
+
+        // Проверка на превышение лимита
+        if (type === 'plus' && newQuantity > cartItem.stockQuantity) {
+            toast.error('Больше порций добавить нельзя');
+            return;
         }
-      
+
+        if (newQuantity === 0) {
+            removeCartItem(cartItem.id);
+            return;
+        }
+
         updateItemQuantity(cartItem.id, newQuantity);
-      };
-      
-      const isUpdating = cartItem ? 
-        updatingItems[cartItem.id] || cartItem.disabled 
+    };
+
+    const isUpdating = cartItem ?
+        updatingItems[cartItem.id] || cartItem.disabled
         : false;
 
     const handleAdd = async () => {
@@ -103,6 +109,7 @@ export const SeeProductForm: React.FC<Props> = ({
                                 onClick={handleQuantityChange}
                                 onReachZero={handleReachZero}
                                 isLoading={isUpdating}
+                                max={cartItem.stockQuantity} // Передаем stockQuantity
                             />
                             <span className="text-lg font-bold">
                                 {price * cartItem.quantity} ₽

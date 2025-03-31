@@ -12,6 +12,7 @@ export type CartStateItem = {
   image: string;
   price: number;
   disabled?: boolean;
+  stockQuantity: number;
 };
 
 type ReturnProps = {
@@ -28,6 +29,8 @@ export const getCartDetails = (data: CartDTO): ReturnProps => {
     weight: item.product.weight,
     eValue: item.product.eValue,
     image: item.product.image,
+    stockQuantity: item.product.stockQuantity,
+    isAvailable: item.product.isAvailable,
     price: calcCartItemTotalPrice(item),
     disabled: false,
   })) as CartStateItem[];

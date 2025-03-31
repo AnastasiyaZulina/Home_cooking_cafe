@@ -23,6 +23,7 @@ export const CartDrawerItem: React.FC<React.PropsWithChildren<Props>> = ({
     quantity,
     className,
     disabled,
+    stockQuantity,
     onClickCountButton,
     onClickRemove
 }) => {
@@ -38,7 +39,7 @@ export const CartDrawerItem: React.FC<React.PropsWithChildren<Props>> = ({
             <hr className="my-3" />
 
             <div className="flex justify-between items-center">
-                <CountButton onClick={onClickCountButton} value={quantity} isLoading={updatingItems[id]}/>
+                <CountButton onClick={onClickCountButton} value={quantity} isLoading={updatingItems[id]} max={stockQuantity}/>
 
                 <div className="flex items-center gap-3">
                     <CartItem.Price value={price} />

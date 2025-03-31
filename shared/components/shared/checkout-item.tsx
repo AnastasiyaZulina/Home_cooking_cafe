@@ -5,6 +5,7 @@ import { X } from 'lucide-react';
 import { CartItemProps } from './cart-item-details/cart-item-details.types';
 import * as CartItemDetails from './cart-item-details';
 import { cn } from '@/shared/lib/utils';
+import { useCartStore } from '@/shared/store';
 
 interface Props extends CartItemProps {
   onClickCountButton?: (type: 'plus' | 'minus') => void;
@@ -13,17 +14,20 @@ interface Props extends CartItemProps {
 }
 
 export const CheckoutItem: React.FC<Props> = ({
+  id,
   name,
   weight,
   eValue,
   price,
   image,
   quantity,
+  stockQuantity,
   className,
   disabled,
   onClickCountButton,
   onClickRemove,
 }) => {
+  const { updatingItems } = useCartStore();
   return (
     <div className={cn(
       'flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0',
@@ -45,6 +49,8 @@ export const CheckoutItem: React.FC<Props> = ({
         
         <div className="flex items-center gap-3 sm:gap-5">
           <CartItemDetails.CountButton 
+            isLoading={updatingItems[id]}
+            max={stockQuantity}
             onClick={onClickCountButton} 
             value={quantity} 
             size="sm"

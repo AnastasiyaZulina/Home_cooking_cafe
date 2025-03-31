@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { getCartDetails } from "../lib";
 import { Api } from "../services/api-clients";
 import { CreateCartItemValues } from "../services/dto/cart.dto";
+import toast from "react-hot-toast";
 
 export type CartStateItem = {
     id: number;
@@ -13,6 +14,7 @@ export type CartStateItem = {
     image: string;
     price: number;
     disabled?: boolean;
+    stockQuantity: number;
   };
 
 export interface CartState {
@@ -38,17 +40,59 @@ export interface CartState {
     totalAmount: 0,
 
     fetchCartItems: async () => {
-      if (get().initialized) return;
+      if (get().initialized) return; // Добавляем проверку на инициализацию
+      
       try {
         set({ loading: true, error: false });
-        const data = await Api.cart.getCart();
-        set({ 
-          ...getCartDetails(data),
-          initialized: true // Помечаем как инициализированное
-        });
+        let data = await Api.cart.getCart();
+        
+        // Первичная обработка данных
+        let cartData = getCartDetails(data);
+        set({ ...cartData, initialized: true });
+  
+        // Проверка и корректировка данных
+        const adjustments = {
+          removed: [] as Array<{ name: string }>,
+          reduced: [] as Array<{ name: string; newQuantity: number }>,
+        };
+  
+        // Удаление недоступных товаров
+        const unavailableItems = data.items.filter(item => !item.product.isAvailable);
+        for (const item of unavailableItems) {
+          await Api.cart.removeCartItem(item.id);
+          adjustments.removed.push({ name: item.product.name });
+        }
+  
+        // Корректировка количества
+        data = await Api.cart.getCart(); // Получаем обновленные данные
+        const remainingItems = data.items.filter(item => item.product.isAvailable);
+        for (const item of remainingItems) {
+          if (item.quantity > item.product.stockQuantity) {
+            await Api.cart.updateItemQuantity(item.id, item.product.stockQuantity);
+            adjustments.reduced.push({
+              name: item.product.name,
+              newQuantity: item.product.stockQuantity,
+            });
+          }
+        }
+  
+        // Обновляем состояние последний раз
+        if (unavailableItems.length > 0 || adjustments.reduced.length > 0) {
+          data = await Api.cart.getCart();
+          set(getCartDetails(data));
+        }
+  
+        // Показываем уведомления
+        if (adjustments.removed.length > 0) {
+          toast.error(`Товары ${adjustments.removed.map(i => i.name).join(', ')} удалены`);
+        }
+        if (adjustments.reduced.length > 0) {
+          adjustments.reduced.forEach(adj => {
+            toast.error(`${adj.name} уменьшено до ${adj.newQuantity}`);
+          });
+        }
       } catch (error) {
-        console.error(error);
-        set({ error: true });
+        toast.error('Ошибка загрузки корзины');
       } finally {
         set({ loading: false });
       }

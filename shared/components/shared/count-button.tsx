@@ -9,10 +9,12 @@ export interface CountButtonProps {
   className?: string;
   isLoading: boolean;
   onClick?: (type: 'plus' | 'minus') => void;
+  max: number;
 }
 
 export const CountButton: React.FC<CountButtonProps> = ({
   className,
+  max,
   onClick,
   isLoading,
   value = 1,
@@ -33,7 +35,12 @@ export const CountButton: React.FC<CountButtonProps> = ({
         <b className={size === 'sm' ? 'text-sm' : 'text-md'}>{value}</b>
       )}
 
-      <CountIconButton onClick={() => onClick?.('plus')} size={size} type="plus" disabled={isLoading} />
+      <CountIconButton
+        onClick={() => onClick?.('plus')}
+        size={size}
+        type="plus"
+        disabled={isLoading || (max !== undefined && value >= max)}
+      />
     </div>
   );
 };

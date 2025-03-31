@@ -18,14 +18,22 @@ import { Title } from './title';
 import { cn } from '@/shared/lib/utils';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { useCart } from '@/hooks';
+import toast from 'react-hot-toast';
 
 export const CartDrawer: React.FC<React.PropsWithChildren> = ({children}) => {
   const { totalAmount, updateItemQuantity, items, removeCartItem } = useCart();
   const [redirecting, setRedirecting] =React.useState(false);
   const onClickCountButton = (id: number, quantity: number, type: 'plus' | 'minus') => {
+    const product = items.find(item => item.id === id);
+    
+    if (type === 'plus' && product && quantity >= product.stockQuantity) {
+      toast.error('Больше порций добавить нельзя');
+      return;
+    }
+    
     const newQuantity = type === 'plus' ? quantity + 1 : quantity - 1;
     updateItemQuantity(id, newQuantity);
-  }
+  };
 
   return (
     <Sheet>
@@ -74,6 +82,7 @@ export const CartDrawer: React.FC<React.PropsWithChildren> = ({children}) => {
                         price={item.price}
                         quantity={item.quantity}
                         disabled={item.disabled}
+                        stockQuantity={item.stockQuantity}
                         onClickCountButton={(type) => onClickCountButton(item.id, item.quantity, type)}
                         onClickRemove={() => removeCartItem(item.id)}>
                       </CartDrawerItem>
