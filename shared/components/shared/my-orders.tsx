@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { OrderStatus, DeliveryType, Order, PaymentMethod } from '@prisma/client';
 import { cn } from '@/shared/lib/utils';
-import { MyOrdersBlock } from './my-orders-block';
+import { GrayBlock } from './gray-block';
 import { Button } from '../ui';
 import toast from 'react-hot-toast';
 import { useCart } from '@/hooks';
@@ -152,7 +152,7 @@ export const MyOrders = ({ orders }: MyOrdersProps) => {
         );
 
         return (
-          <MyOrdersBlock key={order.id} className="p-6">
+          <GrayBlock key={order.id} className="p-6">
             <div className="space-y-4">
               {/* Заголовок заказа */}
               <div className="flex justify-between items-start">
@@ -274,7 +274,7 @@ export const MyOrders = ({ orders }: MyOrdersProps) => {
                 </Button>
               </div>
             )}
-          </MyOrdersBlock>
+          </GrayBlock>
         );
       })}
     </div>

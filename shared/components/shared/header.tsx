@@ -62,7 +62,7 @@ export const Header: React.FC<Props> = ({ hasCart = true, className }) => {
                     <Link href="/delivery" className="text-gray-400 hover:text-primary transition-colors">
                         Доставка
                     </Link>
-                    <Link href="/reviews" className="text-gray-400 hover:text-primary transition-colors">
+                    <Link href="/feedback" className="text-gray-400 hover:text-primary transition-colors">
                         Отзывы
                     </Link>
                     <Link href="/corporate" className="text-gray-400 hover:text-primary transition-colors">

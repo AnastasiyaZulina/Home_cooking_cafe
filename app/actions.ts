@@ -401,3 +401,63 @@ export async function registerUser(body: Prisma.UserCreateInput) {
     throw error;
   }
 }
+
+export type FeedbackWithUser = {
+  id: number;
+  feedbackText: string;
+  createdAt: Date;
+  user: {
+    fullName: string;
+  };
+};
+
+// Добавьте эти функции в конец файла
+export async function createFeedback(feedbackText: string) {
+  try {
+    const session = await getUserSession();
+    
+    if (!session?.id) {
+      throw new Error('Для отправки отзыва необходимо авторизоваться');
+    }
+
+    const newFeedback = await prisma.feedback.create({
+      data: {
+        feedbackText,
+        userId: Number(session.id),
+        feedbackStatus: 'PENDING',
+        isVisible: false
+      }
+    });
+
+    return newFeedback;
+  } catch (error) {
+    console.error('[CREATE_FEEDBACK_ERROR]:', error);
+    throw error;
+  }
+}
+
+export async function getFeedbacks(): Promise<FeedbackWithUser[]> {
+  try {
+    const feedbacks = await prisma.feedback.findMany({
+      where: {
+        isVisible: true,
+        feedbackStatus: 'APPROVED'
+      },
+      include: {
+        user: {
+          select: {
+            fullName: true
+          }
+        }
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+
+    return feedbacks as FeedbackWithUser[];
+  } catch (error) {
+    console.error('[GET_FEEDBACKS_ERROR]:', error);
+    return [];
+  }
+}

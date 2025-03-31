@@ -21,6 +21,7 @@ model User {
   orders           Order[]
   cart             Cart?
   verificationCode VerificationCode?
+  feedbacks        Feedback[]
 
   provider   String?
   providerId String?
@@ -124,6 +125,23 @@ model VerificationCode {
 
   createdAt DateTime @default(now())
   @@unique([userId, code])
+}
+
+model Feedback {
+  id           Int      @id @default(autoincrement())
+  userId       Int
+  user         User     @relation(fields: [userId], references: [id])
+  feedbackText String
+  feedbackStatus FeedbackStatus @default(PENDING)
+  isVisible    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+enum FeedbackStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 enum OrderStatus {
