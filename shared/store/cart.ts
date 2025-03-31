@@ -5,6 +5,7 @@ import { CreateCartItemValues } from "../services/dto/cart.dto";
 
 export type CartStateItem = {
     id: number;
+    productId: number;
     quantity: number;
     name: string;
     weight: number;
@@ -15,7 +16,9 @@ export type CartStateItem = {
   };
 
 export interface CartState {
+  updatingItems: Record<number, boolean>;
     loading: boolean;
+    initialized: boolean;
     error: boolean;
     totalAmount: number;
     items: CartStateItem[];
@@ -27,16 +30,22 @@ export interface CartState {
   }
 
   export const useCartStore = create<CartState>((set, get) => ({
+    updatingItems: {},
     items: [],
+    initialized: false,
     error: false,
     loading: true,
     totalAmount: 0,
 
     fetchCartItems: async () => {
+      if (get().initialized) return;
       try {
         set({ loading: true, error: false });
         const data = await Api.cart.getCart();
-        set(getCartDetails(data));
+        set({ 
+          ...getCartDetails(data),
+          initialized: true // Помечаем как инициализированное
+        });
       } catch (error) {
         console.error(error);
         set({ error: true });
@@ -47,14 +56,16 @@ export interface CartState {
 
     updateItemQuantity: async (id: number, quantity: number) => {
       try {
-        set({ loading: true, error: false });
+        set(state => ({
+          updatingItems: { ...state.updatingItems, [id]: true } // Блокируем элемент
+        }));
+        
         const data = await Api.cart.updateItemQuantity(id, quantity);
         set(getCartDetails(data));
-      } catch (error) {
-        console.error(error);
-        set({ error: true });
       } finally {
-        set({ loading: false });
+        set(state => ({
+          updatingItems: { ...state.updatingItems, [id]: false } // Разблокируем
+        }));
       }
     },
 

@@ -4,9 +4,12 @@ import Link from 'next/link';
 import React, { useState } from 'react';
 import { Title } from './title';
 import { Button } from '../ui';
-import { Plus } from 'lucide-react';
+import { Loader2, Plus } from 'lucide-react';
 import { useCartStore } from '@/shared/store';
 import toast from 'react-hot-toast';
+import { CartButton } from './cart-button';
+import { CountButton } from './count-button';
+import { CountButtonProduct } from './count-button-product';
 
 
 interface Props {
@@ -20,7 +23,7 @@ interface Props {
 }
 
 export const ProductCard: React.FC<Props> = ({
-    id,
+    id: productId,
     name,
     price,
     image,
@@ -28,25 +31,36 @@ export const ProductCard: React.FC<Props> = ({
     isAvailable,
     weight,
 }) => {
-    const addCartItem = useCartStore(state => state.addCartItem);
-    const [isLoading, setIsLoading] = useState(false);
+    const { updatingItems, items, loading, initialized, addCartItem, updateItemQuantity, removeCartItem } = useCartStore();
+    const [localLoading, setLocalLoading] = useState(false);
 
-    const onAddProduct = async () => {
+    // Находим элемент корзины для этого продукта
+    const cartItem = items.find(item => item.productId === productId);
+
+    const isUpdating = cartItem ? updatingItems[cartItem.id] : false;
+
+    const showSkeleton = !initialized && loading;
+    if (showSkeleton) {
+        return (
+            <div className={className}>
+                <div className="animate-pulse bg-gray-200 h-[350px] sm:h-[300px] rounded-lg" />
+                <div className="mt-4 h-4 bg-gray-200 w-3/4 rounded mx-3" />
+                <div className="mt-4 flex justify-end px-3 sm:px-4">
+                    <div className="h-10 w-24 bg-gray-200 rounded-md" />
+                </div>
+            </div>
+        );
+    }
+
+    const handleReachZero = async () => {
+        if (!cartItem) return;
+        
         try {
-            setIsLoading(true);
-            await addCartItem({
-                productId: id,
-            });
-            toast.success('Добавлено в корзину!');
+          await removeCartItem(cartItem.id);
+        } catch (error) {
+          toast.error('Не удалось удалить товар');
         }
-        catch (e) {
-            toast.error('Не удалось добавить в корзину!');
-            console.error(e);
-        }
-        finally {
-            setIsLoading(false);
-        }
-    };
+      };
 
 
     if (!isAvailable) {
@@ -72,7 +86,7 @@ export const ProductCard: React.FC<Props> = ({
                     0% 92%, 3% 85%, 0% 78%, 3% 71%, 0% 64%, 3% 57%, 0% 50%, 3% 43%, 0% 36%, 3% 29%, 0% 22%, 3% 15%, 0% 8%
                 )`
                 }}>
-                <Link href={`/product/${id}`} className="relative w-full h-full">
+                <Link href={`/product/${productId}`} className="relative w-full h-full">
                     <img
                         className="absolute inset-0 w-full h-full object-contain"
                         src={image}
@@ -95,15 +109,35 @@ export const ProductCard: React.FC<Props> = ({
                 <span className="text-[18px] hidden 2xl:block">
                     {price} ₽ <br /> {weight} г.
                 </span>
-                <Button
-                    variant="secondary"
-                    className="text-sm sm:text-base px-3 sm:px-4 py-2"
-                    onClick={onAddProduct}
-                    disabled={isLoading}
-                >
-                    <Plus size={16} className="mr-1 sm:mr-2" />
-                    {isLoading ? 'Добавляем...' : 'Добавить'}
-                </Button>
+                {cartItem ? (
+                    <CountButtonProduct
+                        value={cartItem.quantity}
+                        onClick={(type) => {
+                            const newQuantity = type === 'plus'
+                                ? cartItem.quantity + 1
+                                : cartItem.quantity - 1;
+                            updateItemQuantity(cartItem.id, newQuantity);
+                        }}
+                        onReachZero={handleReachZero}
+                        isLoading={isUpdating}
+                    />
+                ) : (
+                    <Button
+                        variant="secondary"
+                        onClick={async () => {
+                            try {
+                                setLocalLoading(true);
+                                await addCartItem({ productId });
+                            } finally {
+                                setLocalLoading(false);
+                            }
+                        }}
+                        loading={localLoading}
+                    >
+                        <Plus size={16} className="mr-2" />
+                        {localLoading ? 'Добавляем...' : 'Добавить'}
+                    </Button>
+                )}
             </div>
         </div>
     );

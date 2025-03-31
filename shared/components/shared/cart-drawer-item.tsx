@@ -4,6 +4,7 @@ import * as CartItem from './cart-item-details';
 import { CartItemProps } from './cart-item-details/cart-item-details.types';
 import { CountButton } from './count-button';
 import { Trash2Icon } from 'lucide-react';
+import { useCartStore } from '@/shared/store';
 
 
 interface Props extends CartItemProps{
@@ -13,6 +14,7 @@ interface Props extends CartItemProps{
 }
 
 export const CartDrawerItem: React.FC<React.PropsWithChildren<Props>> = ({
+    id,
     image,
     name,
     price,
@@ -24,6 +26,8 @@ export const CartDrawerItem: React.FC<React.PropsWithChildren<Props>> = ({
     onClickCountButton,
     onClickRemove
 }) => {
+    const { updatingItems } = useCartStore();
+    
     return (
     <div className={cn('flex bg-white p-5 gap-6', {'opacity-50 pointer-events-none': disabled}, className)}>
         <CartItem.Image src={image}/>
@@ -34,7 +38,7 @@ export const CartDrawerItem: React.FC<React.PropsWithChildren<Props>> = ({
             <hr className="my-3" />
 
             <div className="flex justify-between items-center">
-                <CountButton onClick={onClickCountButton} value={quantity} />
+                <CountButton onClick={onClickCountButton} value={quantity} isLoading={updatingItems[id]}/>
 
                 <div className="flex items-center gap-3">
                     <CartItem.Price value={price} />
