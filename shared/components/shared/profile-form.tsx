@@ -22,7 +22,7 @@ export const ProfileForm: React.FC<Props> = ({ data }) => {
   const form = useForm({
     resolver: zodResolver(formRegisterSchema),
     defaultValues: {
-      fullName: data.fullName,
+      name: data.name,
       email: data.email,
       password: '',
       confirmPassword: '',
@@ -33,7 +33,7 @@ export const ProfileForm: React.FC<Props> = ({ data }) => {
     try {
       await updateUserInfo({
         email: formData.email,
-        fullName: formData.fullName,
+        name: formData.name,
         password: formData.password,
       });
 
@@ -81,7 +81,7 @@ export const ProfileForm: React.FC<Props> = ({ data }) => {
           onSubmit={form.handleSubmit(onSubmit)}
         >
           <FormInput name="email" label="E-Mail" required />
-          <FormInput name="fullName" label="Полное имя" required />
+          <FormInput name="name" label="Имя" required />
 
           <FormInput
             type="password"

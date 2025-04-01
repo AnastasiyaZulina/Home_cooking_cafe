@@ -17,7 +17,7 @@ export async function GET() {
         id: Number(user.id),
       },
       select: {
-        fullName: true,
+        name: true,
         email: true,
         password: false,
         bonusBalance: true

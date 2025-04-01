@@ -3,6 +3,6 @@ export type FeedbackWithUser = {
   feedbackText: string;
   createdAt: Date;
   user: {
-    fullName: string;
+    name: string;
   };
 };

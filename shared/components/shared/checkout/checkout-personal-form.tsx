@@ -22,11 +22,6 @@ export const CheckoutPersonalForm: React.FC<Props> = ({ className }) => {
                     placeholder="Имя" 
                 />
                 <FormInput 
-                    name="lastname" 
-                    className="text-sm sm:text-base" 
-                    placeholder="Фамилия" 
-                />
-                <FormInput 
                     name="email" 
                     className="text-sm sm:text-base" 
                     placeholder="E-Mail" 

@@ -103,7 +103,6 @@ function CheckoutContent() {
         defaultValues: {
             email: '',
             firstname: '',
-            lastname: '',
             address: '',
             comment: '',
             deliveryType: 'DELIVERY' as DeliveryType,
@@ -115,10 +114,9 @@ function CheckoutContent() {
     React.useEffect(() => {
         async function fetchUserInfo() {
             const data = await Api.auth.getMe();
-            const [firstName, lastName] = data.fullName.split(' ');
+            const firstName = data.name;
 
             form.setValue('firstname', firstName);
-            form.setValue('lastname', lastName);
             form.setValue('email', data.email);
         }
 

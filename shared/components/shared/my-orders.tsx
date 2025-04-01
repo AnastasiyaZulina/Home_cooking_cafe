@@ -169,7 +169,7 @@ export const MyOrders = ({ orders }: MyOrdersProps) => {
               <div className="border-t border-gray-100 pt-3 space-y-2">
                 <div className="flex justify-between">
                   <span className="font-medium">Клиент:</span>
-                  <span>{order.fullName}</span>
+                  <span>{order.name}</span>
                 </div>
                 {order.deliveryType === 'DELIVERY' && order.address && (
                   <div className="flex justify-between">

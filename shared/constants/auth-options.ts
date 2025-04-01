@@ -49,7 +49,7 @@ export const authOptions: AuthOptions = {
                 return {
                     id: findUser.id,
                     email: findUser.email,
-                    name: findUser.fullName,
+                    name: findUser.name,
                     role: findUser.role,
                 };
             },
@@ -97,7 +97,7 @@ export const authOptions: AuthOptions = {
                 await prisma.user.create({
                   data: {
                     email: user.email,
-                    fullName: user.name || 'User #' + user.id,
+                    name: user.name || 'User #' + user.id,
                     password: hashSync(user.id.toString(), 10), //TODO: продумать, лучше сделать так, чтобы пароль был не нужен
                     verified: new Date(),
                     provider: account?.provider,
@@ -126,7 +126,7 @@ export const authOptions: AuthOptions = {
             if (findUser) {
                 token.id = String(findUser.id);
                 token.email = findUser.email;
-                token.fullName = findUser.fullName;
+                token.name = findUser.name;
                 token.role = findUser.role;
             }
 

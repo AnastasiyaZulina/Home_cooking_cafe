@@ -260,7 +260,7 @@ export async function createOrder(data: CheckoutFormValues) {
       data: {
         userId: session?.id ? Number(session.id) : null,
         token: cartToken,
-        fullName: data.firstname + ' ' + data.lastname,
+        name: data.firstname + ' ' + data.lastname,
         email: data.email,
         phone: data.phone,
         address: data.deliveryType === 'DELIVERY' ? data.address : null,
@@ -349,7 +349,7 @@ export async function updateUserInfo(body: Prisma.UserUpdateInput) {
         id: Number(currentUser.id),
       },
       data: {
-        fullName: body.fullName,
+        name: body.name,
         email: body.email,
         password: body.password ? hashSync(body.password as string, 10) : findUser?.password,
       },
@@ -379,7 +379,7 @@ export async function registerUser(body: Prisma.UserCreateInput) {
 
     const createdUser = await prisma.user.create({
       data: {
-        fullName: body.fullName,
+        name: body.name,
         email: body.email,
         password: hashSync(body.password, 10),
       },
@@ -407,7 +407,7 @@ export type FeedbackWithUser = {
   feedbackText: string;
   createdAt: Date;
   user: {
-    fullName: string;
+    name: string;
   };
 };
 
@@ -446,7 +446,7 @@ export async function getFeedbacks(): Promise<FeedbackWithUser[]> {
       include: {
         user: {
           select: {
-            fullName: true
+            name: true
           }
         }
       },

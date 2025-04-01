@@ -11,7 +11,7 @@ datasource db {
 model User {
   id       Int    @id @default(autoincrement())
 
-  fullName String
+  name String
   email    String @unique
   password String
   verified DateTime?
@@ -103,9 +103,9 @@ model Order {
 
   deliveryType   DeliveryType @default(DELIVERY)
   deliveryTime   DateTime
-  deliveryCost   Float?
+  deliveryCost   Int?
 
-  fullName String
+  name String
   address  String?
   email    String
   phone    String

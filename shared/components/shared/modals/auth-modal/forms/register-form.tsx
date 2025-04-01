@@ -18,7 +18,7 @@ export const RegisterForm: React.FC<Props> = ({ onClose, onClickLogin }) => {
     resolver: zodResolver(formRegisterSchema),
     defaultValues: {
       email: '',
-      fullName: '',
+      name: '',
       password: '',
       confirmPassword: '',
     },
@@ -28,7 +28,7 @@ export const RegisterForm: React.FC<Props> = ({ onClose, onClickLogin }) => {
     try {
       await registerUser({
         email: data.email,
-        fullName: data.fullName,
+        name: data.name,
         password: data.password,
       });
 
@@ -50,7 +50,7 @@ export const RegisterForm: React.FC<Props> = ({ onClose, onClickLogin }) => {
     <FormProvider {...form}>
       <form className="flex flex-col gap-5" onSubmit={form.handleSubmit(onSubmit)}>
         <FormInput name="email" label="E-Mail" required />
-        <FormInput name="fullName" label="Полное имя" required />
+        <FormInput name="name" label="Имя" required />
         <FormInput name="password" label="Пароль" type="password" required />
         <FormInput name="confirmPassword" label="Подтвердите пароль" type="password" required />
 

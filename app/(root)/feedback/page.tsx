@@ -157,7 +157,7 @@ function FeedbackItem({ feedback }: { feedback: FeedbackWithUser }) {
     return (
         <GrayBlock className="p-6">
             <div className="flex items-center justify-between mb-3">
-                <h3 className="font-semibold">{feedback.user.fullName}</h3>
+                <h3 className="font-semibold">{feedback.user.name}</h3>
                 <span className="text-sm text-gray-500">
                     {new Date(feedback.createdAt).toLocaleDateString()}
                 </span>
