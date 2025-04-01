@@ -22,8 +22,8 @@ export interface CartState {
     loading: boolean;
     initialized: boolean;
     error: boolean;
-    totalAmount: number;
     items: CartStateItem[];
+    totalAmount: number;
     fetchCartItems: () => Promise<void>;
     updateItemQuantity: (id: number, quantity: number) => Promise<void>;
     //!!!!!!! Типизироваать
@@ -33,11 +33,11 @@ export interface CartState {
 
   export const useCartStore = create<CartState>((set, get) => ({
     updatingItems: {},
+    totalAmount: 0,
     items: [],
     initialized: false,
     error: false,
     loading: true,
-    totalAmount: 0,
 
     fetchCartItems: async () => {
       if (get().initialized) return; // Добавляем проверку на инициализацию
@@ -123,11 +123,15 @@ export interface CartState {
         }));
         
         await Api.cart.removeCartItem(id);
-        
-        set((state) => ({
-          items: state.items.filter(item => item.id !== id),
-          updatingItems: { ...state.updatingItems, [id]: false }
-        }));
+    
+        set((state) => {
+          const newItems = state.items.filter(item => item.id !== id);
+          return {
+            items: newItems,
+            updatingItems: { ...state.updatingItems, [id]: false },
+            totalAmount: newItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
+          };
+        });
       } catch (error) {
         set((state) => ({
           updatingItems: { ...state.updatingItems, [id]: false },
@@ -138,6 +142,7 @@ export interface CartState {
         throw error;
       }
     },
+    
     addCartItem: async (values: CreateCartItemValues) => {
       try {
         set({ loading: true, error: false });

@@ -6,15 +6,18 @@ import { cn } from '@/shared/lib/utils';
 import { ArrowRight, ShoppingCart } from 'lucide-react';
 import { CartDrawer } from './cart-drawer';
 import { useCartStore } from '@/shared/store';
+import { useCart } from '@/hooks';
 
 interface Props {
     className?: string;
 }
 
 export const CartButton: React.FC<Props> = ({ className }) => {
+   // const totalAmount=100;
     const totalAmount=useCartStore(state=>state.totalAmount);
     const loading=useCartStore(state=>state.loading);
     const items=useCartStore(state=>state.items);
+   // const totalAmount = useCart();
     return (
     <CartDrawer>
     <Button loading={loading} className={cn('group relative', {'w-[105px]':loading}, className)}>

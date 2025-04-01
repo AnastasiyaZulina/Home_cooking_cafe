@@ -21,6 +21,10 @@ type ReturnProps = {
 };
 
 export const getCartDetails = (data: CartDTO): ReturnProps => {
+  if (!data || !Array.isArray(data.items)) {
+    console.log('пусто');
+    return { items: [], totalAmount: 0 }; // Возвращаем пустой массив, если данных нет
+  }
   const items = data.items.map((item) => ({
     id: item.id,
     quantity: item.quantity,
@@ -34,10 +38,10 @@ export const getCartDetails = (data: CartDTO): ReturnProps => {
     price: calcCartItemTotalPrice(item),
     disabled: false,
   })) as CartStateItem[];
-
+  const totalAmount = items.reduce((sum, item) => sum + item.price, 0);
   return {
     items,
-    totalAmount: data.totalAmount,
+    totalAmount,
   };
 };
 

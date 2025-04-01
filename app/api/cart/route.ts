@@ -3,45 +3,29 @@ import { NextRequest, NextResponse } from "next/server";
 import crypto from 'crypto';
 import { findOrCreateCart } from "@/shared/lib/find-or-create-cart";
 import { CreateCartItemValues } from "@/shared/services/dto/cart.dto";
-import { updateCartTotalAmount } from "@/shared/lib/update-cart-total-amount";
 
 export async function GET(req: NextRequest) {
     try {
-        const token = req.cookies.get('cartToken')?.value;
-
-        if (!token) {
-            return NextResponse.json({ totalAmount: 0, items: [] });
-        }
-
-        const userCart = await prisma.cart.findFirst({
-            where: {
-                OR: [
-                    {
-                        token,
-                    },
-                ],
-            },
-            include: {
-                items: {
-                    orderBy: {
-                        createdAt: 'desc'
-                    },
-                    include: {
-                        product: true,
-                    },
-                },
-            },
-        });
-
-        return NextResponse.json(userCart);
+      const token = req.cookies.get('cartToken')?.value;
+  
+      if (!token) {
+        return NextResponse.json({ items: [] }); // Удаляем totalAmount
+      }
+  
+      const userCart = await prisma.cart.findFirst({
+        where: { token },
+        include: { items: { include: { product: true } } }
+      });
+  
+      return NextResponse.json(userCart || { items: [] });
     } catch (error) {
-        console.error('[CART_GET] Server error', error);
-        return NextResponse.json(
-            { error: 'Не удалось получить корзину' },
-            { status: 500 }
-        );
+      console.error('[CART_GET] Server error', error);
+      return NextResponse.json(
+        { error: 'Не удалось получить корзину' },
+        { status: 500 }
+      );
     }
-}
+  }
 
 export async function POST(req: NextRequest) {
     try {
@@ -81,7 +65,10 @@ export async function POST(req: NextRequest) {
             });
         }
 
-        const updatedUserCart = await updateCartTotalAmount(token);
+        const updatedUserCart = await prisma.cart.findFirst({
+            where: { token },
+            include: { items: { include: { product: true } } },
+        });
         const resp = NextResponse.json(updatedUserCart);
         resp.cookies.set('cartToken', token); 
         return resp;

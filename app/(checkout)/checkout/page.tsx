@@ -179,7 +179,7 @@ function CheckoutContent() {
     const calculateTotal = () => {
         const deliveryPrice = deliveryType === 'DELIVERY' ? CHECKOUT_CONSTANTS.DELIVERY_COST : 0;
         const isAuthenticated = !!session;
-
+        console.log('totalAmount', totalAmount);
         if (!isAuthenticated || bonusOption === 'earn') {
             return {
                 totalPrice: totalAmount + deliveryPrice,

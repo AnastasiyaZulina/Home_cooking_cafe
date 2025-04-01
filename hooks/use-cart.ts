@@ -13,14 +13,14 @@ type ReturnProps = {
 };
 
 export const useCart = (runFetch: boolean = true): ReturnProps => {
-  const totalAmount = useCartStore(state => state.totalAmount);
   const items = useCartStore(state => state.items);
   const fetchCartItems = useCartStore(state => state.fetchCartItems);
   const updateItemQuantity = useCartStore(state => state.updateItemQuantity);
   const removeCartItem = useCartStore(state => state.removeCartItem);
   const addCartItem = useCartStore(state => state.addCartItem);
   const loading = useCartStore(state => state.loading);
-
+  const totalAmount = useCartStore(state => state.totalAmount);
+  
   React.useEffect(() => {
     if (runFetch) {
       fetchCartItems();

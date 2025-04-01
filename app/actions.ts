@@ -8,19 +8,10 @@ import { hashSync } from 'bcrypt';
 import { getUserSession } from '@/shared/lib/get-user-session';
 import { OrderCreatedTemplate, PayOrderTemplate, VerificationUserTemplate } from '@/shared/components';
 
-async function clearCart(Cartid: number) {
-  await prisma.cart.update({
-    where: {
-      id: Cartid,
-    },
-    data: {
-      totalAmount: 0,
-    },
-  });
-
+async function clearCart(cartId: number) {
   await prisma.cartItem.deleteMany({
     where: {
-      cartId: Cartid,
+      cartId: cartId,
     },
   });
 }
@@ -58,7 +49,7 @@ export async function validateCart() {
     await prisma.cartItem.deleteMany({
       where: { id: { in: unavailableItems.map(item => item.id) } }
     });
-    
+
     unavailableItems.forEach(item => {
       adjustments.push({
         type: 'removed',
@@ -72,10 +63,10 @@ export async function validateCart() {
     where: { cartId: userCart.id },
     include: { product: true }
   });
-  
+
   for (const item of remainingItems) {
     if (item.quantity > item.product.stockQuantity) {
-      
+
       await prisma.cartItem.update({
         where: { id: item.id },
         data: { quantity: item.product.stockQuantity }
@@ -87,24 +78,6 @@ export async function validateCart() {
         newQuantity: item.product.stockQuantity
       });
     }
-  }
-
-  // Обновляем общую сумму если были изменения
-  if (adjustments.length > 0) {
-    const newItems = await prisma.cartItem.findMany({
-      where: { cartId: userCart.id },
-      include: { product: true }
-    });
-
-    const newTotal = newItems.reduce(
-      (sum, item) => sum + (item.product.price * item.quantity), 
-      0
-    );
-
-    await prisma.cart.update({
-      where: { id: userCart.id },
-      data: { totalAmount: newTotal }
-    });
   }
 
   return { adjustments };
@@ -126,13 +99,13 @@ export async function updateProductStock(cartToken: string) {
   });
 
   /*Если корзина не найдена, возвращаем ошибку*/
-  if (userCart?.totalAmount === 0) {
-    throw new Error('Cart is empty');
+  if (!userCart) {
+    throw new Error('Cart not found');
   }
 
   /*Если корзина пустая, возвращаем ошибку*/
-  if (!userCart) {
-    throw new Error('Cart not found');
+  if (userCart.items.length === 0) {
+    throw new Error('Cart is empty');
   }
 
   for (const item of userCart.items) {
@@ -199,17 +172,17 @@ export async function createOrder(data: CheckoutFormValues) {
     });
 
     /*Если корзина не найдена, возвращаем ошибку*/
-    if (userCart?.totalAmount === 0) {
-      throw new Error('Cart is empty');
-    }
-
-    /*Если корзина пустая, возвращаем ошибку*/
     if (!userCart) {
       throw new Error('Cart not found');
     }
 
+    /*Если корзина пустая, возвращаем ошибку*/
+    if (userCart.items.length === 0) {
+      throw new Error('Cart is empty');
+    }
+
     const unavailableItems = userCart.items.filter(item => !item.product.isAvailable);
-    
+
     if (unavailableItems.length > 0) {
       // Удаляем недоступные товары из корзины
       await prisma.cartItem.deleteMany({
@@ -220,15 +193,6 @@ export async function createOrder(data: CheckoutFormValues) {
         }
       });
 
-      // Обновляем общую сумму корзины
-      const remainingItems = userCart.items.filter(item => item.product.isAvailable);
-      const newTotal = remainingItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
-
-      await prisma.cart.update({
-        where: { id: userCart.id },
-        data: { totalAmount: newTotal }
-      });
-
       throw new Error(`Некоторые товары закончились и были удалены из корзины. Перезагрузка страницы...`);
     }
 
@@ -236,36 +200,40 @@ export async function createOrder(data: CheckoutFormValues) {
       const product = await prisma.product.findUnique({
         where: { id: item.productId }
       });
-    
+
       if (!product) {
         throw new Error(`Продукт ${item.productId} не найден`);
       }
-    
+
       if (product.stockQuantity < item.quantity) {
         // Автоматически уменьшаем количество до доступного
         await prisma.cartItem.update({
           where: { id: item.id },
           data: { quantity: product.stockQuantity }
         });
-    
+
         throw new Error(
           `Количество "${product.name}" уменьшено до ${product.stockQuantity} (максимально доступное). Перезагрузка страницы...`
         );
       }
     }
 
+    /* Вычисляем сумму заказа */
+    const totalAmount = userCart.items.reduce(
+      (sum, item) => sum + item.product.price * item.quantity,
+      0
+    );
 
     /*Создаем заказ*/
     const order = await prisma.order.create({
       data: {
         userId: session?.id ? Number(session.id) : null,
         token: cartToken,
-        name: data.firstname + ' ' + data.lastname,
+        name: data.firstname,
         email: data.email,
         phone: data.phone,
         address: data.deliveryType === 'DELIVERY' ? data.address : null,
         comment: data.comment || null,
-        totalAmount: userCart.totalAmount,
         status: OrderStatus.PENDING,
         items: userCart.items,
         deliveryType: data.deliveryType,
@@ -278,7 +246,7 @@ export async function createOrder(data: CheckoutFormValues) {
 
     // Обновляем количество товаров на складе (только для OFFLINE оплаты)
     if (data.paymentMethod === 'OFFLINE') {
-
+      
       updateProductStock(cartToken);
 
       await sendEmail(
@@ -292,7 +260,7 @@ export async function createOrder(data: CheckoutFormValues) {
     }
 
     const paymentData = await createPayment({
-      amount: order.totalAmount,
+      amount: totalAmount + data.deliveryPrice,
       orderId: order.id,
       cartToken: cartToken,
       description: 'Оплата заказа #' + order.id,
@@ -318,7 +286,7 @@ export async function createOrder(data: CheckoutFormValues) {
       'Скатерть-самобранка | Оплатите заказ #' + order.id,
       Promise.resolve(PayOrderTemplate({
         orderId: order.id,
-        totalPrice: order.totalAmount + data.deliveryPrice,
+        totalPrice: totalAmount + data.deliveryPrice,
         paymentUrl
       })),
     );
@@ -415,7 +383,7 @@ export type FeedbackWithUser = {
 export async function createFeedback(feedbackText: string) {
   try {
     const session = await getUserSession();
-    
+
     if (!session?.id) {
       throw new Error('Для отправки отзыва необходимо авторизоваться');
     }

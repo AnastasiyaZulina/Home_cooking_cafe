@@ -234,7 +234,7 @@ export const MyOrders = ({ orders }: MyOrdersProps) => {
                 )}
                 <div className="flex justify-between font-bold text-lg pt-2">
                   <span>Итого:</span>
-                  <span>{order.totalAmount} ₽</span>
+                  <span>{totalItemsAmount+order.deliveryCost} ₽</span>
                 </div>
               </div>
 
