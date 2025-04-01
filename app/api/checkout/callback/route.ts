@@ -3,7 +3,6 @@ import { updateProductStock } from "@/app/actions";
 import { prisma } from "@/prisma/prisma-client";
 import { OrderSuccessTemplate } from "@/shared/components/shared/email-templates/order-success";
 import { sendEmail } from "@/shared/lib";
-import { CartItemDTO } from "@/shared/services/dto/cart.dto";
 import { OrderStatus } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -17,10 +16,9 @@ export async function POST(req: NextRequest) {
         }
 
         const order = await prisma.order.findFirst({
-            where: {
-                id: Number(body.object.metadata.order_id),
-            },
-        });
+            where: { id: Number(body.object.metadata.order_id) },
+            include: { items: true }, // Включаем связанные OrderItem
+          });
 
         if (!order) {
             return NextResponse.json({ error: 'Order not found' });
@@ -37,11 +35,19 @@ export async function POST(req: NextRequest) {
             },
         });
 
-        const items = order?.items as unknown as CartItemDTO[];
+        const items = order?.items || [];
         
         const html = Promise.resolve(OrderSuccessTemplate({
             orderId: order.id,
-            items,
+            items: items.map((item: { 
+              productName: string; 
+              productPrice: number; 
+              productQuantity: number 
+            }) => ({
+              productName: item.productName,
+              productPrice: item.productPrice,
+              productQuantity: item.productQuantity,
+            })),
         }));
 
         if (isSucceeded) { 

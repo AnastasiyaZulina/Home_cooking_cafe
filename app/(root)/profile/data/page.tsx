@@ -16,6 +16,9 @@ export default async function ProfileDataPage() {
     },
     include: {
       orders: {
+        include: {
+          items: true // Добавляем включение элементов заказа
+        },
         orderBy: {
           createdAt: 'desc',
         },

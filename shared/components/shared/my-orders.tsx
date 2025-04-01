@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { OrderStatus, DeliveryType, Order, PaymentMethod } from '@prisma/client';
+import { OrderStatus, DeliveryType, Order, PaymentMethod, OrderItem } from '@prisma/client';
 import { cn } from '@/shared/lib/utils';
 import { GrayBlock } from './gray-block';
 import { Button } from '../ui';
@@ -9,7 +9,9 @@ import toast from 'react-hot-toast';
 import { useCart } from '@/hooks';
 
 interface MyOrdersProps {
-  orders: Order[];
+  orders: (Order & {
+    items: OrderItem[];
+  })[];
 }
 
 export const MyOrders = ({ orders }: MyOrdersProps) => {
@@ -35,43 +37,64 @@ export const MyOrders = ({ orders }: MyOrdersProps) => {
     }
   };
 
-  const handleRepeatOrder = async (orderId: number, items: any[]) => {
+  const handleRepeatOrder = async (orderId: number, items: OrderItem[]) => {
     setIsReordering(prev => ({ ...prev, [orderId]: true }));
-    
+  
     const toastId = toast.loading('Добавляем товары в корзину...');
     let successCount = 0;
     const failedProducts: string[] = [];
+    const adjustedProducts: {name: string, originalQty: number, newQty: number}[] = [];
   
     try {
       for (const item of items) {
-        const productId = item.product?.id || item.productId;
-        const productName = item.product?.name || item.name;
-        
         try {
           // Проверяем доступность товара
-          const checkResponse = await fetch(`/api/products/${productId}`);
+          const checkResponse = await fetch(`/api/products/${item.productId}`);
           if (!checkResponse.ok) {
-            failedProducts.push(productName);
+            failedProducts.push(item.productName);
             continue;
           }
   
           const product = await checkResponse.json();
           if (!product.isAvailable) {
-            failedProducts.push(productName);
+            failedProducts.push(item.productName);
             continue;
           }
   
-          // Используем метод из стора вместо прямого fetch
+          // Проверяем доступное количество
+          const availableQuantity = product.stockQuantity;
+          const quantityToAdd = Math.min(item.productQuantity, availableQuantity);
+  
+          // Если количество пришлось уменьшить, добавляем в список скорректированных
+          if (quantityToAdd < item.productQuantity) {
+            adjustedProducts.push({
+              name: item.productName,
+              originalQty: item.productQuantity,
+              newQty: quantityToAdd
+            });
+          }
+  
+          // Добавляем товар с учетом доступного количества
           await addCartItem({
-            productId: product.id,
-            quantity: item.quantity || 1
+            productId: item.productId,
+            quantity: quantityToAdd
           });
-          
+  
           successCount++;
         } catch (error) {
-          console.error(`Error adding product ${productId} to cart:`, error);
-          failedProducts.push(productName);
+          console.error(`Error adding product ${item.productId} to cart:`, error);
+          failedProducts.push(item.productName);
         }
+      }
+  
+      // Показываем уведомления о скорректированных количествах
+      if (adjustedProducts.length > 0) {
+        adjustedProducts.forEach(adj => {
+          toast.error(
+            `Количество "${adj.name}" уменьшено с ${adj.originalQty} до ${adj.newQty} (максимально доступное)`,
+            { id: `adjusted-${adj.name}`, duration: 5000 }
+          );
+        });
       }
   
       // Формируем финальное уведомление
@@ -129,25 +152,13 @@ export const MyOrders = ({ orders }: MyOrdersProps) => {
     });
   };
 
-  const parseOrderItems = (items: any) => {
-    try {
-      if (typeof items === 'string') {
-        return JSON.parse(items);
-      }
-      return items || [];
-    } catch (e) {
-      console.error('Error parsing order items', e);
-      return [];
-    }
-  };
-
   return (
 
     <div className="space-y-4">
       {orders.map((order) => {
-        const items = parseOrderItems(order.items);
+        const items = order.items;
         const totalItemsAmount = items.reduce(
-          (sum: number, item: any) => sum + (item.product?.price || item.price || 0) * (item.quantity || 1),
+          (sum: number, item: OrderItem) => sum + item.productPrice * item.productQuantity,
           0
         );
 
@@ -197,11 +208,11 @@ export const MyOrders = ({ orders }: MyOrdersProps) => {
               <div className="border-t border-gray-100 pt-3">
                 <h4 className="font-medium mb-2">Состав заказа:</h4>
                 <ul className="space-y-2">
-                  {items.map((item: any, index: number) => (
+                  {items.map((item: OrderItem, index: number) => (
                     <li key={index} className="flex justify-between">
-                      <span>{item.product?.name || item.name}</span>
+                      <span>{item.productName}</span>
                       <span>
-                        {item.product?.price || item.price} ₽ × {item.quantity} шт.
+                        {item.productPrice} ₽ × {item.productQuantity} шт.
                       </span>
                     </li>
                   ))}
@@ -234,7 +245,7 @@ export const MyOrders = ({ orders }: MyOrdersProps) => {
                 )}
                 <div className="flex justify-between font-bold text-lg pt-2">
                   <span>Итого:</span>
-                  <span>{totalItemsAmount+order.deliveryCost} ₽</span>
+                  <span>{totalItemsAmount + (order.deliveryCost || 0)} ₽</span>
                 </div>
               </div>
 

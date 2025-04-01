@@ -21,63 +21,63 @@ import { CHECKOUT_CONSTANTS } from '@/shared/constants';
 import { DeliveryTimePicker, generateTimeSlots } from "@/shared/components/shared/delivery-time-picker";
 
 export default function CheckoutPage() {
-    const { items, loading } = useCart();
+    const { items, loading, fetchCartItems } = useCart();
     const router = useRouter();
     const [isInitialLoad, setIsInitialLoad] = React.useState(true);
 
     React.useEffect(() => {
         const validateAndNotify = async () => {
             try {
-                const { adjustments } = await validateCart();
-
-                if (adjustments.length > 0) {
-                    // Группируем изменения по типу
-                    const removedItems = adjustments.filter(a => a.type === 'removed');
-                    const reducedItems = adjustments.filter(a => a.type === 'reduced');
-
-                    // Уведомление об удаленных товарах
-                    if (removedItems.length > 0) {
-                        const productNames = removedItems.map(i => i.productName).join(', ');
-                        toast(
-                            <div className="flex items-start">
-                                <span>
-                                    ⚠️Некоторые товары закончились и были удалены из корзины: <strong>{productNames}</strong>
-                                </span>
-                            </div>,
-                            { duration: 5000 }
-                        );
-                    }
-
-                    // Уведомления об уменьшенных количествах
-                    reducedItems.forEach(item => {
-                        toast(
-                            <div className="flex items-start">
-                                <span>
-                                    ⚠️Количество <strong>{item.productName}</strong> уменьшено до {item.newQuantity} (максимально доступное)
-                                </span>
-                            </div>,
-                            { duration: 5000 }
-                        );
-                    });
-
-                    // Обновляем данные корзины после изменений
-                    router.refresh();
+              const { adjustments } = await validateCart();
+          
+              if (adjustments.length > 0) {
+                // Группируем изменения по типу
+                const removedItems = adjustments.filter(a => a.type === 'removed');
+                const reducedItems = adjustments.filter(a => a.type === 'reduced');
+          
+                // Уведомление об удаленных товарах
+                if (removedItems.length > 0) {
+                  const productNames = removedItems.map(i => i.productName).join(', ');
+                  toast(
+                    <div className="flex items-start">
+                      <span>
+                        ⚠️Некоторые товары закончились и были удалены из корзины: <strong>{productNames}</strong>
+                      </span>
+                    </div>,
+                    { duration: 5000 }
+                  );
                 }
+          
+                // Уведомления об уменьшенных количествах
+                reducedItems.forEach(item => {
+                  toast(
+                    <div className="flex items-start">
+                      <span>
+                        ⚠️Количество <strong>{item.productName}</strong> уменьшено до {item.newQuantity} (максимально доступное)
+                      </span>
+                    </div>,
+                    { duration: 5000 }
+                  );
+                });
+          
+                // Обновляем данные корзины после изменений
+                await fetchCartItems(); // Добавляем явный вызов fetchCartItems
+              }
             } catch (error) {
-                console.error('Cart validation failed:', error);
+              console.error('Cart validation failed:', error);
             } finally {
-                if (!items || items.length === 0) {
-                    router.push('/checkout-empty');
-                } else {
-                    setIsInitialLoad(false);
-                }
+              if (!items || items.length === 0) {
+                router.push('/checkout-empty');
+              } else {
+                setIsInitialLoad(false);
+              }
             }
         };
 
         if (!loading) {
             validateAndNotify();
         }
-    }, [items, loading, router]);
+    }, [items, loading, router, fetchCartItems]);
 
     if (isInitialLoad && loading) {
         return <div className="p-4 text-center">Загрузка...</div>;

@@ -25,6 +25,9 @@ export default async function ProfilePage() {
     where: {
       userId: user.id,
     },
+    include: {
+      items: true
+    },
     orderBy: {
       createdAt: 'desc',
     },

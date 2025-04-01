@@ -10,10 +10,13 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/shared/lib/utils';
 import { MyOrders } from './my-orders';
+import { OrderItem } from '@prisma/client';
 
 interface ProfileLayoutProps {
   user: User;
-  orders: Order[]; // Добавляем orders в пропсы
+  orders: (Order & {
+    items: OrderItem[];
+  })[];
 }
 
 export const ProfileLayout: React.FC<ProfileLayoutProps> = ({ user, orders }) => {

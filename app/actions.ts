@@ -235,13 +235,22 @@ export async function createOrder(data: CheckoutFormValues) {
         address: data.deliveryType === 'DELIVERY' ? data.address : null,
         comment: data.comment || null,
         status: OrderStatus.PENDING,
-        items: userCart.items,
         deliveryType: data.deliveryType,
         deliveryTime: data.deliveryTime,
         deliveryCost: data.deliveryPrice,
         paymentMethod: data.paymentMethod,
         bonusDelta: data.bonusDelta
       },
+    });
+
+    await prisma.orderItem.createMany({
+      data: userCart.items.map(item => ({
+        orderId: order.id,
+        productId: item.productId,
+        productName: item.product.name,
+        productPrice: item.product.price,
+        productQuantity: item.quantity,
+      })),
     });
 
     // Обновляем количество товаров на складе (только для OFFLINE оплаты)

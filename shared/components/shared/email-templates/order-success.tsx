@@ -1,21 +1,22 @@
-import { CartItemDTO } from "@/shared/services/dto/cart.dto";
-
+// Удаляем импорт CartItemDTO и изменяем интерфейс Props
 interface Props {
   orderId: number;
-  items: CartItemDTO[];
+  items: Array<{
+    productName: string;
+    productPrice: number;
+    productQuantity: number;
+  }>;
 }
 
-export const OrderSuccessTemplate: React.FC<Props> = ({
-  orderId,
-  items,
-}) => (
+export const OrderSuccessTemplate: React.FC<Props> = ({ orderId, items }) => (
   <div>
     <h1>Спасибо за покупку!</h1>
     <p>Ваш заказ #{orderId} оплачен. Список товаров:</p><hr/>
     <ul>
-      {items.map((item) => (
-        <li key={item.id}>{item.product.name} | {item.product.price}₽ x {item.quantity} шт.={' '}
-        {item.product.price*item.quantity}₽
+      {items.map((item, index) => (
+        <li key={index}>
+          {item.productName} | {item.productPrice}₽ x {item.productQuantity} шт.={' '}
+          {item.productPrice * item.productQuantity}₽
         </li>
       ))}
     </ul>
