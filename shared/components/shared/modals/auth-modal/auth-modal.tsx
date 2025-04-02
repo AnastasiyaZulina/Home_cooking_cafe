@@ -29,8 +29,8 @@ export const AuthModal: React.FC<Props> = ({ open, onClose }) => {
             ?.split('=')[1];
       
           const result = await signIn('google', { redirect: false });
-          if (result?.error) throw new Error(result.error);
-      
+          if (result?.error) {console.log('result?.error ошибка'); throw new Error(result.error);}
+            
           // Ждем обновления сессии
           const { update } = useSession();
           const session = await update();

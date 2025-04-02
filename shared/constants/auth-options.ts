@@ -93,7 +93,7 @@ export const authOptions: AuthOptions = {
                   return true;
                 }
         
-                await prisma.user.create({
+                const createdUser = await prisma.user.create({
                   data: {
                     email: user.email,
                     name: user.name || 'User #' + user.id,
@@ -103,7 +103,7 @@ export const authOptions: AuthOptions = {
                     providerId: account?.providerAccountId,
                   },
                 });
-                console.log('usercreated',findUser);
+                console.log('Created user:', createdUser);
                 return true;
             } catch (error) {
                 console.error('Error [SIGNIN]', error);
@@ -126,8 +126,11 @@ export const authOptions: AuthOptions = {
                 token.email = user.email;
                 token.name = user.name;
                 token.role = user.role;
+                console.log('Нашёлся! return token', token);
+                console.log('return token.id', token.id);
               }
-              console.log('return token', token);
+              console.log('Не нашелся... return token', token);
+              console.log('return token.id', token.id);
               return token;
             }
             console.log('Entering account?.provider not google');
