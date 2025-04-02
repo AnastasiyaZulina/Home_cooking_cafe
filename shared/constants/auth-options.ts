@@ -69,7 +69,8 @@ export const authOptions: AuthOptions = {
                 if (!user.email) {
                   return false;
                 }
-        
+                console.log('user id=', user.id);
+                console.log('signIn');
                 const findUser = await prisma.user.findFirst({
                   where: {
                     OR: [
@@ -78,7 +79,7 @@ export const authOptions: AuthOptions = {
                     ],
                   },
                 });
-        
+                console.log('findUser',findUser);
                 if (findUser) {
                   await prisma.user.update({
                     where: {
@@ -102,7 +103,7 @@ export const authOptions: AuthOptions = {
                     providerId: account?.providerAccountId,
                   },
                 });
-        
+                console.log('usercreated',findUser);
                 return true;
             } catch (error) {
                 console.error('Error [SIGNIN]', error);
@@ -110,19 +111,26 @@ export const authOptions: AuthOptions = {
             }
         },
         async jwt({ token, account }) {
-
+            console.log('Entering jwt');
             if (!token.email){
                 return token;
             }
 
             if (account?.provider === 'google') {
+              console.log('Entering account?.provider === google');
               const user = await prisma.user.findUnique({
-                where: { providerId: account.providerAccountId },
+                where: { providerId: account.providerAccountId }
               });
-              if (user) token.id = user.id;
+              if (user) {
+                token.id = user.id;
+                token.email = user.email;
+                token.name = user.name;
+                token.role = user.role;
+              }
+              console.log('return token', token);
               return token;
             }
-
+            console.log('Entering account?.provider not google');
             const findUser = await prisma.user.findFirst({
                 where: {
                     email: token.email,

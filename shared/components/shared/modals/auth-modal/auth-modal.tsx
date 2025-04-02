@@ -23,40 +23,34 @@ export const AuthModal: React.FC<Props> = ({ open, onClose }) => {
 
     const handleGoogleSignIn = async () => {
         try {
-            // Сохраняем токен корзины перед авторизацией
-            const cartToken = document.cookie
-                .split('; ')
-                .find(row => row.startsWith('cartToken='))
-                ?.split('=')[1];
-
-            console.log('cartToken:', cartToken);
-            // Выполняем авторизацию
-            const result = await signIn('google', {
-                redirect: false,
-            });
-
-            if (result?.error) throw new Error(result.error);
-
-            await new Promise(resolve => setTimeout(resolve, 10000));
-            const { update } = useSession();
-            const newSession = await update();
-
-            console.log('newSession?.user?.id',newSession?.user?.id);
-            // Выполняем слияние корзин
-            if (cartToken && newSession?.user?.id) {
-                await Api.cart.mergeCarts({ cartToken });
-                document.cookie = 'cartToken=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-            }
-
-            // Обновляем данные
-            await fetchCartItems();
+          const cartToken = document.cookie
+            .split('; ')
+            .find(row => row.startsWith('cartToken='))
+            ?.split('=')[1];
+      
+          const result = await signIn('google', { redirect: false });
+          if (result?.error) throw new Error(result.error);
+      
+          // Ждем обновления сессии
+          const { update } = useSession();
+          const session = await update();
+          
+          if (!session?.user?.id) {
+            throw new Error('User ID not found');
+          }
+      
+          if (cartToken) {
+            await Api.cart.mergeCarts({ cartToken });
+            document.cookie = 'cartToken=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+          }
+      
+          await fetchCartItems();
+          onClose();
         } catch (error) {
-            console.error('Google auth error:', error);
-            toast.error('Ошибка авторизации через Google');
-        } finally {
-            onClose();
+          console.error('Google auth error:', error);
+          toast.error('Ошибка авторизации через Google');
         }
-    };
+      };
 
     const handleSuccess = async () => {
         try {
