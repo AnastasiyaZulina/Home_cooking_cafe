@@ -3,10 +3,12 @@ import { getUserSession } from "@/shared/lib/get-user-session";
 import { NextRequest, NextResponse } from "next/server";
 
 // PATCH-роут
-export async function PATCH(req: NextRequest, { params }: { params: Promise<{ idParams: string }> }) {
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> } // Добавляем Promise
+) {
   try {
-    const { idParams } = await params;
-    const id = Number(idParams);
+    const { id } = await params;
     const user = await getUserSession();
     const token = req.cookies.get('cartToken')?.value;
     const data = await req.json();
@@ -74,10 +76,12 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   }
 }
 
-export async function DELETE(req: NextRequest, { params }: { params: Promise<{ idParams: string }>}) {
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> } // Добавляем Promise
+) {
   try {
-    const { idParams } = await params;
-    const id = Number(idParams);
+    const { id } = await params;
     const user = await getUserSession();
     const token = req.cookies.get('cartToken')?.value;
     const numericId = Number(id);
