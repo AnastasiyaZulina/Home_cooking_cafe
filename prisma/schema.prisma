@@ -24,7 +24,7 @@ model User {
   feedbacks        Feedback[]
 
   provider   String?
-  providerId String?
+  providerId String? @unique
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt

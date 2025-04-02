@@ -65,9 +65,7 @@ export const authOptions: AuthOptions = {
                 if (account?.provider === 'credentials') {
                   return true;
                 }
-        
-                console.log(user, account);
-        
+
                 if (!user.email) {
                   return false;
                 }
@@ -111,10 +109,18 @@ export const authOptions: AuthOptions = {
                 return false;
             }
         },
-        async jwt({ token }) {
+        async jwt({ token, account }) {
 
             if (!token.email){
                 return token;
+            }
+
+            if (account?.provider === 'google') {
+              const user = await prisma.user.findUnique({
+                where: { providerId: account.providerAccountId },
+              });
+              if (user) token.id = user.id;
+              return token;
             }
 
             const findUser = await prisma.user.findFirst({

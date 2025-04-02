@@ -4,7 +4,7 @@ import { Button } from "@/shared/components/ui";
 import { Dialog, DialogContent } from "@/shared/components/ui/dialog";
 import { DialogTitle } from "@/shared/components/ui/dialog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
-import { signIn } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 import React from "react";
 import { LoginForm } from "./forms/login-form";
 import { RegisterForm } from "./forms/register-form";
@@ -20,7 +20,7 @@ interface Props {
 export const AuthModal: React.FC<Props> = ({ open, onClose }) => {
     const [type, setType] = React.useState<'login' | 'register'>('login');
     const { fetchCartItems } = useCartStore();
-    
+
     const handleGoogleSignIn = async () => {
         try {
             // Сохраняем токен корзины перед авторизацией
@@ -38,15 +38,18 @@ export const AuthModal: React.FC<Props> = ({ open, onClose }) => {
             if (result?.error) throw new Error(result.error);
 
             await new Promise(resolve => setTimeout(resolve, 1000));
+            const { update } = useSession();
+            const newSession = await update();
 
+            console.log('newSession?.user?.id',newSession?.user?.id);
             // Выполняем слияние корзин
-            if (cartToken) {
+            if (cartToken && newSession?.user?.id) {
                 await Api.cart.mergeCarts({ cartToken });
                 document.cookie = 'cartToken=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
             }
 
             // Обновляем данные
-            await fetchCartItems();          
+            await fetchCartItems();
         } catch (error) {
             console.error('Google auth error:', error);
             toast.error('Ошибка авторизации через Google');
@@ -57,28 +60,28 @@ export const AuthModal: React.FC<Props> = ({ open, onClose }) => {
 
     const handleSuccess = async () => {
         try {
-          // Получаем текущий токен корзины
-          const cartToken = document.cookie
-            .split('; ')
-            .find(row => row.startsWith('cartToken='))
-            ?.split('=')[1];
-      
-          // Если есть токен - выполняем слияние
-          if (cartToken) {
-            await Api.cart.mergeCarts({ cartToken });
-            
-            // Очищаем токен
-            document.cookie = 'cartToken=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-          }
-      
-          // Обновляем данные
-          await fetchCartItems();
+            // Получаем текущий токен корзины
+            const cartToken = document.cookie
+                .split('; ')
+                .find(row => row.startsWith('cartToken='))
+                ?.split('=')[1];
+
+            // Если есть токен - выполняем слияние
+            if (cartToken) {
+                await Api.cart.mergeCarts({ cartToken });
+
+                // Очищаем токен
+                document.cookie = 'cartToken=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+            }
+
+            // Обновляем данные
+            await fetchCartItems();
         } catch (error) {
-          toast.error('Ошибка обновления корзины');
+            toast.error('Ошибка обновления корзины');
         } finally {
-          onClose();
+            onClose();
         }
-      };
+    };
 
     const onSwitchType = () => {
         setType(type === 'login' ? 'register' : 'login');
