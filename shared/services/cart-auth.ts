@@ -1,28 +1,56 @@
-import { prisma } from "@/prisma/prisma-client";
+// app/api/cart/merge/route.ts
+import { NextResponse } from 'next/server';
+import { prisma } from '@/prisma/prisma-client';
+import { getUserSession } from '@/shared/lib/get-user-session';
 
-export const handleCartOnAuth = async (userId: number, token?: string) => {
-    if (!token) return null;
-  
-    return prisma.$transaction(async (tx) => {
-      const guestCart = await tx.cart.findUnique({
-        where: { token },
-        include: { items: true }
-      });
-  
+export async function POST(req: Request) {
+  const user = await getUserSession();
+  const { cartToken } = await req.json();
+
+  if (!user?.id || !cartToken) {
+    return NextResponse.json(
+      { error: 'Неверные параметры' },
+      { status: 400 }
+    );
+  }
+
+  try {
+    const result = await prisma.$transaction(async (tx) => {
+      const [userCart, guestCart] = await Promise.all([
+        tx.cart.findUnique({ where: { userId: user.id } }),
+        tx.cart.findUnique({
+          where: { token: cartToken },
+          include: { items: true }
+        })
+      ]);
+
       if (!guestCart) return null;
-  
-      // Удаляем все существующие корзины пользователя
-      await tx.cart.deleteMany({ 
-        where: { userId } 
-      });
-      if (!userId) {console.log('services/cart-auth.ts, нет userId!'); return null; }
+
+      // Сценарий 1: Удаляем гостевую корзину
+      if (userCart) {
+        await tx.cartItem.deleteMany({ where: { cartId: guestCart.id } });
+        await tx.cart.delete({ where: { id: guestCart.id } });
+        return userCart;
+      }
+
+      // Сценарий 2: Привязываем корзину
       return tx.cart.update({
         where: { id: guestCart.id },
         data: {
-          userId,
+          userId: user.id,
           token: null
         },
         include: { items: true }
       });
     });
-  };
+
+    return NextResponse.json(result);
+
+  } catch (error) {
+    console.error('[CART_MERGE] Error:', error);
+    return NextResponse.json(
+      { error: 'Ошибка объединения корзин' },
+      { status: 500 }
+    );
+  }
+}

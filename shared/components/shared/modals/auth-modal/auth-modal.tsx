@@ -23,31 +23,24 @@ export const AuthModal: React.FC<Props> = ({ open, onClose }) => {
     
     const handleSuccess = async () => {
         try {
-          console.log('Auth success, checking cookies...');
+          // Получаем текущий токен корзины
           const cartToken = document.cookie
             .split('; ')
             .find(row => row.startsWith('cartToken='))
             ?.split('=')[1];
       
-          console.log('Cart token in auth modal:', cartToken);
-      
+          // Если есть токен - выполняем слияние
           if (cartToken) {
-            console.log('Attempting cart merge...');
             await Api.cart.mergeCarts({ cartToken });
-            console.log('Merge completed');
             
+            // Очищаем токен
             document.cookie = 'cartToken=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-            console.log('Cart token cleared');
           }
       
-          console.log('Refreshing cart data...');
+          // Обновляем данные
           await fetchCartItems();
-          
-          console.log('Reloading page...');
-          window.location.reload();
         } catch (error) {
-          console.error('Auth success handler error:', error);
-          toast.error('Ошибка обновления данных');
+          toast.error('Ошибка обновления корзины');
         } finally {
           onClose();
         }

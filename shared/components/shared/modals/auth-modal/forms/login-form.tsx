@@ -35,17 +35,15 @@ export const LoginForm: React.FC<Props> = ({ onClose }) => {
           icon: '❌',
         });
       }
-      await new Promise(resolve => setTimeout(resolve, 500));
-      // Получаем токен корзины ДО авторизации
+
       const cartToken = document.cookie
         .split('; ')
         .find(row => row.startsWith('cartToken='))
         ?.split('=')[1];
-        console.log('Cart token before merge:', cartToken);
+
         if (cartToken) {
           try {
-            const mergeResult = await Api.cart.mergeCarts({ cartToken });
-            console.log('Merge result:', mergeResult);
+            await Api.cart.mergeCarts({ cartToken });
             
             // Очищаем куки
             document.cookie = 'cartToken=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
@@ -56,8 +54,8 @@ export const LoginForm: React.FC<Props> = ({ onClose }) => {
           }
         }
     
-        // Принудительное обновление данных
-        window.location.href = '/';
+        await fetchCartItems();
+        onClose?.();
     } catch (error) {
       console.log('Error [LOGIN]', error);
       toast.error('Не удалось войти', {
