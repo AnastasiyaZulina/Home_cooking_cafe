@@ -21,6 +21,37 @@ export const AuthModal: React.FC<Props> = ({ open, onClose }) => {
     const [type, setType] = React.useState<'login' | 'register'>('login');
     const { fetchCartItems } = useCartStore();
     
+    const handleGoogleSignIn = async () => {
+        try {
+            // Сохраняем токен корзины перед авторизацией
+            const cartToken = document.cookie
+                .split('; ')
+                .find(row => row.startsWith('cartToken='))
+                ?.split('=')[1];
+
+            // Выполняем авторизацию
+            const result = await signIn('google', {
+                redirect: false,
+            });
+
+            if (result?.error) throw new Error(result.error);
+
+            // Выполняем слияние корзин
+            if (cartToken) {
+                await Api.cart.mergeCarts({ cartToken });
+                document.cookie = 'cartToken=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+            }
+
+            // Обновляем данные
+            await fetchCartItems();          
+        } catch (error) {
+            console.error('Google auth error:', error);
+            toast.error('Ошибка авторизации через Google');
+        } finally {
+            onClose();
+        }
+    };
+
     const handleSuccess = async () => {
         try {
           // Получаем текущий токен корзины
@@ -70,12 +101,7 @@ export const AuthModal: React.FC<Props> = ({ open, onClose }) => {
                 <div className="flex gap-2">
                     <Button
                         variant="secondary"
-                        onClick={() =>
-                            signIn('google', {
-                                callbackUrl: '/',
-                                redirect: true,
-                            })
-                        }
+                        onClick={handleGoogleSignIn}
                         type="button"
                         className="gap-2 h-12 p-2 flex-1">
                         <img
