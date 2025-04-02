@@ -37,7 +37,7 @@ export const AuthModal: React.FC<Props> = ({ open, onClose }) => {
 
             if (result?.error) throw new Error(result.error);
 
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            await new Promise(resolve => setTimeout(resolve, 10000));
             const { update } = useSession();
             const newSession = await update();
 
