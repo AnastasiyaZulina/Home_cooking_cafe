@@ -3,11 +3,12 @@ import { getUserSession } from "@/shared/lib/get-user-session";
 import { NextRequest, NextResponse } from "next/server";
 
 // PATCH-роут
-export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ idParams: string }> }) {
   try {
+    const { idParams } = await params;
+    const id = Number(idParams);
     const user = await getUserSession();
     const token = req.cookies.get('cartToken')?.value;
-    const { id } = params;
     const data = await req.json();
 
     // Получаем полную информацию о корзине
@@ -73,11 +74,12 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   }
 }
 
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ idParams: string }>}) {
   try {
+    const { idParams } = await params;
+    const id = Number(idParams);
     const user = await getUserSession();
     const token = req.cookies.get('cartToken')?.value;
-    const { id } = params;
     const numericId = Number(id);
 
     // Получаем элемент корзины с информацией о корзине

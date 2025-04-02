@@ -9,11 +9,7 @@ import { NextRequest, NextResponse } from "next/server";
 export async function POST(req: NextRequest) {
     try {
         const body = (await req.json()) as PaymentCallbackData;
-        const cartToken = String(body.object.metadata.cartToken);
-
-        if (!cartToken) {
-          throw new Error('Cart token not found');
-        }
+        const cartId = Number(body.object.metadata.cartId);
 
         const order = await prisma.order.findFirst({
             where: { id: Number(body.object.metadata.order_id) },
@@ -51,7 +47,7 @@ export async function POST(req: NextRequest) {
         }));
 
         if (isSucceeded) { 
-            await updateProductStock(cartToken);
+            await updateProductStock(cartId);
             await sendEmail(order.email, 'Скатерть-самобранка / Ваш заказ оплачен!', html);
         }
         else {

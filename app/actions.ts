@@ -20,17 +20,19 @@ export async function validateCart() {
   const cookieStore = cookies();
   const cartToken = (await cookieStore).get('cartToken')?.value;
 
-  if (!cartToken) return { adjustments: [] };
-
+  const session = await getUserSession();
   const userCart = await prisma.cart.findFirst({
     include: {
       items: {
-        include: {
-          product: true,
-        },
+        include: { product: true },
       },
     },
-    where: { token: cartToken },
+    where: {
+      OR: [
+        { userId: session?.id ? Number(session.id) : undefined },
+        { token: cartToken }
+      ]
+    },
   });
 
   if (!userCart || userCart.items.length === 0) {
@@ -83,19 +85,15 @@ export async function validateCart() {
   return { adjustments };
 }
 
-export async function updateProductStock(cartToken: string) {
-  const userCart = await prisma.cart.findFirst({
+export async function updateProductStock(cartId: number) {
+  const userCart = await prisma.cart.findUnique({
     include: {
       user: true,
       items: {
-        include: {
-          product: true,
-        },
+        include: { product: true },
       },
     },
-    where: {
-      token: cartToken,
-    },
+    where: { id: cartId },
   });
 
   /*Если корзина не найдена, возвращаем ошибку*/
@@ -142,10 +140,7 @@ export async function createOrder(data: CheckoutFormValues) {
   try {
     const cookieStore = cookies();
     const cartToken = (await cookieStore).get('cartToken')?.value;
-
-    if (!cartToken) {
-      throw new Error('Cart token not found');
-    }
+    
     const session = await getUserSession();
 
     if (data.bonusDelta !== 0 && !session) {
@@ -156,24 +151,23 @@ export async function createOrder(data: CheckoutFormValues) {
       throw new Error("Оплата при получении недоступна для доставки");
     }
 
-    /*Находим корзину по токену*/
     const userCart = await prisma.cart.findFirst({
       include: {
         user: true,
         items: {
-          include: {
-            product: true,
-          },
+          include: { product: true },
         },
       },
       where: {
-        token: cartToken,
+        OR: [
+          { userId: session?.id ? Number(session.id) : undefined },
+          { token: cartToken }
+        ]
       },
     });
 
-    /*Если корзина не найдена, возвращаем ошибку*/
     if (!userCart) {
-      throw new Error('Cart not found');
+      throw new Error('Корзина не найдена');
     }
 
     /*Если корзина пустая, возвращаем ошибку*/
@@ -255,7 +249,7 @@ export async function createOrder(data: CheckoutFormValues) {
     // Обновляем количество товаров на складе (только для OFFLINE оплаты)
     if (data.paymentMethod === 'OFFLINE') {
       
-      updateProductStock(cartToken);
+      updateProductStock(userCart.id);
 
       await sendEmail(
         data.email,
@@ -270,7 +264,7 @@ export async function createOrder(data: CheckoutFormValues) {
     const paymentData = await createPayment({
       amount: totalAmount + data.deliveryPrice,
       orderId: order.id,
-      cartToken: cartToken,
+      cartId: userCart.id,
       description: 'Оплата заказа #' + order.id,
     });
 

@@ -56,8 +56,8 @@ export const TopBar: React.FC<Props> = ({ categories, className }) => {
           </div>
           {!isHeaderVisible && isLargeScreen && (
             <div ref={buttonsRef} className="flex items-center gap-2 sm:gap-3 shrink-0">
-              <CartButton />
               <ProfileButton />
+              <CartButton />
             </div>
           )}
         </div>
