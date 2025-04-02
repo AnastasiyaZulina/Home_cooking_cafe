@@ -115,7 +115,7 @@ export const authOptions: AuthOptions = {
             if (!token.email){
                 return token;
             }
-
+/*
             if (account?.provider === 'google') {
               console.log('Entering account?.provider === google');
               const user = await prisma.user.findUnique({
@@ -133,7 +133,8 @@ export const authOptions: AuthOptions = {
               console.log('return token.id', token.id);
               return token;
             }
-            console.log('Entering account?.provider not google');
+            console.log('Entering account?.provider not google account?.provider:', account?.provider);
+            */
             const findUser = await prisma.user.findFirst({
                 where: {
                     email: token.email,
