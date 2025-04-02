@@ -228,7 +228,6 @@ export async function createOrder(data: CheckoutFormValues) {
     const order = await prisma.order.create({
       data: {
         userId: session?.id ? Number(session.id) : null,
-        token: cartToken,
         name: data.firstname,
         email: data.email,
         phone: data.phone,

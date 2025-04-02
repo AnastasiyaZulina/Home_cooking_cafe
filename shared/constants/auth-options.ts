@@ -124,7 +124,7 @@ export const authOptions: AuthOptions = {
             });
 
             if (findUser) {
-                token.id = String(findUser.id);
+                token.id = findUser.id;
                 token.email = findUser.email;
                 token.name = findUser.name;
                 token.role = findUser.role;

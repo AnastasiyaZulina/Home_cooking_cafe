@@ -7,8 +7,6 @@ import { Button } from '../ui';
 import { Loader2, Plus } from 'lucide-react';
 import { useCartStore } from '@/shared/store';
 import toast from 'react-hot-toast';
-import { CartButton } from './cart-button';
-import { CountButton } from './count-button';
 import { CountButtonProduct } from './count-button-product';
 
 interface CartItem {

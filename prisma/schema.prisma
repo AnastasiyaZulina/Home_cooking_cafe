@@ -59,8 +59,7 @@ model Cart {
 
   userId Int?  @unique
   user   User? @relation(fields: [userId], references: [id])
-
-  token String
+  token String? @unique
 
   items CartItem[]
 
@@ -90,7 +89,6 @@ model Order {
   user   User? @relation(fields: [userId], references: [id])
 
   items OrderItem[]
-  token String
 
   status      OrderStatus @default(PENDING)
   paymentId   String?

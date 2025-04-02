@@ -25,3 +25,15 @@ export const removeCartItem = async (id: number): Promise<CartDTO> => {
 
   return data;
 };
+
+export const mergeCarts =  async (data: { cartToken: string }) => {
+      console.log('Вызываем mergeCarts в cart.ts');
+      const response = await fetch('/api/cart/merge', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      });
+      return response.json();
+};
