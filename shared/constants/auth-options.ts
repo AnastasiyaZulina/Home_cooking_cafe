@@ -141,14 +141,14 @@ export const authOptions: AuthOptions = {
                     email: token.email,
                 },
             });
-
+            
             if (findUser) {
                 token.id = findUser.id;
                 token.email = findUser.email;
                 token.name = findUser.name;
                 token.role = findUser.role;
             }
-
+            console.log('findUser:', findUser);
             return token;
         },
         session({ session, token }) {
