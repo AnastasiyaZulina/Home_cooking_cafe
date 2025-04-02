@@ -29,12 +29,15 @@ export const AuthModal: React.FC<Props> = ({ open, onClose }) => {
                 .find(row => row.startsWith('cartToken='))
                 ?.split('=')[1];
 
+            console.log('cartToken:', cartToken);
             // Выполняем авторизацию
             const result = await signIn('google', {
                 redirect: false,
             });
 
             if (result?.error) throw new Error(result.error);
+
+            await new Promise(resolve => setTimeout(resolve, 1000));
 
             // Выполняем слияние корзин
             if (cartToken) {

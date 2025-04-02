@@ -4,9 +4,11 @@ import { prisma } from '@/prisma/prisma-client';
 import { getUserSession } from '@/shared/lib/get-user-session';
 
 export async function POST(req: Request) {
+  console.log('[MERGE] Starting merge process...');
   const user = await getUserSession();
   const { cartToken } = await req.json();
-
+  console.log('[MERGE] cartToken:', cartToken);
+  console.log('[MERGE] Session user ID:', user?.id);
   if (!user?.id || !cartToken) {
     return NextResponse.json(
       { error: 'Неверные параметры' },
@@ -15,6 +17,7 @@ export async function POST(req: Request) {
   }
 
   try {
+    console.log('[MERGE] Starting merge process...');
     const result = await prisma.$transaction(async (tx) => {
       const [userCart, guestCart] = await Promise.all([
         tx.cart.findUnique({ where: { userId: user.id } }),
@@ -43,6 +46,7 @@ export async function POST(req: Request) {
         include: { items: true }
       });
     });
+    console.log('[MERGE] Cart merged successfully');
     return NextResponse.json(result);
 
   } catch (error) {
