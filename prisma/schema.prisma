@@ -23,9 +23,6 @@ model User {
   verificationCode VerificationCode?
   feedbacks        Feedback[]
 
-  provider   String?
-  providerId String? @unique
-
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 }
