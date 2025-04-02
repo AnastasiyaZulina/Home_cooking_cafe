@@ -20,28 +20,40 @@ interface Props {
 export const AuthModal: React.FC<Props> = ({ open, onClose }) => {
     const [type, setType] = React.useState<'login' | 'register'>('login');
     const { fetchCartItems } = useCartStore();
-
     const handleGoogleSignIn = async () => {
         try {
+          // 1. Сохраняем cartToken в localStorage перед авторизацией
           const cartToken = document.cookie
             .split('; ')
             .find(row => row.startsWith('cartToken='))
             ?.split('=')[1];
-      
-          const result = await signIn('google', { redirect: false });
-          if (result?.error) {console.log('result?.error ошибка'); throw new Error(result.error);}
-            
-          // Ждем обновления сессии
-          const { update } = useSession();
-          const session = await update();
           
-          if (!session?.user?.id) {
-            throw new Error('User ID not found');
+          if (cartToken) {
+            localStorage.setItem('pendingCartMerge', cartToken);
           }
       
-          if (cartToken) {
-            await Api.cart.mergeCarts({ cartToken });
+          // 2. Выполняем вход
+          const result = await signIn('google', { callback: '/', redirect: false });
+          if (result?.error) throw new Error(result.error);
+      
+          // 3. Ожидаем обновления сессии с таймаутом
+          const { update } = useSession();
+          let session;
+          let attempts = 0;
+          
+          do {
+            session = await update();
+            attempts++;
+            await new Promise(resolve => setTimeout(resolve, 300));
+            console.log('ждём');
+          } while (!session?.user?.id && attempts < 5);
+      
+          // 4. Выполняем мерж корзин
+          const savedToken = localStorage.getItem('pendingCartMerge');
+          if (savedToken) {
+            await Api.cart.mergeCarts({ cartToken: savedToken });
             document.cookie = 'cartToken=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+            localStorage.removeItem('pendingCartMerge');
           }
       
           await fetchCartItems();
