@@ -86,14 +86,8 @@ export const AuthModal: React.FC<Props> = ({ open, onClose }) => {
                 <div className="flex gap-2">
                     <Button
                         variant="secondary"
-                        onClick={() =>
-                            {const res = signIn('google', {
-                                callbackUrl: '/',
-                                redirect: true,
-                            });
-                        if(!res) {console.log('ошибка авторизации через гугл', res); toast.error('ошибка авторизации через гугл');} else console.log('авторизация через гугл успешна', res);
-                        }
-                        }
+                        onClick={handleGoogleLogin}
+        
                         type="button"
                         className="gap-2 h-12 p-2 flex-1">
                         <img
