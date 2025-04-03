@@ -20,6 +20,22 @@ interface Props {
 export const AuthModal: React.FC<Props> = ({ open, onClose }) => {
     const [type, setType] = React.useState<'login' | 'register'>('login');
     const { fetchCartItems } = useCartStore();
+
+    const handleGoogleLogin = () => {
+        const cartToken = document.cookie
+            .split('; ')
+            .find(row => row.startsWith('cartToken='))
+            ?.split('=')[1];
+
+        if (cartToken) {
+            localStorage.setItem('pendingCartMerge', cartToken);
+        }
+
+        signIn('google', {
+            callbackUrl: '/',
+            redirect: true,
+        });
+    };
     
     const handleSuccess = async () => {
         try {
