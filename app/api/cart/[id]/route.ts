@@ -123,19 +123,6 @@ export async function DELETE(
         where: { id: numericId }
       });
 
-      // Проверяем оставшиеся элементы
-      const remainingItems = await tx.cartItem.count({
-        where: { cartId: cartItem.cartId }
-      });
-
-      // Если корзина пустая - удаляем её
-      if (remainingItems === 0) {
-        await tx.cart.delete({
-          where: { id: cartItem.cartId }
-        });
-        return null;
-      }
-
       // Возвращаем обновленную корзину
       return tx.cart.findUnique({
         where: { id: cartItem.cartId },
