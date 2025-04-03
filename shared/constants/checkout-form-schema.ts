@@ -4,7 +4,11 @@ import { z } from 'zod';
 export const CheckoutFormSchema = z.object({
     firstname: z.string().min(2, {message:'Имя должно содержать не менее двух символов'}),
     email: z.string().email({message:'Введите корректную почту'}),
-    phone: z.string().min(10, {message:'Введите корректный номер телефона'}),
+    phone: z
+        .string()
+        .refine((val) => /^\+7\d{10}$/.test(val), {
+            message: 'Введите корректный номер телефона',
+        }),
     address: z.string().optional(),
     comment: z.string().optional(),
     deliveryType: z.nativeEnum(DeliveryType),
