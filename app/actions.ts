@@ -318,7 +318,7 @@ export async function updateUserInfo(data: {
 
   if (!user) throw new Error('Пользователь не найден');
 
-  const updateData: any = {
+  const updateData: Prisma.UserUpdateInput = {
     name: data.name,
     phone: data.phone,
   };
