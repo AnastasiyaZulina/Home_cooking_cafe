@@ -60,8 +60,7 @@ export default function CheckoutPage() {
                   );
                 });
           
-                // Обновляем данные корзины после изменений
-                await fetchCartItems(); // Добавляем явный вызов fetchCartItems
+                await fetchCartItems();
               }
             } catch (error) {
               console.error('Cart validation failed:', error);
@@ -103,6 +102,7 @@ function CheckoutContent() {
         defaultValues: {
             email: '',
             firstname: '',
+            phone: '',
             address: '',
             comment: '',
             deliveryType: 'DELIVERY' as DeliveryType,
@@ -118,6 +118,7 @@ function CheckoutContent() {
 
             form.setValue('firstname', firstName);
             form.setValue('email', data.email);
+            form.setValue('phone', data.phone || '');
         }
 
         if (session) {

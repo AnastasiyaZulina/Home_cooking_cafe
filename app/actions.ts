@@ -312,17 +312,29 @@ export async function updateUserInfo(body: Prisma.UserUpdateInput) {
       where: {
         id: Number(currentUser.id),
       },
-    })
+    });
+
+    if (!findUser) {
+      throw new Error('Пользователь не существует');
+    }
+
+    const updateData: Prisma.UserUpdateInput = {
+      name: body.name,
+      phone: body.phone,
+    };
+
+    // Обновляем пароль только для пользователей без провайдера
+    if (!findUser.provider) {
+      if (body.password) {
+        updateData.password = hashSync(body.password as string, 10);
+      }
+    }
 
     await prisma.user.update({
       where: {
         id: Number(currentUser.id),
       },
-      data: {
-        name: body.name,
-        email: body.email,
-        password: body.password ? hashSync(body.password as string, 10) : findUser?.password,
-      },
+      data: updateData,
     });
   } catch (error) {
     console.log('Error [UPDATE_USER]', error);
@@ -333,6 +345,7 @@ export async function updateUserInfo(body: Prisma.UserUpdateInput) {
 
 export async function registerUser(body: Prisma.UserCreateInput) {
   try {
+    if (!body.password) throw new Error('Нет пароля');
     const user = await prisma.user.findFirst({
       where: {
         email: body.email,

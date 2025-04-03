@@ -19,6 +19,7 @@ export async function GET() {
       select: {
         name: true,
         email: true,
+        phone: true,
         password: false,
         bonusBalance: true
       },

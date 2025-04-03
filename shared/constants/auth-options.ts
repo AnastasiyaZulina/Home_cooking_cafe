@@ -30,21 +30,22 @@ export const authOptions: AuthOptions = {
             async authorize(credentials) {
                 if (!credentials) return null;
 
-                const values = {
-                    email: credentials.email,
-                };
-
                 const findUser = await prisma.user.findFirst({
-                    where: values,
-                });
-
-                if (!findUser) return null;
-
-                const isPasswordValid = await compare(credentials.password, findUser.password);
-
-                if (!isPasswordValid) return null;
-
-                if (!findUser.verified) return null;
+                    where: {
+                      email: credentials.email,
+                    },
+                  });
+                
+                  // Добавляем проверку на наличие пользователя и пароля
+                  if (!findUser || !findUser.password) return null;
+                
+                  const isPasswordValid = await compare(
+                    credentials.password,
+                    findUser.password
+                  );
+                
+                  if (!isPasswordValid) return null;
+                  if (!findUser.verified) return null;
 
                 return {
                     id: findUser.id,
@@ -94,11 +95,11 @@ export const authOptions: AuthOptions = {
                   return true;
                 }
         
-                const googleUser = await prisma.user.create({
+                await prisma.user.create({
                   data: {
                     email: user.email,
                     name: user.name || 'User #' + user.id,
-                    password: hashSync(user.id.toString(), 10), //TODO: продумать, лучше сделать так, чтобы пароль был не нужен
+                    password: null,
                     verified: new Date(),
                     provider: account?.provider,
                     providerId: account?.providerAccountId,
