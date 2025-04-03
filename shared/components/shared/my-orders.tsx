@@ -7,6 +7,7 @@ import { GrayBlock } from './gray-block';
 import { Button } from '../ui';
 import toast from 'react-hot-toast';
 import { useCart } from '@/hooks';
+import { Title } from './title';
 
 interface MyOrdersProps {
   orders: (Order & {
@@ -153,8 +154,8 @@ export const MyOrders = ({ orders }: MyOrdersProps) => {
   };
 
   return (
-
     <div className="space-y-4">
+      <Title text="Мои заказы" size="md" className="font-bold text-center mb-2" />
       {orders.map((order) => {
         const items = order.items;
         const totalItemsAmount = items.reduce(

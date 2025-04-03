@@ -13,13 +13,49 @@ export const formLoginSchema = z.object({
 });
 
 export const formRegisterSchema = formLoginSchema.merge(z.object({
+    name: z.string().min(2, 'Введите имя'),
+    phone: z.string()
+      .regex(/^$|^\+7\d{10}$/, "Формат: +7XXXXXXXXXX") // Разрешаем пустую строку или корректный номер
+      .optional(),
+    confirmPassword: passwordSchema,
+  }));
+  
+  export const formUpdateUserWithPasswordSchema = z.object({
+    name: z.string().min(2, 'Введите имя'),
+    phone: z.string()
+      .regex(/^$|^\+7\d{10}$/, "Формат: +7XXXXXXXXXX")
+      .optional(),
+    currentPassword: z.string().min(1, 'Текущий пароль обязателен'), // Обязательное поле
+    newPassword: z.string().optional(),
+    confirmPassword: z.string().optional(),
+  }).refine(data => {
+    if (data.newPassword) {
+      return data.newPassword === data.confirmPassword;
+    }
+    return true;
+  }, {
+    message: "Пароли не совпадают",
+    path: ["confirmPassword"],
+  });
+  
+export const formUpdateGoogleUserSchema = z.object({
   name: z.string().min(2, 'Введите имя'),
-  phone: z.string().optional(),
-  confirmPassword: passwordSchema,
-})).refine(data => data.password === data.confirmPassword, {
-  message: 'Пароли не совпадают',
-  path: ['confirmPassword'],
-});
-
+  phone: z.string()
+    .regex(/^$|^\+7\d{10}$/, "Формат: +7XXXXXXXXXX")
+    .optional(),
+  newPassword: z.string().min(1, 'Новый пароль обязателен'), // Обязательное поле
+  confirmPassword: z.string().min(1, 'Подтверждение пароля обязательно'),
+  }).refine(data => {
+    if (data.newPassword) {
+      return data.newPassword === data.confirmPassword;
+    }
+    return true;
+  }, {
+    message: "Пароли не совпадают",
+    path: ["confirmPassword"],
+  });
+  
+export type TFormUpdateUserWithPasswordValues = z.infer<typeof formUpdateUserWithPasswordSchema>;
 export type TFormLoginValues = z.infer<typeof formLoginSchema>;
 export type TFormRegisterValues = z.infer<typeof formRegisterSchema>;
+export type TFormUpdateGoogleValues = z.infer<typeof formUpdateGoogleUserSchema>;

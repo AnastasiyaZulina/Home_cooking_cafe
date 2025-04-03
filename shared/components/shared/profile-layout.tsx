@@ -23,13 +23,7 @@ export const ProfileLayout: React.FC<ProfileLayoutProps> = ({ user, orders }) =>
   const pathname = usePathname();
 
   return (
-    <Container className="my-6 md:my-10 px-4">
-      <Title 
-        text={pathname === '/profile/data' ? 'Личные данные' : 'Мои заказы'} 
-        size="md" 
-        className="font-bold mb-6 md:mb-8" 
-      />
-
+    <Container className="my-2 md:my-5 px-4">
       <div className="flex flex-col md:flex-row gap-6 md:gap-10">
         {/* Боковое меню */}
         <div className="hidden md:flex flex-col w-64 gap-2">

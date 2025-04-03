@@ -7,6 +7,9 @@ import { createPayment, sendEmail } from '@/shared/lib';
 import { hashSync } from 'bcrypt';
 import { getUserSession } from '@/shared/lib/get-user-session';
 import { OrderCreatedTemplate, PayOrderTemplate, VerificationUserTemplate } from '@/shared/components';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/shared/constants/auth-options';
+import * as bcrypt from 'bcrypt';
 
 async function clearCart(cartId: number) {
   await prisma.cartItem.deleteMany({
@@ -300,46 +303,46 @@ export async function createOrder(data: CheckoutFormValues) {
   }
 }
 
-export async function updateUserInfo(body: Prisma.UserUpdateInput) {
-  try {
-    const currentUser = await getUserSession();
+export async function updateUserInfo(data: {
+  name: string;
+  phone?: string | null;
+  password?: string;
+  currentPassword?: string;
+}) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.email) throw new Error('Не авторизован');
 
-    if (!currentUser) {
-      throw new Error('Пользователь не найден');
+  const user = await prisma.user.findUnique({
+    where: { email: session.user.email },
+  });
+
+  if (!user) throw new Error('Пользователь не найден');
+
+  const updateData: any = {
+    name: data.name,
+    phone: data.phone,
+  };
+
+  // Если у пользователя есть пароль, проверяем текущий
+  if (user.password) {
+    if (!data.currentPassword) {
+      throw new Error('Текущий пароль обязателен для внесения изменений');
     }
-
-    const findUser = await prisma.user.findFirst({
-      where: {
-        id: Number(currentUser.id),
-      },
-    });
-
-    if (!findUser) {
-      throw new Error('Пользователь не существует');
+    const isValid = await bcrypt.compare(data.currentPassword, user.password);
+    if (!isValid) {
+      throw new Error('Неверный текущий пароль');
     }
-
-    const updateData: Prisma.UserUpdateInput = {
-      name: body.name,
-      phone: body.phone,
-    };
-
-    // Обновляем пароль только для пользователей без провайдера
-    if (!findUser.provider) {
-      if (body.password) {
-        updateData.password = hashSync(body.password as string, 10);
-      }
-    }
-
-    await prisma.user.update({
-      where: {
-        id: Number(currentUser.id),
-      },
-      data: updateData,
-    });
-  } catch (error) {
-    console.log('Error [UPDATE_USER]', error);
-    throw error;
   }
+
+  // Устанавливаем новый пароль (для OAuth или смены пароля)
+  if (data.password) {
+    updateData.password = hashSync(data.password, 10);
+  }
+
+  return await prisma.user.update({
+    where: { id: user.id },
+    data: updateData,
+  });
 }
 
 
