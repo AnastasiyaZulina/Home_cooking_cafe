@@ -1,10 +1,26 @@
+import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { prisma } from "@/prisma/prisma-client";
 import { compare, hashSync } from "bcrypt";
+import { UserRole } from "@prisma/client";
+import { error } from "console";
 import { AuthOptions } from "next-auth";
 
 export const authOptions: AuthOptions = {
     providers: [
+        GoogleProvider({
+            clientId: process.env.GOOGLE_CLIENT_ID || '',
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
+            profile(profile) {
+                return {
+                    id: profile.sub,
+                    name: profile.name || profile.login,
+                    email: profile.email,
+                    image: profile.avatar_url,
+                    role: 'USER' as UserRole,
+                };
+            },
+        }),
         CredentialsProvider({
             name: 'Credentials',
             credentials: {
@@ -44,23 +60,78 @@ export const authOptions: AuthOptions = {
         strategy: 'jwt',
     },
     callbacks: {
-        async jwt({ token}) {
+        async signIn({ user, account }) {
+            try {
+                if (account?.provider === 'credentials') {
+                  return true;
+                }
+        
+                console.log(user, account);
+        
+                if (!user.email) {
+                  return false;
+                }
+        
+                const findUser = await prisma.user.findFirst({
+                  where: {
+                    OR: [
+                      { provider: account?.provider, providerId: account?.providerAccountId },
+                      { email: user.email },
+                    ],
+                  },
+                });
+        
+                if (findUser) {
+                  await prisma.user.update({
+                    where: {
+                      id: findUser.id,
+                    },
+                    data: {
+                      provider: account?.provider,
+                      providerId: account?.providerAccountId,
+                    },
+                  });
+                  return true;
+                }
+        
+                const googleUser = await prisma.user.create({
+                  data: {
+                    email: user.email,
+                    name: user.name || 'User #' + user.id,
+                    password: hashSync(user.id.toString(), 10), //TODO: продумать, лучше сделать так, чтобы пароль был не нужен
+                    verified: new Date(),
+                    provider: account?.provider,
+                    providerId: account?.providerAccountId,
+                  },
+                });
+
+                console.log('авторизация googleUser=', googleUser);
+        
+                return true;
+            } catch (error) {
+                console.error('Error [SIGNIN]', error);
+                return false;
+            }
+        },
+        async jwt({ token }) {
+
             if (!token.email){
                 return token;
             }
-            
+
             const findUser = await prisma.user.findFirst({
                 where: {
                     email: token.email,
                 },
             });
-            
+
             if (findUser) {
                 token.id = findUser.id;
                 token.email = findUser.email;
                 token.name = findUser.name;
                 token.role = findUser.role;
             }
+            console.log('findUser in jwt', findUser);
             return token;
         },
         session({ session, token }) {
