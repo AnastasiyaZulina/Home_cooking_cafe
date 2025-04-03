@@ -8,8 +8,6 @@ import { signIn } from "next-auth/react";
 import React from "react";
 import { LoginForm } from "./forms/login-form";
 import { RegisterForm } from "./forms/register-form";
-import { useCartStore } from "@/shared/store";
-import { Api } from "@/shared/services/api-clients";
 import toast from "react-hot-toast";
 
 interface Props {
@@ -19,7 +17,6 @@ interface Props {
 
 export const AuthModal: React.FC<Props> = ({ open, onClose }) => {
     const [type, setType] = React.useState<'login' | 'register'>('login');
-    const { fetchCartItems } = useCartStore();
 
     const handleGoogleLogin = () => {
         const cartToken = document.cookie
@@ -44,17 +41,11 @@ export const AuthModal: React.FC<Props> = ({ open, onClose }) => {
             .split('; ')
             .find(row => row.startsWith('cartToken='))
             ?.split('=')[1];
-      
-          // Если есть токен - выполняем слияние
-          if (cartToken) {
-            await Api.cart.mergeCarts({ cartToken });
-            
-            // Очищаем токен
-            document.cookie = 'cartToken=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-          }
-      
-          // Обновляем данные
-          await fetchCartItems();
+
+            if (cartToken) {
+                localStorage.setItem('pendingCartMerge', cartToken);
+            }
+          
         } catch (error) {
           toast.error('Ошибка обновления корзины');
         } finally {

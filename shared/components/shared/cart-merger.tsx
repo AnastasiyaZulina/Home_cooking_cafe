@@ -10,6 +10,13 @@ export const CartMerger = () => {
 
     useEffect(() => {
         const mergeCarts = async () => {
+            const isNewRegistration = localStorage.getItem('isNewRegistration');
+
+            if (isNewRegistration) {
+                localStorage.removeItem('isNewRegistration');
+                return;
+              }
+              
             const pendingCartToken = localStorage.getItem('pendingCartMerge');
             const currentCartToken = document.cookie
                 .split('; ')

@@ -4,11 +4,8 @@ import { prisma } from '@/prisma/prisma-client';
 import { getUserSession } from '@/shared/lib/get-user-session';
 
 export async function POST(req: Request) {
-  console.log('[MERGE] Starting merge process...');
   const user = await getUserSession();
   const { cartToken } = await req.json();
-  console.log('[MERGE] cartToken:', cartToken);
-  console.log('[MERGE] Session user ID:', user?.id);
   if (!user?.id || !cartToken) {
     return NextResponse.json(
       { error: 'Неверные параметры' },
@@ -17,7 +14,6 @@ export async function POST(req: Request) {
   }
 
   try {
-    console.log('[MERGE] Starting merge process...');
     const result = await prisma.$transaction(async (tx) => {
       const [userCart, guestCart] = await Promise.all([
         tx.cart.findUnique({ where: { userId: user.id } }),
@@ -30,9 +26,24 @@ export async function POST(req: Request) {
       if (!guestCart) return null;
 
       // Сценарий 1: Удаляем гостевую корзину
+      
       if (userCart) {
-        await tx.cartItem.deleteMany({ where: { cartId: guestCart.id } });
-        await tx.cart.delete({ where: { id: guestCart.id } });
+        // Удаляем элементы гостевой корзины
+        await tx.cartItem.deleteMany({ 
+          where: { cartId: guestCart.id } 
+        });
+      
+        // Проверяем существование корзины перед удалением
+        const existingCart = await tx.cart.findUnique({
+          where: { id: guestCart.id }
+        });
+      
+        if (existingCart) {
+          await tx.cart.delete({ 
+            where: { id: guestCart.id } 
+          });
+        }
+      
         return userCart;
       }
 

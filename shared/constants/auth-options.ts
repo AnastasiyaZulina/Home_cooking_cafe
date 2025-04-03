@@ -104,8 +104,6 @@ export const authOptions: AuthOptions = {
                     providerId: account?.providerAccountId,
                   },
                 });
-
-                console.log('авторизация googleUser=', googleUser);
         
                 return true;
             } catch (error) {
@@ -131,7 +129,6 @@ export const authOptions: AuthOptions = {
                 token.name = findUser.name;
                 token.role = findUser.role;
             }
-            console.log('findUser in jwt', findUser);
             return token;
         },
         session({ session, token }) {

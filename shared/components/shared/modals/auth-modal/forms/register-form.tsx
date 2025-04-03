@@ -35,7 +35,7 @@ export const RegisterForm: React.FC<Props> = ({ onClose, onClickLogin }) => {
       toast.error('Регистрация успешна 📝. Подтвердите свою почту', {
         icon: '✅',
       });
-
+      localStorage.setItem('isNewRegistration', 'true');
       onClose?.();
     } catch (error) {
       return toast.error('Неверный E-Mail или пароль', {
@@ -43,8 +43,6 @@ export const RegisterForm: React.FC<Props> = ({ onClose, onClickLogin }) => {
       });
     }
   };
-
-  console.log(form.formState);
 
   return (
     <FormProvider {...form}>
