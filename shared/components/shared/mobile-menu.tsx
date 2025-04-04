@@ -23,30 +23,71 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, onSignI
     return (
         <div className="fixed inset-0 bg-white z-50 min-h-screen">
             <div className="flex flex-col h-full">
-                {/* Верхняя часть с кнопкой назад и логотипом */}
-                <div className="border-b p-4 relative">
-                    <div className="flex items-center gap-4">
-                        <Link href="/" className="flex items-center gap-x-4" onClick={onClose}>
+                {(session?.user.role === "ADMIN") ? (
+                    <div className="border-b p-4 relative">
+                    <div className="relative flex items-center gap-4">
+                        <Link href="/" title="На главную" className="flex flex-col items-center gap-y-1 sm:gap-y-2">
                             <Image
                                 src="/logobig.png"
                                 alt="Logo"
-                                width={48}
-                                height={48}
-                                className="w-12 h-12"
+                                width={55}
+                                height={55}
+                                className="w-10 h-10 sm:w-12 sm:h-12"
                             />
-                            <div>
-                                <h1 className="text-[16px] lg:text-xl uppercase font-black">Скатерь-самобранка</h1>
-                                <p className="text-sm text-gray-400 leading-3">по-домашнему вкусно!</p>
-                            </div>
+                            <h1 className="text-[14px] uppercase font-black text-center">
+                                Скатерть-<br />самобранка
+                            </h1>
                         </Link>
+
+                        <Link
+                            href="/admin"
+                            className="flex flex-col items-center gap-y-1 sm:gap-y-2 ml-25 sm:ml-0"
+                            title="Панель управления"
+                        >
+                            <Image
+                                src="/dashboard.png"
+                                alt="Dashboard"
+                                width={60}
+                                height={60}
+                                className="w-10 h-10 sm:w-12 sm:h-12"
+                            />
+                            <h1 className="text-[14px] uppercase font-black text-center">
+                                Админ-панель
+                            </h1>
+                        </Link>
+                        </div>
+                        <button
+                            onClick={onClose}
+                            className="absolute top-2 right-2 p-2"
+                        >
+                            <X className="w-8 h-8" />
+                        </button>
                     </div>
-                    <button
-                        onClick={onClose}
-                        className="absolute top-2 right-2 p-2"
-                    >
-                        <X className="w-8 h-8" />
-                    </button>
-                </div>
+                ) : (
+                    <div className="border-b p-4 relative">
+                        <div className="flex items-center gap-4">
+                            <Link href="/" className="flex items-center gap-x-4" onClick={onClose}>
+                                <Image
+                                    src="/logobig.png"
+                                    alt="Logo"
+                                    width={48}
+                                    height={48}
+                                    className="w-12 h-12"
+                                />
+                                <div>
+                                    <h1 className="text-[16px] lg:text-xl uppercase font-black">Скатерь-самобранка</h1>
+                                    <p className="text-sm text-gray-400 leading-3">по-домашнему вкусно!</p>
+                                </div>
+                            </Link>
+                        </div>
+                        <button
+                            onClick={onClose}
+                            className="absolute top-10 right-2 p-2"
+                        >
+                            <X className="w-8 h-8" />
+                        </button>
+                    </div>
+                )}
 
                 {/* Навигация */}
                 <div className="flex flex-col p-4 gap-6">
