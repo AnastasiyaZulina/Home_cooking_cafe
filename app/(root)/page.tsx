@@ -6,7 +6,7 @@ export default async function Home() {
     include: {
       products: {
         orderBy: {
-          id: 'desc',
+          id: 'asc',
         },
       },
     },

@@ -1,8 +1,11 @@
+// app/admin/(dashboard)/layout.tsx
 import { Header } from '@/shared/components/shared';
 import { getUserSession } from '@/shared/lib/get-user-session';
-import type { Metadata } from 'next';
+import { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { Suspense } from 'react';
+import { ReactQueryProvider } from '@/app/providers/react-query';
+import AdminContainer from '../components/admin-container';
 
 export const metadata: Metadata = {
   title: 'Скатерть-самобранка | Dashboard',
@@ -21,11 +24,15 @@ export default async function DashboardLayout({
   }
 
   return (
-    <main className='min-h-screen bg-white'>
-      <Suspense>
-      <Header hasCart={false} className="border-b-gray-200" />
-      {children}
-      </Suspense>
-    </main>
+    <ReactQueryProvider>
+      <main className='min-h-screen bg-white'>
+        <Suspense fallback={<div>Loading...</div>}>
+          <Header hasCart={false} className="border-b-gray-200" />
+          <AdminContainer> {/* Добавлено здесь */}
+            {children}
+          </AdminContainer>
+        </Suspense>
+      </main>
+    </ReactQueryProvider>
   );
 }

@@ -56,7 +56,7 @@ export const Header: React.FC<Props> = ({ hasCart = true, className }) => {
                             </Link>
 
                             <Link
-                                href="/admin"
+                                href="/admin/categories"
                                 className="flex flex-col items-center gap-y-1 sm:gap-y-2 ml-25 sm:ml-0"
                                 title="Панель управления"
                             >
