@@ -17,7 +17,7 @@ import moment from 'moment';
 import dynamic from 'next/dynamic';
 
 const OrderFormSchema = z.object({
-  userId: z.string().optional(),
+  userId: z.number().optional(),
   firstname: z.string().min(2, { message: 'Имя должно содержать не менее двух символов' }),
   email: z.string().email({ message: 'Введите корректную почту' }),
   phone: z.string().min(11, { message: 'Введите корректный номер телефона' }),
@@ -36,6 +36,7 @@ const CreateOrderPage = () => {
   const [deliveryType, setDeliveryType] = useState<DeliveryType>('DELIVERY');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('ONLINE');
   const datetimeRef = useRef<HTMLDivElement>(null);
+
   const Datetime = dynamic(
     () => import('react-datetime'),
     {
@@ -54,10 +55,35 @@ const CreateOrderPage = () => {
       deliveryType: 'DELIVERY',
       paymentMethod: 'ONLINE',
       status: 'PENDING',
-      deliveryPrice: 300,
+      deliveryPrice: 0,
       deliveryTime: new Date(),
     },
   });
+
+  const { control, handleSubmit, setValue, watch, resetField } = form;
+  const currentStatus = watch('status');
+  const currentDeliveryType = watch('deliveryType');
+  const currentPaymentMethod = watch('paymentMethod');
+
+  // Очистка полей при изменении типа доставки
+  useEffect(() => {
+    resetField('status'); // Сбрасываем статус при изменении типа доставки
+    if (currentDeliveryType === 'PICKUP') {
+      resetField('address');
+      resetField('deliveryPrice');
+    }
+  }, [currentDeliveryType, resetField]);
+
+  // Очистка ключа платежа при изменении способа оплаты
+  useEffect(() => {
+    resetField('paymentKey');
+  }, [currentPaymentMethod, resetField]);
+
+  useEffect(() => {
+    if (currentStatus === 'PENDING') {
+      resetField('paymentKey');
+    }
+  }, [currentStatus, resetField]);
 
   // Обработчик клика вне компонента даты
   useEffect(() => {
@@ -71,8 +97,6 @@ const CreateOrderPage = () => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
-
-  const { control, handleSubmit, setValue } = form;
 
   const onSubmit = (data: OrderFormValues) => {
     console.log('Order data:', data);
@@ -122,6 +146,7 @@ const CreateOrderPage = () => {
                 <FormInput
                   name="userId"
                   label="ID клиента"
+                  type="number"
                   placeholder="Введите ID клиента"
                 />
 
@@ -157,6 +182,10 @@ const CreateOrderPage = () => {
                       if (value === 'DELIVERY') {
                         setPaymentMethod('ONLINE');
                         setValue('paymentMethod', 'ONLINE');
+                      } else {
+                        resetField('address');
+                        resetField('deliveryPrice');
+                        resetField('status'); // Дополнительный сброс статуса
                       }
                     }}
                     className="flex gap-4"
@@ -242,7 +271,12 @@ const CreateOrderPage = () => {
                   <FormInput
                     name="paymentKey"
                     label="Ключ платежа"
-                    placeholder="Введите ключ платежа"
+                    placeholder={
+                      currentStatus === 'PENDING'
+                        ? 'Будет сгенерирован после создания заказа'
+                        : 'Введите ключ платежа'
+                    }
+                    disabled={currentStatus === 'PENDING'}
                   />
                 )}
               </div>

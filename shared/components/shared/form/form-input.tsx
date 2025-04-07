@@ -4,7 +4,6 @@ import React from 'react';
 import { Input } from '../../ui';
 import { RequiredSymbol } from '../required-symbol';
 import { ErrorText } from '../error-text';
-import { ClearButton } from '../clear-button';
 import { useFormContext } from 'react-hook-form';
 
 interface Props extends React.InputHTMLAttributes<HTMLInputElement> {
@@ -18,16 +17,16 @@ export const FormInput: React.FC<Props> = ({ className, name, label, required, .
   const {
     register,
     formState: { errors },
-    watch,
-    setValue,
   } = useFormContext();
 
-  const errotText = errors?.[name]?.message as string;
+  const errorText = errors?.[name]?.message as string;
 
-  const text = watch(name);
-
-  const onClickClear = () => {
-    setValue(name, '', {shouldValidate: true});
+  // Функция для преобразования значений в число
+  const handleNumberInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (props.type === 'number') {
+      return e.target.valueAsNumber || '';
+    }
+    return e.target.value;
   };
 
   return (
@@ -39,12 +38,20 @@ export const FormInput: React.FC<Props> = ({ className, name, label, required, .
       )}
 
       <div className="relative">
-        <Input className="h-12 text-md" {...register(name)} {...props} />
-        <ClearButton />
-        {Boolean(text) && <ClearButton onClick={onClickClear} />}
+        <Input
+          className="h-12 text-md"
+          {...register(name, {
+            setValueAs: props.type === 'number' 
+              ? (v) => (v === '' ? undefined : Number(v)) 
+              : undefined,
+            onChange: handleNumberInput
+          })}
+          {...props}
+          step={props.type === 'number' ? 'any' : undefined}
+        />
       </div>
 
-      {errotText && <ErrorText text={errotText} />}
+      {errorText && <ErrorText text={errorText} />}
     </div>
   );
 };
