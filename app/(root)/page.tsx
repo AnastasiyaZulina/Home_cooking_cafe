@@ -14,7 +14,8 @@ export default async function Home() {
 
   const availableCategories = categories.filter((category) =>
     category.products.length > 0 &&
-    category.products.some(product => product.isAvailable)
+    category.products.some(product => product.isAvailable) &&
+    category.isAvailable
   );
 
   return (

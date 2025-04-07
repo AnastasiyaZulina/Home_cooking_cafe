@@ -14,12 +14,12 @@ export async function PATCH(
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const { name } = await request.json();
+  const { name, isAvailable } = await request.json();
 
   try {
     const updatedCategory = await prisma.category.update({
       where: { id: Number(params.id) },
-      data: { name },
+      data: { name, isAvailable },
     });
 
     return NextResponse.json(updatedCategory);

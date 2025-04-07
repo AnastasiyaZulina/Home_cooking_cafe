@@ -34,7 +34,7 @@ model Category {
   id       Int       @id @default(autoincrement())
   name     String
   products Product[]
-  @@map("categories")
+  isAvailable Boolean @default(true)
 }
 
 model Product {
@@ -43,7 +43,6 @@ model Product {
   image String
   categoryId Int
   category    Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  @@map("products")
   
   description String?
   price     Int
@@ -61,7 +60,7 @@ model Cart {
   id Int @id @default(autoincrement())
 
   userId Int?  @unique
-  user   User? @relation(fields: [userId], references: [id])
+  user   User? @relation(fields: [userId], references: [id], onDelete: Cascade)
   token String? @unique
 
   items CartItem[]
@@ -74,7 +73,7 @@ model CartItem {
   id Int @id @default(autoincrement())
 
   productId Int
-  product   Product @relation(fields: [productId], references: [id])
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   cartId Int
   cart   Cart @relation(fields: [cartId], references: [id])
@@ -89,9 +88,9 @@ model Order {
   id Int @id @default(autoincrement())
 
   userId Int?
-  user   User? @relation(fields: [userId], references: [id])
+  user   User? @relation(fields: [userId], references: [id], onDelete: SetNull)
 
-  items OrderItem[]
+  items OrderItem[] 
 
   status      OrderStatus @default(PENDING)
   paymentId   String?
@@ -116,7 +115,7 @@ model Order {
 model OrderItem {
   id        Int     @id @default(autoincrement())
   orderId   Int
-  order     Order   @relation(fields: [orderId], references: [id])
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
   productId Int
   productName String
   productQuantity  Int     @default(1)
@@ -139,7 +138,7 @@ model VerificationCode {
 model Feedback {
   id           Int      @id @default(autoincrement())
   userId       Int
-  user         User     @relation(fields: [userId], references: [id])
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   feedbackText String
   feedbackStatus FeedbackStatus @default(PENDING)
   isVisible    Boolean  @default(false)

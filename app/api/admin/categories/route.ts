@@ -3,27 +3,6 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from "next-auth";
 import { authOptions } from '@/shared/constants/auth-options';
 
-export async function GET() {
-  const session = await getServerSession(authOptions);
-  
-  if (!session?.user || session.user.role !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-
-  const categories = await prisma.category.findMany({
-    orderBy: {
-      id: 'asc',
-    },
-  });
-
-  const data = categories.map(category => ({
-    id: category.id,
-    name: category.name,
-  }));
-
-  return NextResponse.json(data);
-}
-
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
   
@@ -31,10 +10,18 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const { name } = await request.json();
-
   try {
-    // Проверяем, существует ли уже категория с таким именем
+    const { name, isAvailable } = await request.json();
+
+    // Валидация данных
+    if (!name || typeof name !== 'string') {
+      return NextResponse.json(
+        { error: "Некорректное название категории" },
+        { status: 400 }
+      );
+    }
+
+    // Проверяем существование категории
     const existingCategory = await prisma.category.findFirst({
       where: { name },
     });
@@ -48,14 +35,37 @@ export async function POST(request: Request) {
 
     // Создаем новую категорию
     const newCategory = await prisma.category.create({
-      data: { name },
+      data: { 
+        name,
+        isAvailable: Boolean(isAvailable) // Явное преобразование в boolean
+      },
     });
 
     return NextResponse.json(newCategory);
   } catch (error) {
+    console.error('Error creating category:', error);
     return NextResponse.json(
-      { error: "Ошибка при создании категории" },
+      { error: "Внутренняя ошибка сервера" },
       { status: 500 }
     );
   }
+}
+
+export async function GET() {
+  const session = await getServerSession(authOptions);
+  
+  if (!session?.user || session.user.role !== "ADMIN") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const categories = await prisma.category.findMany({
+    orderBy: { id: 'asc' },
+    select: {
+      id: true,
+      name: true,
+      isAvailable: true,
+    },
+  });
+
+  return NextResponse.json(categories);
 }

@@ -69,7 +69,6 @@ const CategoryTable = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
-      toast.success('Категория успешно создана');
     },
     onError: (error: Error) => {
       toast.error(error.message);
@@ -89,7 +88,6 @@ const CategoryTable = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
-      toast.success('Категория успешно удалена');
     },
     onError: (error) => {
       toast.error(error.message || 'Произошла ошибка при удалении');
@@ -187,6 +185,22 @@ const CategoryTable = () => {
           onFocus: () => setValidationErrors({ ...validationErrors, name: undefined }),
         },
       },
+      {
+        accessorKey: 'isAvailable',
+        header: 'Видимость',
+        size: 120,
+        // Отображаем "Да/Нет" вместо true/false
+        Cell: ({ cell }) => cell.getValue<boolean>() ? 'Да' : 'Нет',
+        // Режим редактирования
+        editVariant: 'select',
+        editSelectOptions: [
+          { value: true, label: 'Да' },
+          { value: false, label: 'Нет' }
+        ],
+        muiEditTextFieldProps: {
+          select: true,
+        },
+      },
     ],
     [validationErrors]
   );
@@ -197,7 +211,7 @@ const CategoryTable = () => {
     state: { isLoading },
     enableEditing: true,
     createDisplayMode: 'modal',
-    editDisplayMode: 'row',
+    editDisplayMode: 'modal',
     onCreatingRowSave: handleCreateCategory,
     onCreatingRowCancel: () => setValidationErrors({}),
     onEditingRowSave: handleSaveCategory,

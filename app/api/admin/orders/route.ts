@@ -11,13 +11,10 @@ export async function GET() {
   }
 
   const orders = await prisma.order.findMany({
-    orderBy: { createdAt: 'desc' },
     include: {
-      user: {
-        select: { email: true, name: true }
-      },
-      items: true
-    }
+      items: true,
+    },
+    orderBy: { id: 'desc' },
   });
 
   return NextResponse.json(orders);
@@ -30,23 +27,42 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const orderData = await request.json();
-
   try {
+    const body = await request.json();
+    
+    // Валидация обязательных полей
+    if (!body.name || !body.email || !body.phone || !body.deliveryType || !body.paymentMethod) {
+      return NextResponse.json(
+        { error: "Не заполнены обязательные поля" },
+        { status: 400 }
+      );
+    }
+
     const newOrder = await prisma.order.create({
       data: {
-        ...orderData,
+        status: 'PENDING',
+        paymentMethod: body.paymentMethod,
+        deliveryType: body.deliveryType,
+        deliveryTime: new Date(body.deliveryTime),
+        name: body.name,
+        email: body.email,
+        phone: body.phone,
+        comment: body.comment,
+        paymentId: body.paymentId,
         items: {
-          create: orderData.items
-        }
+          create: body.items || [],
+        },
       },
-      include: { items: true }
+      include: {
+        items: true,
+      },
     });
 
     return NextResponse.json(newOrder);
   } catch (error) {
+    console.error('Error creating order:', error);
     return NextResponse.json(
-      { error: "Ошибка при создании заказа" },
+      { error: "Внутренняя ошибка сервера" },
       { status: 500 }
     );
   }
