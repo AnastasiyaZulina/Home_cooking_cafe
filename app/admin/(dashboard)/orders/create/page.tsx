@@ -14,6 +14,7 @@ import 'react-datetime/css/react-datetime.css';
 import { FormProvider } from 'react-hook-form';
 import { PhoneInput } from '@/shared/components/shared/phone-input';
 import moment from 'moment';
+import dynamic from 'next/dynamic';
 
 const OrderFormSchema = z.object({
   userId: z.string().optional(),
@@ -35,7 +36,18 @@ const CreateOrderPage = () => {
   const [deliveryType, setDeliveryType] = useState<DeliveryType>('DELIVERY');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('ONLINE');
   const datetimeRef = useRef<HTMLDivElement>(null);
-
+  const Datetime = dynamic(
+    () => import('react-datetime'),
+    {
+      ssr: false,
+      loading: () => (
+        <input
+          className="form-input w-full p-2 border rounded"
+          placeholder="Загрузка выбора даты..."
+        />
+      )
+    }
+  );
   const form = useForm<OrderFormValues>({
     resolver: zodResolver(OrderFormSchema),
     defaultValues: {
@@ -238,34 +250,36 @@ const CreateOrderPage = () => {
 
             {/* Время доставки */}
             <WhiteBlock title="Время доставки" className="p-6">
-            <div className="space-y-4">
-              <label className="block text-sm font-medium mb-2">Дата и время доставки</label>
-              <div ref={datetimeRef}>
-                <Controller
-                  name="deliveryTime"
-                  control={control}
-                  render={({ field }) => (
-                    <Datetime
-                      value={moment(field.value)}
-                      onChange={(momentDate) => {
-                        if (moment.isMoment(momentDate)) {
-                          const date = momentDate.toDate();
-                          field.onChange(date);
-                        }
-                      }}
-                      inputProps={{
-                        className: "form-input w-full p-2 border rounded",
-                        placeholder: "Выберите дату и время"
-                      }}
-                      dateFormat="DD.MM.YYYY"
-                      timeFormat="HH:mm:ss"
-                      closeOnSelect={false}
-                    />
-                  )}
-                />
+              <div className="space-y-4">
+                <label className="block text-sm font-medium mb-2">Дата и время доставки</label>
+                <div ref={datetimeRef}>
+                  <Controller
+                    name="deliveryTime"
+                    control={control}
+                    render={({ field }) => (
+                      <div ref={datetimeRef}>
+                        <Datetime
+                          value={field.value ? moment(field.value) : moment()}
+                          onChange={(momentDate) => {
+                            if (moment.isMoment(momentDate)) {
+                              field.onChange(momentDate.toDate());
+                            }
+                          }}
+                          inputProps={{
+                            className: "form-input w-full p-2 border rounded",
+                            placeholder: "Выберите дату и время",
+                            readOnly: true
+                          }}
+                          dateFormat="DD.MM.YYYY"
+                          timeFormat="HH:mm:ss"
+                          closeOnSelect={false}
+                        />
+                      </div>
+                    )}
+                  />
+                </div>
               </div>
-            </div>
-          </WhiteBlock>
+            </WhiteBlock>
             {/* Статус заказа */}
             <WhiteBlock title="Статус заказа" className="p-6">
               <div className="space-y-4">
