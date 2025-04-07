@@ -1,6 +1,6 @@
 import * as RadioGroup from '@radix-ui/react-radio-group';
 import React from 'react';
-import { Slider } from '@/shared/components/ui/slider'; // Предполагается, что у вас есть компонент Slider
+import { Slider } from '@/shared/components/ui/slider';
 import { CHECKOUT_CONSTANTS} from '@/shared/constants';
 
 interface BonusOptionsProps {
