@@ -2,20 +2,24 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { DeliveryType, PaymentMethod, OrderStatus } from '@prisma/client';
-import { Controller, useForm } from 'react-hook-form';
+import { Controller, useFieldArray, useForm } from 'react-hook-form';
 import { Button } from '@/shared/components/ui/button';
 import * as RadioGroup from '@radix-ui/react-radio-group';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select';
 import { FormInput, FormTextarea, WhiteBlock } from '@/shared/components';
-import Datetime from 'react-datetime';
 import 'react-datetime/css/react-datetime.css';
 import { FormProvider } from 'react-hook-form';
 import { PhoneInput } from '@/shared/components/shared/phone-input';
 import moment from 'moment';
 import dynamic from 'next/dynamic';
-
+import { Trash } from 'lucide-react';
+type Product = {
+  id: number;
+  name: string;
+  stockQuantity: number;
+};
 const OrderFormSchema = z.object({
   userId: z.number().optional(),
   firstname: z.string().min(2, { message: 'Имя должно содержать не менее двух символов' }),
@@ -28,6 +32,12 @@ const OrderFormSchema = z.object({
   paymentKey: z.string().optional(),
   status: z.nativeEnum(OrderStatus),
   deliveryTime: z.date(),
+  items: z.array(z.object({
+    productId: z.number(),
+    quantity: z.number().min(1, "Количество должно быть не менее 1"),
+    productName: z.string(),
+    stockQuantity: z.number()
+  })).nonempty("Добавьте хотя бы один товар")
 });
 
 type OrderFormValues = z.infer<typeof OrderFormSchema>;
@@ -61,10 +71,101 @@ const CreateOrderPage = () => {
   });
 
   const { control, handleSubmit, setValue, watch, resetField } = form;
+  const [products, setProducts] = useState<Product[]>([]);
   const currentStatus = watch('status');
   const currentDeliveryType = watch('deliveryType');
   const currentPaymentMethod = watch('paymentMethod');
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "items"
+  });
 
+  // Загрузка товаров при монтировании
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const response = await fetch('/api/admin/products');
+        if (!response.ok) throw new Error('Ошибка загрузки товаров');
+        const data = await response.json();
+        setProducts(data);
+      } catch (error) {
+        console.error('Ошибка:', error);
+      }
+    };
+    fetchProducts();
+  }, []);
+
+  // Компонент для выбора товара
+  const ProductSelector = ({ index }: { index: number }) => {
+    const [open, setOpen] = useState(false);
+    const selectedProductId = watch(`items.${index}.productId`);
+    const selectedProduct = products.find(p => p.id === selectedProductId);
+  
+    return (
+      <div className="flex items-center gap-4 mb-4">
+        <div className="flex-1">
+          <Controller
+            name={`items.${index}.productId`}
+            control={control}
+            render={({ field }) => (
+              <Select
+                open={open}
+                onOpenChange={setOpen}
+                value={field.value ? String(field.value) : ""}
+                onValueChange={(value) => {
+                  const product = products.find(p => p.id === Number(value));
+                  if (product) {
+                    field.onChange(Number(value));
+                    setValue(`items.${index}.productName`, product.name);
+                    setValue(`items.${index}.stockQuantity`, product.stockQuantity);
+                  }
+                  setOpen(true);
+                }}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Выберите товар">
+                    {selectedProduct ? `${selectedProduct.name}` : "Выберите товар"}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {products.map(product => (
+                    <SelectItem
+                      key={product.id}
+                      value={String(product.id)}
+                    >
+                      {product.name} (Доступно: {product.stockQuantity})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
+        </div>
+  
+        <div className="flex items-center gap-2">
+          <span className="text-muted-foreground">×</span>
+          <FormInput
+            name={`items.${index}.quantity`}
+            type="number"
+            min={1}
+            max={selectedProduct?.stockQuantity || 1}
+            required
+            className="w-20"
+          />
+        </div>
+  
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          onClick={() => remove(index)}
+          className="text-destructive hover:text-destructive/80"
+        >
+          <Trash className="h-4 w-4" />
+        </Button>
+      </div>
+    );
+  };
   // Очистка полей при изменении типа доставки
   useEffect(() => {
     resetField('status'); // Сбрасываем статус при изменении типа доставки
@@ -168,7 +269,24 @@ const CreateOrderPage = () => {
                 <PhoneInput name="phone" label="Телефон" placeholder="+7(xxx)xxx-xx-xx" required />
               </div>
             </WhiteBlock>
-
+            <WhiteBlock title="Товары в заказе" className="mt-6">
+              <div className="space-y-4">
+                {fields.map((field, index) => (
+                  <ProductSelector key={field.id} index={index} />
+                ))}
+                <Button
+                  type="button"
+                  onClick={() => append({
+                    productId: 0,
+                    quantity: 1,
+                    productName: '',
+                    stockQuantity: 0
+                  })}
+                >
+                  Добавить товар
+                </Button>
+              </div>
+            </WhiteBlock>
             {/* Доставка и оплата */}
             <WhiteBlock title="Доставка и оплата" className="p-6">
               <div className="space-y-4">

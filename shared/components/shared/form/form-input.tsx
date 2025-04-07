@@ -46,6 +46,8 @@ export const FormInput: React.FC<Props> = ({ className, name, label, required, .
               : undefined,
             onChange: handleNumberInput
           })}
+          min={props.min}
+          max={props.max}
           {...props}
           step={props.type === 'number' ? 'any' : undefined}
         />
