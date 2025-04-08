@@ -67,6 +67,7 @@ export default function EditOrderPage() {
     const datetimeRef = useRef<HTMLDivElement>(null);
     const [originalProductsStock, setOriginalProductsStock] = useState<Record<number, number>>({});
     const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
+    const [canEdit, setCanEdit] = useState(true);
 
     const Datetime = dynamic(
         () => import('react-datetime'),
@@ -112,6 +113,18 @@ export default function EditOrderPage() {
                 const orderRes = await fetch(`/api/admin/orders/${id}`);
                 if (!orderRes.ok) throw new Error('Ошибка загрузки заказа');
                 const orderData = await orderRes.json();
+                const isCancelledOrSucceeded = ['CANCELLED', 'SUCCEEDED'].includes(orderData.status);
+
+                const productsRes = fetch(`/api/admin/orders/${id}/edit/products`);
+                if (!(await productsRes).ok) throw new Error('Ошибка загрузки данных');
+                const productsData = await (await productsRes).json();
+                const allProductsExist = orderData.items.every((item: any) =>
+                    productsData.some((p: Product) => p.id === item.productId)
+                );
+
+                setCanEdit(!isCancelledOrSucceeded && allProductsExist);
+                setOriginalProducts(productsData);
+                setCurrentProducts(productsData);
 
                 setSelectedUserId(orderData.userId);
                 const orderUser = usersData.find((u: User) => u.id === orderData.userId);
@@ -154,25 +167,6 @@ export default function EditOrderPage() {
         fetchOrder();
     }, [id, reset]);
 
-    // Загрузка продуктов и пользователей
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const productsRes = fetch(`/api/admin/orders/${id}/edit/products`);
-
-                if (!(await productsRes).ok) throw new Error('Ошибка загрузки данных');
-
-                const productsData = await (await productsRes).json();
-
-                setOriginalProducts(productsData);
-                setCurrentProducts(productsData);
-            } catch (error) {
-                console.error('Ошибка:', error);
-            }
-        };
-
-        fetchData();
-    }, []);
 
     const handleUserSelect = (userId: number | undefined) => {
         const selectedUser = users.find(u => u.id === userId);
@@ -239,8 +233,8 @@ export default function EditOrderPage() {
     const onSubmit = async (data: z.infer<typeof OrderUpdateFormSchema>) => {
         try {
             // Проверка товаров
-            if (!data.items || data.items.some(item => item.productId < 1)) {
-                console.error('Есть невалидные товары');
+            if (!data.items || data.items.some(item => item.productId < 1) || data.items.length === 0) {
+                toast.error('Пожалуйста, добавьте хотя бы один товар в заказ!');
                 return;
             }
             const payload = {
@@ -264,6 +258,27 @@ export default function EditOrderPage() {
 
     if (loading) return <div>Загрузка...</div>;
     if (!order) return <div>Заказ не найден</div>;
+    if (!canEdit) return (
+        <div className="container mx-auto px-4 py-8">
+            <h1 className="text-2xl font-bold mb-6">Редактирование заказа #{order.id}</h1>
+            <div className="bg-white rounded-lg p-6 shadow">
+                <p className="text-lg text-red-500">
+                    Редактирование этого заказа невозможно:
+                    {order.status === 'CANCELLED' || order.status === 'SUCCEEDED'
+                        ? ' заказ уже завершен или отменен'
+                        : ' некоторые товары из заказа больше не доступны'}
+                </p>
+                <Button
+                    onClick={() => router.back()}
+                    className="mt-4"
+                >
+                    Вернуться назад
+                </Button>
+            </div>
+        </div>
+    );
+
+    // ... остальной рендер формы ...
 
     return (
         <div className="container mx-auto px-4 py-8">

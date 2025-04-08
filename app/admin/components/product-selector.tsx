@@ -20,16 +20,20 @@ type ProductSelectorProps = {
   onRemove: () => void;
 };
 
-export const ProductSelector = ({ 
+export const ProductSelector = ({
   index,
   products,
   onRemove
 }: ProductSelectorProps) => {
   const [open, setOpen] = useState(false);
-  const { control, watch, setValue, formState: { errors } } = useFormContext();
+  const { control, watch, setValue, getValues, formState: { errors } } = useFormContext();
   const selectedProductId = watch(`items.${index}.productId`);
   const selectedProduct = products.find(p => p.id === selectedProductId);
-
+  const allSelectedIds = getValues('items').map((item: any) => item.productId);
+  const filteredProducts = products.filter(product =>
+    product.stockQuantity > 0 &&
+    (product.id === selectedProductId || !allSelectedIds.includes(product.id))
+  );
   return (
     <div className="flex items-center gap-4 mb-4">
       <div className="flex-1">
@@ -61,7 +65,7 @@ export const ProductSelector = ({
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
-                  {products.map(product => (
+                  {filteredProducts.map(product => (
                     <SelectItem key={product.id} value={String(product.id)}>
                       {product.name} (Доступно: {product.stockQuantity})
                     </SelectItem>
@@ -80,19 +84,45 @@ export const ProductSelector = ({
 
       <div className="flex items-center gap-2">
         <span className="text-muted-foreground">×</span>
-        <FormInput
+        <Controller
           name={`items.${index}.quantity`}
-          type="number"
-          min={1}
-          max={selectedProduct?.stockQuantity || 1}
-          required
-          className="w-20"
+          control={control}
+          rules={{
+            required: "Введите количество",
+            min: {
+              value: 1,
+              message: "Минимальное количество 1"
+            },
+            max: {
+              value: selectedProduct?.stockQuantity ?? 0,
+              message: "Превышает доступное количество"
+            }
+          }}
+          render={({ field }) => (
+            <div>
+              <FormInput
+                {...field}
+                type="number"
+                min={1}
+                max={selectedProduct?.stockQuantity}
+                className="w-20"
+                onChange={(e) => {
+                  const value = Number(e.target.value);
+                  const maxStock = selectedProduct?.stockQuantity || 1;
+                  const clampedValue = Math.min(Math.max(value, 1), maxStock);
+                  field.onChange(clampedValue);
+                }}
+                disabled={!selectedProductId}
+                value={field.value}
+              />
+              {(errors.items as any)?.[index]?.quantity && (
+                <p className="text-sm text-red-500">
+                  {(errors.items as any)[index].quantity.message}
+                </p>
+              )}
+            </div>
+          )}
         />
-        {(errors.items as any)?.[index]?.quantity && (
-          <p className="text-sm text-red-500">
-            {(errors.items as any)[index].quantity.message}
-          </p>
-        )}
       </div>
 
       <Button
