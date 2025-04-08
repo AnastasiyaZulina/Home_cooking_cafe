@@ -279,36 +279,36 @@ const CreateOrderPage = () => {
                       placeholder="Введите стоимость"
                       required
                     />
-
-                    <div className="space-y-4">
-                      <label className="block text-sm font-medium mb-2">Дата и время доставки</label>
-                      <div ref={datetimeRef}>
-                        <Controller
-                          name="deliveryTime"
-                          control={control}
-                          render={({ field }) => (
-                            <Datetime
-                              value={field.value ? moment(field.value) : moment()}
-                              onChange={(momentDate) => {
-                                if (moment.isMoment(momentDate)) {
-                                  field.onChange(momentDate.toDate());
-                                }
-                              }}
-                              inputProps={{
-                                className: "form-input w-full p-2 border rounded",
-                                placeholder: "Выберите дату и время",
-                                readOnly: true
-                              }}
-                              dateFormat="DD.MM.YYYY"
-                              timeFormat="HH:mm:ss"
-                              closeOnSelect={false}
-                            />
-                          )}
-                        />
-                      </div>
-                    </div>
                   </>
                 )}
+                <div className="space-y-4">
+                  <label className="block text-sm font-medium mb-2">Дата и время доставки</label>
+                  <div ref={datetimeRef}>
+                    <Controller
+                      name="deliveryTime"
+                      control={control}
+                      render={({ field }) => (
+                        <Datetime
+                          value={field.value ? moment(field.value) : moment()}
+                          onChange={(momentDate) => {
+                            if (moment.isMoment(momentDate)) {
+                              field.onChange(momentDate.toDate());
+                            }
+                          }}
+                          inputProps={{
+                            className: "form-input w-full p-2 border rounded",
+                            placeholder: "Выберите дату и время",
+                            readOnly: true
+                          }}
+                          dateFormat="DD.MM.YYYY"
+                          timeFormat="HH:mm:ss"
+                          closeOnSelect={false}
+                        />
+                      )}
+                    />
+                  </div>
+                </div>
+
 
                 <div>
                   <label className="block text-sm font-medium mb-2">Способ оплаты</label>

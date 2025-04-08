@@ -71,6 +71,7 @@ export default function EditOrderPage() {
     const [isEditingItems, setIsEditingItems] = useState(false);
     const datetimeRef = useRef<HTMLDivElement>(null);
     const [originalProductsStock, setOriginalProductsStock] = useState<Record<number, number>>({});
+    const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
 
     const form = useForm<OrderUpdateFormValues>({
         resolver: zodResolver(OrderUpdateFormSchema),
@@ -97,22 +98,33 @@ export default function EditOrderPage() {
     useEffect(() => {
         const fetchOrder = async () => {
             try {
-                const response = await fetch(`/api/admin/orders/${id}`);
-                if (!response.ok) throw new Error('Ошибка загрузки заказа');
-                const data = await response.json();
+                const usersRes = await fetch('/api/admin/users');
+                const usersData = await usersRes.json();
+                setUsers(usersData);
 
-                const deliveryTime = new Date(data.deliveryTime);
+                const orderRes = await fetch(`/api/admin/orders/${id}`);
+                if (!orderRes.ok) throw new Error('Ошибка загрузки заказа');
+                const orderData = await orderRes.json();
+
+                setSelectedUserId(orderData.userId);
+                const orderUser = usersData.find((u: User) => u.id === orderData.userId);
+                if (orderUser) {
+                    setUserBonuses(orderUser.bonusBalance);
+                }
+
+                const deliveryTime = new Date(orderData.deliveryTime);
 
                 const initialStock: Record<number, number> = {};
-                data.items.forEach((item: any) => {
+                orderData.items.forEach((item: any) => {
                     initialStock[item.productId] = item.product.stockQuantity + item.productQuantity;
                 });
                 setOriginalProductsStock(initialStock);
 
                 reset({
-                    ...data,
+                    ...orderData,
+                    deliveryPrice: orderData.deliveryCost,
                     deliveryTime,
-                    items: data.items.map((item: any) => ({
+                    items: orderData.items.map((item: any) => ({
                         ...item,
                         productId: item.productId,
                         quantity: item.productQuantity,
@@ -122,9 +134,9 @@ export default function EditOrderPage() {
                     }))
                 });
 
-                setOrder(data);
-                setSpentBonuses(Math.abs(data.bonusDelta));
-                setBonusOption(data.bonusDelta >= 0 ? 'earn' : 'spend');
+                setOrder(orderData);
+                setSpentBonuses(Math.abs(orderData.bonusDelta));
+                setBonusOption(orderData.bonusDelta >= 0 ? 'earn' : 'spend');
                 setLoading(false);
             } catch (error) {
                 console.error('Ошибка:', error);
@@ -139,21 +151,14 @@ export default function EditOrderPage() {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const [productsRes, usersRes] = await Promise.all([
-                    fetch(`/api/admin/orders/${id}/edit/products`),
-                    fetch('/api/admin/users')
-                ]);
+                const productsRes = fetch(`/api/admin/orders/${id}/edit/products`);
 
-                if (!productsRes.ok || !usersRes.ok) throw new Error('Ошибка загрузки данных');
+                if (!(await productsRes).ok) throw new Error('Ошибка загрузки данных');
 
-                const [productsData, usersData] = await Promise.all([
-                    productsRes.json(),
-                    usersRes.json()
-                ]);
+                const productsData = await (await productsRes).json();
 
                 setOriginalProducts(productsData);
                 setCurrentProducts(productsData);
-                setUsers(usersData);
             } catch (error) {
                 console.error('Ошибка:', error);
             }
@@ -163,23 +168,11 @@ export default function EditOrderPage() {
     }, []);
 
     const handleUserSelect = (userId: number | undefined) => {
-        setBonusOption('earn');
-        setSpentBonuses(0);
-
-        if (!userId) {
-            resetField('name');
-            resetField('email');
-            resetField('phone');
-            setUserBonuses(0);
-            return;
-        }
-
         const selectedUser = users.find(u => u.id === userId);
         if (selectedUser) {
-            setValue('name', selectedUser.name);
-            setValue('email', selectedUser.email);
-            setValue('phone', selectedUser.phone || '');
             setUserBonuses(selectedUser.bonusBalance);
+        } else {
+            setUserBonuses(0);
         }
     };
 
@@ -213,10 +206,10 @@ export default function EditOrderPage() {
         setCurrentProducts(originalProducts);
         setIsEditingItems(false);
     };
-    
+
     const handleSaveItems = async () => {
         const isValid = await form.trigger('items');
-        
+
         if (!isValid) return;
 
         const formValues = form.getValues();
@@ -224,13 +217,13 @@ export default function EditOrderPage() {
         toast('Список товаров успешно обновлён!👏');
         // Принудительно обновляем состояние формы
         reset({
-          ...formValues,
-          items: formValues.items.map(item => ({
-            ...item,
-            productName: item.productName,
-            stockQuantity: item.stockQuantity,
-            productPrice: item.productPrice
-          }))
+            ...formValues,
+            items: formValues.items.map(item => ({
+                ...item,
+                productName: item.productName,
+                stockQuantity: item.stockQuantity,
+                productPrice: item.productPrice
+            }))
         });
     };
 
@@ -250,20 +243,22 @@ export default function EditOrderPage() {
                     : -spentBonuses,
                 items: data.items.map(item => ({
                     productId: item.productId,
-                    quantity: item.quantity
+                    quantity: item.quantity,
+                    productName: item.productName,
+                    productPrice: item.productPrice
                 }))
             };
             console.log('Order data:', payload);
-/*
-            const response = await fetch(`/api/admin/orders/${id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-
-            if (!response.ok) throw new Error('Ошибка обновления заказа');
-
-            router.push('/admin/orders');*/
+            /*
+                        const response = await fetch(`/api/admin/orders/${id}`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+            
+                        if (!response.ok) throw new Error('Ошибка обновления заказа');
+            
+                        router.push('/admin/orders');*/
         } catch (error) {
             console.error('Ошибка:', error);
         }
@@ -285,6 +280,7 @@ export default function EditOrderPage() {
                                     <UserSelect
                                         users={users}
                                         onUserSelect={handleUserSelect}
+                                        disabled={true}
                                     />
                                 </div>
 
@@ -400,13 +396,14 @@ export default function EditOrderPage() {
                                         onValueChange={(value: DeliveryType) => {
                                             setDeliveryType(value);
                                             setValue('deliveryType', value);
+
                                             if (value === 'DELIVERY') {
                                                 setPaymentMethod('ONLINE');
                                                 setValue('paymentMethod', 'ONLINE');
                                             } else {
-                                                resetField('address');
-                                                resetField('deliveryPrice');
-                                                resetField('status');
+                                                setValue('address', '');
+                                                setValue('deliveryPrice', 0);
+                                                setValue('status', 'PENDING');
                                             }
                                         }}
                                         className="flex gap-4"
@@ -450,36 +447,36 @@ export default function EditOrderPage() {
                                             placeholder="Введите стоимость"
                                             required
                                         />
-
-                                        <div className="space-y-4">
-                                            <label className="block text-sm font-medium mb-2">Дата и время доставки</label>
-                                            <div ref={datetimeRef}>
-                                                <Controller
-                                                    name="deliveryTime"
-                                                    control={control}
-                                                    render={({ field }) => (
-                                                        <Datetime
-                                                            value={field.value ? moment(field.value) : moment()}
-                                                            onChange={(momentDate) => {
-                                                                if (moment.isMoment(momentDate)) {
-                                                                    field.onChange(momentDate.toDate());
-                                                                }
-                                                            }}
-                                                            inputProps={{
-                                                                className: "form-input w-full p-2 border rounded",
-                                                                placeholder: "Выберите дату и время",
-                                                                readOnly: true
-                                                            }}
-                                                            dateFormat="DD.MM.YYYY"
-                                                            timeFormat="HH:mm:ss"
-                                                            closeOnSelect={false}
-                                                        />
-                                                    )}
-                                                />
-                                            </div>
-                                        </div>
                                     </>
                                 )}
+                                <div className="space-y-4">
+                                    <label className="block text-sm font-medium mb-2">Дата и время доставки</label>
+                                    <div ref={datetimeRef}>
+                                        <Controller
+                                            name="deliveryTime"
+                                            control={control}
+                                            render={({ field }) => (
+                                                <Datetime
+                                                    value={field.value ? moment(field.value) : moment()}
+                                                    onChange={(momentDate) => {
+                                                        if (moment.isMoment(momentDate)) {
+                                                            field.onChange(momentDate.toDate());
+                                                        }
+                                                    }}
+                                                    inputProps={{
+                                                        className: "form-input w-full p-2 border rounded",
+                                                        placeholder: "Выберите дату и время",
+                                                        readOnly: true
+                                                    }}
+                                                    dateFormat="DD.MM.YYYY"
+                                                    timeFormat="HH:mm:ss"
+                                                    closeOnSelect={false}
+                                                />
+                                            )}
+                                        />
+                                    </div>
+                                </div>
+
 
                                 <div>
                                     <label className="block text-sm font-medium mb-2">Способ оплаты</label>

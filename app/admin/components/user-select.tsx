@@ -13,10 +13,12 @@ type User = {
 
 export const UserSelect = ({ 
   users,
-  onUserSelect 
+  onUserSelect,
+  disabled
 }: { 
   users: User[];
   onUserSelect: (userId: number | undefined) => void;
+  disabled?: boolean;
 }) => {
   const { control } = useFormContext();
 
@@ -28,12 +30,13 @@ export const UserSelect = ({
         <Select
           value={field.value !== undefined ? String(field.value) : "unselected"}
           onValueChange={(value) => {
+            if (disabled) return;
             const userId = value !== "unselected" ? parseInt(value) : undefined;
             field.onChange(userId);
             onUserSelect(userId || undefined);
           }}
         >
-          <SelectTrigger className="w-full">
+          <SelectTrigger className="w-full" disabled={disabled}>
             <SelectValue placeholder="Выберите клиента" />
           </SelectTrigger>
           <SelectContent>

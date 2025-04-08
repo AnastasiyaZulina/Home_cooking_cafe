@@ -27,7 +27,6 @@ export const OrderSummary = ({
   const { watch } = useFormContext();
   const deliveryPrice = watch('deliveryPrice') || 0;
   const userId = watch('userId');
-
   const { totalPrice, bonusDelta } = bonusOption === 'earn'
     ? {
       totalPrice: totalAmount + deliveryPrice,
@@ -50,6 +49,7 @@ export const OrderSummary = ({
                     <span>Стоимость доставки:</span>
                     <span>{deliveryPrice} ₽</span>
                 </div>
+                
                 {userId && (
                     <BonusOptions
                         userBonuses={userBonuses}
