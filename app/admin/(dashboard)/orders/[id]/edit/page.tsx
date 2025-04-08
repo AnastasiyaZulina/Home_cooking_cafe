@@ -1,5 +1,3 @@
-// app\admin\(dashboard)\orders\[id]\edit\page.tsx
-
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
@@ -17,9 +15,8 @@ import moment from 'moment';
 import dynamic from 'next/dynamic';
 import { CHECKOUT_CONSTANTS } from '@/shared/constants';
 import { UserSelect } from '@/app/admin/components/user-select';
-import { ProductSelector } from '@/app/admin/components/product-selector';
 import { OrderSummary } from '@/app/admin/components/order-summary';
-import { OrderFormSchema, OrderFormValues, OrderUpdateFormSchema, OrderUpdateFormValues } from '@/app/admin/schemas/order-form-schema';
+import { OrderFormSchema, OrderUpdateFormSchema, OrderUpdateFormValues } from '@/app/admin/schemas/order-form-schema';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select';
 import { ProductSelectorEdit } from '@/app/admin/components/product-selector-edit';
 
@@ -28,6 +25,15 @@ type Product = {
     name: string;
     stockQuantity: number;
     price: number;
+    isAvailable: boolean;
+};
+
+type OrderItem = {
+    productId: number;
+    quantity: number;
+    productName: string;
+    stockQuantity: number;
+    productPrice: number;
 };
 
 type User = {
@@ -53,14 +59,17 @@ export default function EditOrderPage() {
     const router = useRouter();
     const [loading, setLoading] = useState(true);
     const [order, setOrder] = useState<OrderDetails | null>(null);
-    const [products, setProducts] = useState<Product[]>([]);
+    const [originalProducts, setOriginalProducts] = useState<Product[]>([]);
+    const [currentProducts, setCurrentProducts] = useState<Product[]>([]);
     const [users, setUsers] = useState<User[]>([]);
     const [bonusOption, setBonusOption] = useState<'earn' | 'spend'>('earn');
     const [spentBonuses, setSpentBonuses] = useState(0);
     const [userBonuses, setUserBonuses] = useState(0);
     const [deliveryType, setDeliveryType] = useState<DeliveryType>('DELIVERY');
     const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('ONLINE');
+    const [isEditingItems, setIsEditingItems] = useState(false);
     const datetimeRef = useRef<HTMLDivElement>(null);
+    const [originalProductsStock, setOriginalProductsStock] = useState<Record<number, number>>({});
 
     const form = useForm<OrderUpdateFormValues>({
         resolver: zodResolver(OrderUpdateFormSchema),
@@ -91,10 +100,14 @@ export default function EditOrderPage() {
                 if (!response.ok) throw new Error('Ошибка загрузки заказа');
                 const data = await response.json();
 
-                // Преобразование даты
                 const deliveryTime = new Date(data.deliveryTime);
 
-                // Сброс формы с полученными данными
+                const initialStock: Record<number, number> = {};
+                data.items.forEach((item: any) => {
+                    initialStock[item.productId] = item.product.stockQuantity + item.productQuantity;
+                });
+                setOriginalProductsStock(initialStock);
+
                 reset({
                     ...data,
                     deliveryTime,
@@ -137,7 +150,8 @@ export default function EditOrderPage() {
                     usersRes.json()
                 ]);
 
-                setProducts(productsData);
+                setOriginalProducts(productsData);
+                setCurrentProducts(productsData);
                 setUsers(usersData);
             } catch (error) {
                 console.error('Ошибка:', error);
@@ -168,13 +182,55 @@ export default function EditOrderPage() {
         }
     };
 
+    const [originalItems, setOriginalItems] = useState<OrderItem[]>([]);
+    const handleEditItems = () => {
+        // Сохраняем оригинальные товары
+        const currentItems = form.getValues('items');
+        setOriginalItems([...currentItems]);
+
+        // Восстанавливаем оригинальные остатки только для товаров из заказа
+        const updatedProducts = originalProducts.map(product => {
+            if (originalProductsStock[product.id]) {
+                return {
+                    ...product,
+                    stockQuantity: originalProductsStock[product.id]
+                };
+            }
+            return product;
+        });
+
+        setCurrentProducts(updatedProducts);
+        form.setValue('items', []);
+        setIsEditingItems(true);
+    };
+
+    const handleCancelEditItems = () => {
+        // Восстанавливаем оригинальные товары
+        form.setValue('items', originalItems);
+
+        // Восстанавливаем оригинальные продукты
+        setCurrentProducts(originalProducts);
+        setIsEditingItems(false);
+    };
+    
+    const handleSaveItems = async () => {
+        const isValid = await form.trigger('items');
+
+        if (!isValid) return;
+
+        // Обновляем оригинальные товары
+        const currentItems = form.getValues('items');
+        setOriginalItems([...currentItems]);
+        setIsEditingItems(false);
+    };
+
     const items = watch('items') || [];
     const totalAmount = items.reduce(
         (sum, item) => sum + (item.productPrice * item.quantity),
         0
     );
 
-    const onSubmit = async (data: z.infer<typeof OrderFormSchema>) => {
+    const onSubmit = async (data: z.infer<typeof OrderUpdateFormSchema>) => {
         try {
             const payload = {
                 ...data,
@@ -245,37 +301,84 @@ export default function EditOrderPage() {
                             </div>
                         </WhiteBlock>
 
-                        {/* Товары в заказе */}
-                        <WhiteBlock title="Товары в заказе" className="mt-6">
-                            <div className="space-y-4">
-                                {fields.map((field, index) => (
-                                    <ProductSelectorEdit
-                                        key={field.id}
-                                        index={index}
-                                        products={products}
-                                        orderItems={items.map((item: any) => ({
-                                            productId: item.productId,
-                                            productQuantity: item.quantity,
-                                            productName: item.productName,
-                                            productPrice: item.productPrice,
-                                          }))}
-                                        onRemove={() => remove(index)}
-                                    />
-                                ))}
-                                <Button
-                                    type="button"
-                                    onClick={() => append({
-                                        productId: 0,
-                                        quantity: 1,
-                                        productName: '',
-                                        stockQuantity: 0,
-                                        productPrice: 0
-                                    })}
-                                >
-                                    Добавить товар
-                                </Button>
-                            </div>
-                        </WhiteBlock>
+                        {!isEditingItems ? (
+                            <WhiteBlock title="Товары в заказе" className="mt-6">
+                                <div className="space-y-4">
+                                    {fields.map((field, index) => (
+                                        <div
+                                            key={field.id}
+                                            className="flex justify-between items-center p-3 border rounded-lg"
+                                        >
+                                            <div>
+                                                <p className="font-medium">{field.productName}</p>
+                                                <p className="text-sm text-gray-500">
+                                                    {field.quantity} × {field.productPrice} ₽
+                                                </p>
+                                            </div>
+                                            <p className="font-medium">
+                                                {field.quantity * field.productPrice} ₽
+                                            </p>
+                                        </div>
+                                    ))}
+                                    <Button
+                                        type="button"
+                                        onClick={handleEditItems}
+                                        variant="outline"
+                                        className="w-full"
+                                    >
+                                        Изменить список товаров
+                                    </Button>
+                                </div>
+                            </WhiteBlock>
+                        ) : (
+                            <WhiteBlock title="Редактирование товаров" className="mt-6">
+                                <div className="space-y-4">
+                                    {fields.map((field, index) => (
+                                        <ProductSelectorEdit
+                                            key={field.id}
+                                            index={index}
+                                            products={currentProducts.filter(product =>
+                                                !fields.some((f, i) =>
+                                                    i !== index && f.productId === product.id
+                                                )
+                                            )}
+                                            onRemove={() => remove(index)}
+                                        />
+                                    ))}
+                                    <Button
+                                        type="button"
+                                        onClick={() => append({
+                                            productId: 0,
+                                            quantity: 0,
+                                            productName: '',
+                                            stockQuantity: 0,
+                                            productPrice: 0
+                                        })}
+                                        variant="outline"
+                                        className="w-full"
+                                    >
+                                        Добавить товар
+                                    </Button>
+                                    <div className="flex gap-4 mt-4">
+                                        <Button
+                                            type="button"
+                                            variant="destructive"
+                                            onClick={handleCancelEditItems}
+                                            className="flex-1"
+                                        >
+                                            Отмена
+                                        </Button>
+                                        <Button
+                                            type="button"
+                                            onClick={handleSaveItems}
+                                            className="flex-1"
+                                        >
+                                            Сохранить список товаров
+                                        </Button>
+                                    </div>
+                                </div>
+                            </WhiteBlock>
+                        )}
 
                         <WhiteBlock title="Доставка и оплата" className="p-6">
                             <div className="space-y-4">

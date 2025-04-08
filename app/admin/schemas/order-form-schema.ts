@@ -29,7 +29,28 @@ export const OrderFormSchema = z.object({
 });
 
 export const OrderUpdateFormSchema = OrderFormSchema.merge(z.object({
-    updatedAt: z.date(),
+  userId: z.number().optional(),
+  name: z.string().min(2, { message: 'Имя должно содержать не менее двух символов' }),
+  email: z.string().email({ message: 'Введите корректную почту' }),
+  phone: z.string().min(11, { message: 'Введите корректный номер телефона' }),
+  address: z.string().optional(),
+  deliveryType: z.nativeEnum(DeliveryType),
+  paymentMethod: z.nativeEnum(PaymentMethod),
+  deliveryPrice: z.number().optional().default(0),
+  paymentId: z.string().optional(),
+  status: z.nativeEnum(OrderStatus),
+  deliveryTime: z.date(),
+  bonusDelta: z.number().default(0),
+  updatedAt: z.date(),
+  items: z.array(
+    z.object({
+      productId: z.number().min(1, "Выберите товар"),
+      quantity: z.number().min(1, "Минимальное количество товара 1"),      
+      productName: z.string(),
+      stockQuantity: z.number(),
+      productPrice: z.number(),
+    })
+  ).min(0) // Разрешаем пустой массив
 }));
 
 export type OrderFormValues = z.infer<typeof OrderFormSchema>;

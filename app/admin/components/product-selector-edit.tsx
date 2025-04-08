@@ -1,15 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Controller, useFormContext } from 'react-hook-form';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/shared/components/ui/select';
+import { Controller } from 'react-hook-form';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select';
 import { Button, FormInput } from '@/shared/components';
+import { useFormContext } from 'react-hook-form';
 import { Trash } from 'lucide-react';
 
 type Product = {
@@ -17,57 +12,35 @@ type Product = {
   name: string;
   stockQuantity: number;
   price: number;
-};
-
-type OrderItem = {
-  productId: number;
-  productName: string;
-  productQuantity: number;
-  productPrice: number;
+  isAvailable: boolean;
 };
 
 type ProductSelectorProps = {
   index: number;
   products: Product[];
-  orderItems: OrderItem[];
   onRemove: () => void;
+  allowEmpty?: boolean;
 };
-
 
 export const ProductSelectorEdit = ({
   index,
   products,
-  orderItems,
-  onRemove
+  onRemove,
+  allowEmpty = false
 }: ProductSelectorProps) => {
   const [open, setOpen] = useState(false);
-  const {
-    control,
-    watch,
-    setValue,
-    formState: { errors }
-  } = useFormContext();
-
-  const allItems = watch('items');
+  const { control, watch, setValue, getValues, formState: { errors } } = useFormContext();
+  
+  // Получаем все выбранные productId из формы
+  const allSelectedIds = getValues('items').map((item: any) => item.productId);
   const selectedProductId = watch(`items.${index}.productId`);
+  const selectedProduct = products.find(p => p.id === selectedProductId);
 
-  // Модифицированные товары с учётом заказанных товаров
-  const modifiedProducts = products.map(product => {
-    const itemInOrder = orderItems.find(oi => oi.productId === product.id);
-    const originalQuantity = itemInOrder?.productQuantity ?? 0;
-
-    return {
-      ...product,
-      stockQuantity: product.stockQuantity + originalQuantity,
-    };
-  });
-  const selectedProductFromOrderItems = orderItems.find(
-    oi => oi.productId === selectedProductId && !products.find(p => p.id === selectedProductId)
+  // Фильтруем продукты, исключая уже выбранные в других селектах
+  const filteredProducts = products.filter(product => 
+    product.stockQuantity > 0 && 
+    (product.id === selectedProductId || !allSelectedIds.includes(product.id))
   );
-
-  const selectedProduct = modifiedProducts.find(p => p.id === selectedProductId);
-  const fallbackProduct = orderItems.find(item => item.productId === selectedProductId);
-  const isMissingProduct = !selectedProduct && !!fallbackProduct;
 
   return (
     <div className="flex items-center gap-4 mb-4">
@@ -75,45 +48,44 @@ export const ProductSelectorEdit = ({
         <Controller
           name={`items.${index}.productId`}
           control={control}
+          rules={{
+            required: "Выберите товар",
+            validate: (value) => value !== 0 || "Выберите товар"
+          }}
           render={({ field }) => (
             <div>
               <Select
                 open={open}
                 onOpenChange={setOpen}
-                value={field.value ? String(field.value) : ''}
-                onValueChange={value => {
+                value={field.value ? String(field.value) : ""}
+                onValueChange={(value) => {
                   const product = products.find(p => p.id === Number(value));
                   if (product) {
                     field.onChange(Number(value));
                     setValue(`items.${index}.productName`, product.name);
                     setValue(`items.${index}.stockQuantity`, product.stockQuantity);
                     setValue(`items.${index}.productPrice`, product.price);
+                    // Сбрасываем количество до 1 при смене товара
+                    setValue(`items.${index}.quantity`, 0);
                   }
                   setOpen(true);
                 }}
-                disabled={isMissingProduct}
               >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Выберите товар">
                     {selectedProduct
                       ? `${selectedProduct.name} - ${selectedProduct.price} ₽`
-                      : isMissingProduct
-                        ? `${fallbackProduct?.productName} - ${fallbackProduct?.productPrice} ₽ (удалён)`
-                        : 'Выберите товар'}
+                      : "Выберите товар"}
                   </SelectValue>
                 </SelectTrigger>
-
-                {!isMissingProduct && (
-                  <SelectContent>
-                    {modifiedProducts.map(product => (
-                      <SelectItem key={product.id} value={String(product.id)}>
-                        {product.name} (Доступно: {product.stockQuantity})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                )}
+                <SelectContent>
+                  {filteredProducts.map(product => (
+                    <SelectItem key={product.id} value={String(product.id)}>
+                      {product.name} (Доступно: {product.stockQuantity})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
               </Select>
-
               {(errors.items as any)?.[index]?.productId && (
                 <p className="text-sm text-red-500 mt-1">
                   {(errors.items as any)[index].productId.message}
@@ -126,19 +98,41 @@ export const ProductSelectorEdit = ({
 
       <div className="flex items-center gap-2">
         <span className="text-muted-foreground">×</span>
-        <FormInput
+        <Controller
           name={`items.${index}.quantity`}
-          type="number"
-          min={1}
-          max={watch(`items.${index}.stockQuantity`)}
-          required
-          className="w-20"
+          control={control}
+          rules={{
+            required: "Введите количество",
+            min: {
+              value: 1,
+              message: "Минимальное количество 1"
+            },
+            max: {
+              // Используем нулевой оператор для значения по умолчанию
+              value: selectedProduct?.stockQuantity ?? 0,
+              message: "Превышает доступное количество"
+            }
+          }}
+          render={({ field }) => (
+            <div>
+              <FormInput
+                {...field}
+                type="number"
+                min={1}
+                max={selectedProduct?.stockQuantity}
+                className="w-20"
+                onChange={(e) => field.onChange(Number(e.target.value))}
+                disabled={!selectedProductId}
+                value={field.value || ''} // Добавляем значение по умолчанию
+              />
+              {(errors.items as any)?.[index]?.quantity && (
+                <p className="text-sm text-red-500">
+                  {(errors.items as any)[index].quantity.message}
+                </p>
+              )}
+            </div>
+          )}
         />
-        {(errors.items as any)?.[index]?.quantity && (
-          <p className="text-sm text-red-500">
-            {(errors.items as any)[index].quantity.message}
-          </p>
-        )}
       </div>
 
       <Button

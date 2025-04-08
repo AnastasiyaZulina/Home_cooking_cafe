@@ -17,15 +17,8 @@ type Product = {
 type ProductSelectorProps = {
   index: number;
   products: Product[];
-  orderItems: {
-    productId: number;
-    productName: string;
-    productQuantity: number;
-    productPrice: number;
-  }[];
   onRemove: () => void;
 };
-
 
 export const ProductSelector = ({ 
   index,

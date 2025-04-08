@@ -195,10 +195,16 @@ const CreateOrderPage = () => {
                   <ProductSelector
                     key={field.id}
                     index={index}
-                    products={products}
+                    products={products.filter(product =>
+                      !fields.some((f, i) =>
+                        i !== index &&
+                        f.productId === product.id
+                      )
+                    )}
                     onRemove={() => remove(index)}
                   />
                 ))}
+
                 <Button
                   type="button"
                   onClick={() => append({
