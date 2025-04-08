@@ -41,7 +41,6 @@ export const OrderUpdateFormSchema = z.object({
   status: z.nativeEnum(OrderStatus),
   deliveryTime: z.date(),
   bonusDelta: z.number().default(0),
-  updatedAt: z.date(),
   items: z.array(
     z.object({
       productId: z.number().min(1, "Выберите товар"),

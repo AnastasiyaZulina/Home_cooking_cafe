@@ -46,11 +46,6 @@ type User = {
     verified?: Date | null;
 };
 
-const Datetime = dynamic(
-    () => import('react-datetime'),
-    { ssr: false }
-);
-
 type OrderDetails = OrderUpdateFormValues & {
     id: number;
 };
@@ -73,6 +68,19 @@ export default function EditOrderPage() {
     const [originalProductsStock, setOriginalProductsStock] = useState<Record<number, number>>({});
     const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
 
+    const Datetime = dynamic(
+        () => import('react-datetime'),
+        {
+            ssr: false,
+            loading: () => (
+                <input
+                    className="form-input w-full p-2 border rounded"
+                    placeholder="Загрузка выбора даты..."
+                />
+            )
+        }
+    );
+
     const form = useForm<OrderUpdateFormValues>({
         resolver: zodResolver(OrderUpdateFormSchema),
         defaultValues: {
@@ -83,7 +91,6 @@ export default function EditOrderPage() {
             deliveryTime: new Date(),
             bonusDelta: 0,
             items: [],
-            updatedAt: new Date()
         }
     });
 
@@ -178,7 +185,6 @@ export default function EditOrderPage() {
 
     const [originalItems, setOriginalItems] = useState<OrderItem[]>([]);
     const handleEditItems = () => {
-        // Сохраняем оригинальные товары
         const currentItems = form.getValues('items');
         setOriginalItems([...currentItems]);
 
@@ -199,10 +205,7 @@ export default function EditOrderPage() {
     };
 
     const handleCancelEditItems = () => {
-        // Восстанавливаем оригинальные товары
         form.setValue('items', originalItems);
-
-        // Восстанавливаем оригинальные продукты
         setCurrentProducts(originalProducts);
         setIsEditingItems(false);
     };
@@ -235,6 +238,11 @@ export default function EditOrderPage() {
 
     const onSubmit = async (data: z.infer<typeof OrderUpdateFormSchema>) => {
         try {
+            // Проверка товаров
+            if (!data.items || data.items.some(item => item.productId < 1)) {
+                console.error('Есть невалидные товары');
+                return;
+            }
             const payload = {
                 ...data,
                 id: Number(id),
@@ -249,16 +257,6 @@ export default function EditOrderPage() {
                 }))
             };
             console.log('Order data:', payload);
-            /*
-                        const response = await fetch(`/api/admin/orders/${id}`, {
-                            method: 'PUT',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(payload)
-                        });
-            
-                        if (!response.ok) throw new Error('Ошибка обновления заказа');
-            
-                        router.push('/admin/orders');*/
         } catch (error) {
             console.error('Ошибка:', error);
         }
@@ -271,7 +269,9 @@ export default function EditOrderPage() {
         <div className="container mx-auto px-4 py-8">
             <h1 className="text-2xl font-bold mb-6">Редактирование заказа #{order.id}</h1>
             <FormProvider {...form}>
-                <form onSubmit={handleSubmit(onSubmit)}>
+                <form onSubmit={handleSubmit(onSubmit, (errors) => {
+                    console.log('Validation errors:', errors);
+                })}>
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         <WhiteBlock title="Основная информация" className="p-6">
                             <div className="space-y-4">
