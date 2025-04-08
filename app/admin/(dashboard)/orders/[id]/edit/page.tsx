@@ -19,6 +19,7 @@ import { OrderSummary } from '@/app/admin/components/order-summary';
 import { OrderFormSchema, OrderUpdateFormSchema, OrderUpdateFormValues } from '@/app/admin/schemas/order-form-schema';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select';
 import { ProductSelectorEdit } from '@/app/admin/components/product-selector-edit';
+import toast, { Toaster } from 'react-hot-toast';
 
 type Product = {
     id: number;
@@ -215,13 +216,22 @@ export default function EditOrderPage() {
     
     const handleSaveItems = async () => {
         const isValid = await form.trigger('items');
-
+        
         if (!isValid) return;
 
-        // Обновляем оригинальные товары
-        const currentItems = form.getValues('items');
-        setOriginalItems([...currentItems]);
-        setIsEditingItems(false);
+        const formValues = form.getValues();
+        setOriginalItems([...formValues.items]);
+        toast('Список товаров успешно обновлён!👏');
+        // Принудительно обновляем состояние формы
+        reset({
+          ...formValues,
+          items: formValues.items.map(item => ({
+            ...item,
+            productName: item.productName,
+            stockQuantity: item.stockQuantity,
+            productPrice: item.productPrice
+          }))
+        });
     };
 
     const items = watch('items') || [];
@@ -243,7 +253,8 @@ export default function EditOrderPage() {
                     quantity: item.quantity
                 }))
             };
-
+            console.log('Order data:', payload);
+/*
             const response = await fetch(`/api/admin/orders/${id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
@@ -252,7 +263,7 @@ export default function EditOrderPage() {
 
             if (!response.ok) throw new Error('Ошибка обновления заказа');
 
-            router.push('/admin/orders');
+            router.push('/admin/orders');*/
         } catch (error) {
             console.error('Ошибка:', error);
         }
@@ -366,7 +377,7 @@ export default function EditOrderPage() {
                                             onClick={handleCancelEditItems}
                                             className="flex-1"
                                         >
-                                            Отмена
+                                            Назад
                                         </Button>
                                         <Button
                                             type="button"

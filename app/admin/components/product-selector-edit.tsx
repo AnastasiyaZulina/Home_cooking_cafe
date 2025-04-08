@@ -30,15 +30,15 @@ export const ProductSelectorEdit = ({
 }: ProductSelectorProps) => {
   const [open, setOpen] = useState(false);
   const { control, watch, setValue, getValues, formState: { errors } } = useFormContext();
-  
+
   // Получаем все выбранные productId из формы
   const allSelectedIds = getValues('items').map((item: any) => item.productId);
   const selectedProductId = watch(`items.${index}.productId`);
   const selectedProduct = products.find(p => p.id === selectedProductId);
 
   // Фильтруем продукты, исключая уже выбранные в других селектах
-  const filteredProducts = products.filter(product => 
-    product.stockQuantity > 0 && 
+  const filteredProducts = products.filter(product =>
+    product.stockQuantity > 0 &&
     (product.id === selectedProductId || !allSelectedIds.includes(product.id))
   );
 
@@ -65,8 +65,15 @@ export const ProductSelectorEdit = ({
                     setValue(`items.${index}.productName`, product.name);
                     setValue(`items.${index}.stockQuantity`, product.stockQuantity);
                     setValue(`items.${index}.productPrice`, product.price);
-                    // Сбрасываем количество до 1 при смене товара
-                    setValue(`items.${index}.quantity`, 0);
+                    
+                    // Получаем текущее значение количества
+                    const currentQuantity = getValues(`items.${index}.quantity`);
+                    // Корректируем значение если нужно
+                    const clampedValue = Math.min(
+                      Math.max(currentQuantity, 1), 
+                      product.stockQuantity
+                    );
+                    setValue(`items.${index}.quantity`, clampedValue);
                   }
                   setOpen(true);
                 }}
@@ -108,7 +115,6 @@ export const ProductSelectorEdit = ({
               message: "Минимальное количество 1"
             },
             max: {
-              // Используем нулевой оператор для значения по умолчанию
               value: selectedProduct?.stockQuantity ?? 0,
               message: "Превышает доступное количество"
             }
@@ -121,9 +127,14 @@ export const ProductSelectorEdit = ({
                 min={1}
                 max={selectedProduct?.stockQuantity}
                 className="w-20"
-                onChange={(e) => field.onChange(Number(e.target.value))}
+                onChange={(e) => {
+                  const value = Number(e.target.value);
+                  const maxStock = selectedProduct?.stockQuantity || 1;
+                  const clampedValue = Math.min(Math.max(value, 1), maxStock);
+                  field.onChange(clampedValue);
+                }}
                 disabled={!selectedProductId}
-                value={field.value || ''} // Добавляем значение по умолчанию
+                value={field.value}
               />
               {(errors.items as any)?.[index]?.quantity && (
                 <p className="text-sm text-red-500">

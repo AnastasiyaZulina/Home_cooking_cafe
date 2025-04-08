@@ -28,7 +28,7 @@ export const OrderFormSchema = z.object({
   ).nonempty("Добавьте хотя бы один товар")
 });
 
-export const OrderUpdateFormSchema = OrderFormSchema.merge(z.object({
+export const OrderUpdateFormSchema = z.object({
   userId: z.number().optional(),
   name: z.string().min(2, { message: 'Имя должно содержать не менее двух символов' }),
   email: z.string().email({ message: 'Введите корректную почту' }),
@@ -51,7 +51,7 @@ export const OrderUpdateFormSchema = OrderFormSchema.merge(z.object({
       productPrice: z.number(),
     })
   ).min(0) // Разрешаем пустой массив
-}));
+});
 
 export type OrderFormValues = z.infer<typeof OrderFormSchema>;
 export type OrderUpdateFormValues = z.infer<typeof OrderUpdateFormSchema>;
