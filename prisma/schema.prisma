@@ -51,7 +51,8 @@ model Product {
   isAvailable Boolean @default(true)
   stockQuantity Int @default(0)
   cartItems CartItem[]
-
+  orderItems OrderItem[]
+  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -117,6 +118,7 @@ model OrderItem {
   orderId   Int
   order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
   productId Int
+  product   Product @relation(fields: [productId], references: [id])
   productName String
   productQuantity  Int     @default(1)
   productPrice     Int     

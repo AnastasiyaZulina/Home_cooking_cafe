@@ -14,8 +14,15 @@ export async function GET(
   }
 
   try {
-    const order = await prisma.order.findMany({
-      orderBy: { id: 'desc' },
+    const order = await prisma.order.findUnique({
+      where: { id: Number(params.id) },
+      include: {
+        items: {
+          include: {
+            product: true
+          }
+        }
+      }
     });
 
     if (!order) {

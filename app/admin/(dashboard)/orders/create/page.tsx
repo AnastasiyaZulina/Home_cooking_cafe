@@ -2,10 +2,9 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { DeliveryType, PaymentMethod, OrderStatus } from '@prisma/client';
-import { Controller, useFieldArray, useForm, useFormContext } from 'react-hook-form';
+import { Controller, useFieldArray, useForm } from 'react-hook-form';
 import { Button } from '@/shared/components/ui/button';
 import * as RadioGroup from '@radix-ui/react-radio-group';
-import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select';
 import { FormInput, FormTextarea, WhiteBlock } from '@/shared/components';
@@ -14,9 +13,11 @@ import { FormProvider } from 'react-hook-form';
 import { PhoneInput } from '@/shared/components/shared/phone-input';
 import moment from 'moment';
 import dynamic from 'next/dynamic';
-import { Trash } from 'lucide-react';
-import { Slider } from '@/shared/components/ui/slider';
 import { CHECKOUT_CONSTANTS } from '@/shared/constants';
+import { UserSelect } from '@/app/admin/components/user-select';
+import { ProductSelector } from '@/app/admin/components/product-selector';
+import { OrderSummary } from '@/app/admin/components/order-summary';
+import { OrderFormSchema, OrderFormValues } from '@/app/admin/schemas/order-form-schema';
 
 type Product = {
   id: number;
@@ -34,42 +35,12 @@ type User = {
   verified?: Date | null;
 };
 
-const OrderFormSchema = z.object({
-  userId: z.number().optional(),
-  name: z.string().min(2, { message: 'Имя должно содержать не менее двух символов' }),
-  email: z.string().email({ message: 'Введите корректную почту' }),
-  phone: z.string().min(11, { message: 'Введите корректный номер телефона' }),
-  address: z.string().optional(),
-  deliveryType: z.nativeEnum(DeliveryType),
-  paymentMethod: z.nativeEnum(PaymentMethod),
-  deliveryPrice: z.number().optional().default(0),
-  paymentId: z.string().optional(),
-  status: z.nativeEnum(OrderStatus),
-  deliveryTime: z.date(),
-  bonusDelta: z.number().default(0),
-  items: z.array(
-    z.object({
-      productId: z.number().min(1, "Выберите товар"),
-      quantity: z.number().min(1),
-      productName: z.string(),
-      stockQuantity: z.number(),
-      productPrice: z.number()
-    }).refine(data => data.quantity <= data.stockQuantity, {
-      message: "Количество превышает доступный запас",
-      path: ["quantity"]
-    })
-  ).nonempty("Добавьте хотя бы один товар")
-});
-
-type OrderFormValues = z.infer<typeof OrderFormSchema>;
-
 const CreateOrderPage = () => {
   const [deliveryType, setDeliveryType] = useState<DeliveryType>('DELIVERY');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('ONLINE');
   const datetimeRef = useRef<HTMLDivElement>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [users, setUsers] = useState<User[]>([]);
-  const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
   const [bonusOption, setBonusOption] = useState<'earn' | 'spend'>('earn');
   const [spentBonuses, setSpentBonuses] = useState(0);
   const [userBonuses, setUserBonuses] = useState(0);
@@ -135,7 +106,6 @@ const CreateOrderPage = () => {
   }, []);
 
   const handleUserSelect = (userId: number | undefined) => {
-    setSelectedUserId(userId || null);
     setBonusOption('earn');
     setSpentBonuses(0);
 
@@ -156,244 +126,13 @@ const CreateOrderPage = () => {
     }
   };
 
-  const ProductSelector = ({ index }: { index: number }) => {
-    const [open, setOpen] = useState(false);
-    const selectedProductId = watch(`items.${index}.productId`);
-    const selectedProduct = products.find(p => p.id === selectedProductId);
-    const { formState: { errors } } = useFormContext<OrderFormValues>();
-
-    return (
-      <div className="flex items-center gap-4 mb-4">
-        <div className="flex-1">
-          <Controller
-            name={`items.${index}.productId`}
-            control={control}
-            render={({ field }) => (
-              <div>
-                <Select
-                  open={open}
-                  onOpenChange={setOpen}
-                  value={field.value ? String(field.value) : ""}
-                  onValueChange={(value) => {
-                    const product = products.find(p => p.id === Number(value));
-                    if (product) {
-                      field.onChange(Number(value));
-                      setValue(`items.${index}.productName`, product.name);
-                      setValue(`items.${index}.stockQuantity`, product.stockQuantity);
-                      setValue(`items.${index}.productPrice`, product.price);
-                    }
-                    setOpen(true);
-                  }}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Выберите товар">
-                      {selectedProduct ?
-                        `${selectedProduct.name} - ${selectedProduct.price} ₽`
-                        : "Выберите товар"}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    {products.map(product => (
-                      <SelectItem key={product.id} value={String(product.id)}>
-                        {product.name} (Доступно: {product.stockQuantity})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {(errors.items as any)?.[index]?.productId && (
-                  <p className="text-sm text-red-500 mt-1">
-                    {(errors.items as any)[index].productId.message}
-                  </p>
-                )}
-              </div>
-            )}
-          />
-        </div>
-
-        <div className="flex items-center gap-2">
-          <span className="text-muted-foreground">×</span>
-          <FormInput
-            name={`items.${index}.quantity`}
-            type="number"
-            min={1}
-            max={selectedProduct?.stockQuantity || 1}
-            required
-            className="w-20"
-          />
-          {(errors.items as any)?.[index]?.quantity && (
-            <p className="text-sm text-red-500">
-              {(errors.items as any)[index].quantity.message}
-            </p>
-          )}
-        </div>
-
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          onClick={() => remove(index)}
-          className="text-destructive hover:text-destructive/80"
-        >
-          <Trash className="h-4 w-4" />
-        </Button>
-      </div>
-    );
-  };
-
-  const UserSelect = () => (
-    <Controller
-      name="userId"
-      control={control}
-      render={({ field }) => (
-        <Select
-          value={field.value !== undefined ? String(field.value) : "unselected"}
-          onValueChange={(value) => {
-            const userId = value !== "unselected" ? parseInt(value) : undefined;
-            field.onChange(userId);
-            handleUserSelect(userId);
-          }}
-        >
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="Выберите клиента" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="unselected">Не выбрано</SelectItem>
-            {users.map(user => (
-              <SelectItem key={user.id} value={String(user.id)}>
-                #{user.id} - {user.name} ({user.email})
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      )}
-    />
+  const items = watch('items') || [];
+  const totalAmount = items.reduce(
+    (sum, item) => sum + (item.productPrice * item.quantity),
+    0
   );
 
-  const BonusOptions = () => {
-    const { watch } = useFormContext<OrderFormValues>();
-    const items = watch('items') || [];
-    const totalAmount = items.reduce(
-      (sum, item) => sum + (item.productPrice * item.quantity),
-      0
-    );
-    const maxAvailableToSpend = Math.min(userBonuses, totalAmount);
-
-    return (
-      <div className="mb-4">
-        <RadioGroup.Root
-          value={bonusOption}
-          onValueChange={(value: 'earn' | 'spend') => setBonusOption(value)}
-          className="flex items-center gap-4 mb-4"
-        >
-          <div className="flex items-center gap-2">
-            <RadioGroup.Item
-              value="earn"
-              id="earnBonuses"
-              className="flex items-center justify-center w-6 h-6 rounded-full border border-gray-400"
-            >
-              <RadioGroup.Indicator className="w-4 h-4 rounded-full bg-primary" />
-            </RadioGroup.Item>
-            <label htmlFor="earnBonuses">
-              Начислить бонусы (+{Math.round(totalAmount * CHECKOUT_CONSTANTS.BONUS_MULTIPLIER)} ₽)
-            </label>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <RadioGroup.Item
-              value="spend"
-              id="spendBonuses"
-              className={`flex items-center justify-center w-6 h-6 rounded-full border ${userBonuses <= 0 ? 'border-gray-300 opacity-50' : 'border-gray-400'
-                }`}
-              disabled={userBonuses <= 0}
-            >
-              <RadioGroup.Indicator className="w-4 h-4 rounded-full bg-primary" />
-            </RadioGroup.Item>
-            <label
-              htmlFor="spendBonuses"
-              className={userBonuses <= 0 ? 'opacity-50' : ''}
-            >
-              Списать бонусы {userBonuses > 0 && `(до ${maxAvailableToSpend} ₽)`}
-            </label>
-          </div>
-        </RadioGroup.Root>
-
-        {bonusOption === 'spend' && userBonuses > 0 && (
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm text-gray-600">
-              <span>Списать: {spentBonuses} ₽</span>
-              <span>Доступно: {userBonuses} ₽</span>
-            </div>
-
-            <Slider
-              value={[spentBonuses]}
-              max={maxAvailableToSpend}
-              step={1}
-              onValueChange={(value) => setSpentBonuses(value[0])}
-            />
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  const OrderSummary = () => {
-    const { watch } = useFormContext<OrderFormValues>();
-    const items = watch('items') || [];
-    const deliveryPrice = watch('deliveryPrice') || 0;
-    const userId = watch('userId');
-
-    const totalAmount = items.reduce(
-      (sum, item) => sum + (item.productPrice * item.quantity),
-      0
-    );
-
-    const { totalPrice, bonusDelta } = bonusOption === 'earn'
-      ? {
-        totalPrice: totalAmount + deliveryPrice,
-        bonusDelta: userId ? Math.round(totalAmount * CHECKOUT_CONSTANTS.BONUS_MULTIPLIER) : 0
-      }
-      : {
-        totalPrice: totalAmount + deliveryPrice - spentBonuses,
-        bonusDelta: -spentBonuses
-      };
-
-    return (
-      <WhiteBlock title="Итоговая информация" className="p-6">
-        <div className="space-y-3">
-          <div className="flex justify-between">
-            <span>Стоимость товаров:</span>
-            <span>{totalAmount} ₽</span>
-          </div>
-
-          <div className="flex justify-between">
-            <span>Стоимость доставки:</span>
-            <span>{deliveryPrice} ₽</span>
-          </div>
-
-          {userId && <BonusOptions />}
-
-          <div className="flex justify-between font-bold border-t pt-3">
-            <span>Итого:</span>
-            <span>{totalPrice} ₽</span>
-          </div>
-
-          {userId && (
-            <div className="flex justify-between text-sm text-primary">
-              <span>Изменение бонусов:</span>
-              <span>{bonusDelta > 0 ? '+' : ''}{bonusDelta} ₽</span>
-            </div>
-          )}
-        </div>
-      </WhiteBlock>
-    );
-  };
-
   const onSubmit = (data: OrderFormValues) => {
-    const totalAmount = data.items.reduce(
-      (sum, item) => sum + (item.productPrice * item.quantity),
-      0
-    );
-
     const payload = {
       ...data,
       bonusDelta: bonusOption === 'earn'
@@ -402,8 +141,8 @@ const CreateOrderPage = () => {
       items: data.items.map(item => ({
         productId: item.productId,
         quantity: item.quantity,
-        productName: item.productName, // Добавляем название
-        productPrice: item.productPrice // Добавляем цену
+        productName: item.productName,
+        productPrice: item.productPrice
       }))
     };
 
@@ -420,7 +159,10 @@ const CreateOrderPage = () => {
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium mb-2">Клиент</label>
-                  <UserSelect />
+                  <UserSelect
+                    users={users}
+                    onUserSelect={handleUserSelect}
+                  />
                 </div>
 
                 <FormInput
@@ -450,7 +192,12 @@ const CreateOrderPage = () => {
             <WhiteBlock title="Товары в заказе" className="mt-6">
               <div className="space-y-4">
                 {fields.map((field, index) => (
-                  <ProductSelector key={field.id} index={index} />
+                  <ProductSelector
+                    key={field.id}
+                    index={index}
+                    products={products}
+                    onRemove={() => remove(index)}
+                  />
                 ))}
                 <Button
                   type="button"
@@ -639,10 +386,17 @@ const CreateOrderPage = () => {
                 />
               </div>
             </WhiteBlock>
-            <OrderSummary />
+            <OrderSummary
+              totalAmount={totalAmount}
+              userBonuses={userBonuses}
+              spentBonuses={spentBonuses}
+              bonusOption={bonusOption}
+              setSpentBonuses={setSpentBonuses}
+              setBonusOption={setBonusOption}
+            />
           </div>
 
-          <div className="mt-6 flex justify-end">
+          <div className="mt-6 flex justify-center">
             <Button type="submit" className="px-6 py-3">
               Создать заказ
             </Button>
