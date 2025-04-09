@@ -41,6 +41,9 @@ type Order = {
   paymentMethod: 'ONLINE' | 'OFFLINE';
   deliveryType: 'PICKUP' | 'DELIVERY';
   deliveryTime: string;
+  deliveryCost?: number;
+  userId?: number;
+  bonusDelta: number;
   name: string;
   address?: string;
   email: string;
@@ -87,6 +90,7 @@ const OrderTable = () => {
   const [selectedOrderItems, setSelectedOrderItems] = useState<OrderItem[]>([]);
   const [itemsDialogOpen, setItemsDialogOpen] = useState(false);
   const router = useRouter();
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
   const { data, isLoading } = useQuery<Order[]>({
     queryKey: ['orders'],
@@ -132,7 +136,7 @@ const OrderTable = () => {
         accessorKey: 'id',
         header: 'ID',
         filterVariant: 'range',
-       // size: 80,
+        // size: 80,
       },
       {
         accessorKey: 'status',
@@ -159,7 +163,7 @@ const OrderTable = () => {
             row.original.deliveryType,
             row.original.paymentMethod
           ),
-       // size: 100,
+        // size: 100,
       },
       {
         accessorKey: 'paymentMethod',
@@ -186,6 +190,12 @@ const OrderTable = () => {
         //size: 150,
       },
       {
+        accessorKey: 'deliveryCost',
+        header: 'Стоимость доставки',
+        filterVariant: 'range',
+        // size: 150,
+      },
+      {
         accessorFn: (originalRow) => new Date(originalRow.deliveryTime),
         accessorKey: 'deliveryTime',
         header: 'Время доставки',
@@ -201,7 +211,7 @@ const OrderTable = () => {
         accessorKey: 'name',
         header: 'Имя клиента',
         filterVariant: 'text',
-       // size: 200,
+        // size: 200,
       },
       {
         accessorKey: 'address',
@@ -219,19 +229,31 @@ const OrderTable = () => {
         accessorKey: 'phone',
         header: 'Телефон',
         filterVariant: 'text',
-       // size: 150,
+        // size: 150,
       },
       {
         accessorKey: 'comment',
         header: 'Комментарий',
         filterVariant: 'text',
-       // size: 200,
+        // size: 200,
+      },
+      {
+        accessorKey: 'userId',
+        header: 'ID клиента',
+        filterVariant: 'range',
+        // size: 150,
+      },
+      {
+        accessorKey: 'bonusDelta',
+        header: 'Бонусы',
+        filterVariant: 'range',
+        // size: 150,
       },
       {
         accessorKey: 'paymentId',
         header: 'ID платежа',
         filterVariant: 'text',
-       // size: 150,
+        // size: 150,
       },
       {
         accessorFn: (originalRow) => new Date(originalRow.createdAt),
@@ -261,11 +283,6 @@ const OrderTable = () => {
     []
   );
 
-  // Пересчитываем общую ширину таблицы при изменении колонок
-  const totalTableWidth = useMemo(() => {
-    return columns.reduce((acc, col) => acc + (col.size ?? 150), 0); // 150 — дефолтная ширина, если не задана
-  }, [columns]);
-
   const table = useMaterialReactTable({
     columns,
     data: data || [],
@@ -292,6 +309,7 @@ const OrderTable = () => {
         <Tooltip title="Позиции заказа">
           <IconButton
             onClick={() => {
+              setSelectedOrder(row.original);
               setSelectedOrderItems(row.original.items);
               setItemsDialogOpen(true);
             }}
@@ -311,13 +329,13 @@ const OrderTable = () => {
   return (
     <>
 
-<LocalizationProvider
-  dateAdapter={AdapterDayjs}
-  adapterLocale="ru"
->
+      <LocalizationProvider
+        dateAdapter={AdapterDayjs}
+        adapterLocale="ru"
+      >
         <MaterialReactTable table={table} />
       </LocalizationProvider>
-      
+
       <Dialog
         open={itemsDialogOpen}
         onClose={() => setItemsDialogOpen(false)}
@@ -354,7 +372,38 @@ const OrderTable = () => {
               )}
             </tbody>
           </table>
+
+          {/* Расчёты */}
+          {selectedOrderItems.length > 0 && (
+            <Box mt={3}>
+              {(() => {
+                const totalItemsPrice = selectedOrderItems.reduce(
+                  (acc, item) => acc + item.productPrice * item.productQuantity,
+                  0
+                );
+                const deliveryCost = selectedOrder?.deliveryCost || 0;
+                const bonusDelta = (selectedOrder?.bonusDelta ?? 0) < 0 ? selectedOrder?.bonusDelta ?? 0 : 0;
+                const total = totalItemsPrice + deliveryCost + bonusDelta;
+
+                return (
+                  <Box className="space-y-2 mt-4 text-left">
+                    <div>Стоимость товаров: <strong>{totalItemsPrice.toLocaleString()} ₽</strong></div>
+                    <div>Доставка: <strong>{deliveryCost.toLocaleString()} ₽</strong></div>
+                    <div>
+                      {selectedOrder?.bonusDelta && selectedOrder.bonusDelta > 0
+                        ? `Начислено бонусов: `
+                        : `Списано бонусов: `}
+                      <strong>{Math.abs(selectedOrder?.bonusDelta ?? 0).toLocaleString()} ₽</strong>
+                    </div>
+                    <div><strong>ИТОГО: {total.toLocaleString()} ₽</strong></div>
+                  </Box>
+                );
+              })()}
+            </Box>
+          )}
+
         </DialogContent>
+
         <DialogActions>
           <Button onClick={() => setItemsDialogOpen(false)}>Закрыть</Button>
         </DialogActions>
