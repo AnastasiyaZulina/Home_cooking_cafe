@@ -12,6 +12,7 @@ export const OrderFormSchema = z.object({
   deliveryPrice: z.number().optional().default(0),
   paymentId: z.string().optional(),
   status: z.nativeEnum(OrderStatus),
+  comment: z.string().optional(),
   deliveryTime: z.preprocess(
     (arg) => {
       if (typeof arg === "string" || arg instanceof Date) return new Date(arg);
@@ -43,7 +44,8 @@ export const OrderUpdateFormSchema = z.object({
   paymentMethod: z.nativeEnum(PaymentMethod),
   deliveryPrice: z.number().optional().default(0),
   paymentId: z.string().optional(),
-  status: z.nativeEnum(OrderStatus),
+  status: z.nativeEnum(OrderStatus, {message: "Выберите статус заказа"}),
+  comment: z.string().optional(),
   deliveryTime: z.preprocess(
     (arg) => {
       if (typeof arg === "string" || arg instanceof Date) return new Date(arg);

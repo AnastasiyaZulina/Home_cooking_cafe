@@ -25,13 +25,13 @@ type ApiOrderItem = {
     productId: number;
     productQuantity: number;
     product: {
-      stockQuantity: number;
-      name: string;
-      price: number;
+        stockQuantity: number;
+        name: string;
+        price: number;
     };
     productName: string;
     productPrice: number;
-  };
+};
 
 type Product = {
     id: number;
@@ -96,8 +96,6 @@ export default function EditOrderPage() {
     const form = useForm<OrderUpdateFormValues>({
         resolver: zodResolver(OrderUpdateFormSchema),
         defaultValues: {
-            deliveryType: 'DELIVERY',
-            paymentMethod: 'ONLINE',
             status: 'SUCCEEDED',
             deliveryPrice: 0,
             deliveryTime: new Date(),
@@ -126,7 +124,7 @@ export default function EditOrderPage() {
                 const orderData = await orderRes.json();
                 const isCancelledOrSucceeded = ['CANCELLED', 'COMPLETED'].includes(orderData.status);
 
-                const productsRes = fetch(`/api/admin/orders/${id}/edit/products`);
+                const productsRes = fetch(`/api/admin/orders/${id}/products`);
                 if (!(await productsRes).ok) throw new Error('Ошибка загрузки данных');
                 const productsData = await (await productsRes).json();
 
@@ -164,7 +162,8 @@ export default function EditOrderPage() {
                         stockQuantity: item.product.stockQuantity
                     }))
                 });
-
+                setDeliveryType(orderData.deliveryType);
+                setPaymentMethod(orderData.paymentMethod);
                 setOrder(orderData);
                 setSpentBonuses(Math.abs(orderData.bonusDelta));
                 setBonusOption(orderData.bonusDelta >= 0 ? 'earn' : 'spend');
@@ -198,22 +197,22 @@ export default function EditOrderPage() {
     };
     const getAvailableStatuses = useCallback((): OrderStatus[] => {
         if (deliveryType === 'DELIVERY') {
-          return ['PENDING', 'SUCCEEDED', 'DELIVERY', 'COMPLETED', 'CANCELLED'];
+            return ['PENDING', 'SUCCEEDED', 'DELIVERY', 'COMPLETED', 'CANCELLED'];
         }
-    
+
         if (paymentMethod === 'ONLINE') {
-          return ['PENDING', 'SUCCEEDED', 'READY', 'COMPLETED', 'CANCELLED'];
+            return ['PENDING', 'SUCCEEDED', 'READY', 'COMPLETED', 'CANCELLED'];
         }
-    
+
         return ['PENDING', 'READY', 'COMPLETED', 'CANCELLED'];
-      }, [deliveryType, paymentMethod]);
-    
-      useEffect(() => {
+    }, [deliveryType, paymentMethod]);
+
+    useEffect(() => {
         const availableStatuses = getAvailableStatuses();
         if (!availableStatuses.includes(form.getValues('status'))) {
-          setValue('status', availableStatuses[0]);
+            setValue('status', availableStatuses[0]);
         }
-      }, [getAvailableStatuses, deliveryType, paymentMethod, setValue, form]);
+    }, [getAvailableStatuses, deliveryType, paymentMethod, setValue, form]);
 
     const [originalItems, setOriginalItems] = useState<OrderItem[]>([]);
     const handleEditItems = () => {
@@ -270,7 +269,6 @@ export default function EditOrderPage() {
 
     const onSubmit = async (data: z.infer<typeof OrderUpdateFormSchema>) => {
         try {
-            // Проверка товаров
             if (!data.items || data.items.some(item => item.productId < 1) || data.items.length === 0) {
                 toast.error('Пожалуйста, добавьте хотя бы один товар в заказ!');
                 return;
@@ -281,6 +279,7 @@ export default function EditOrderPage() {
             }
             const payload = {
                 ...data,
+                deliveryTime: new Date(data.deliveryTime),
                 id: Number(id),
                 bonusDelta: bonusOption === 'earn'
                     ? Math.round(totalAmount * CHECKOUT_CONSTANTS.BONUS_MULTIPLIER)
@@ -289,14 +288,34 @@ export default function EditOrderPage() {
                     productId: item.productId,
                     quantity: item.quantity,
                     productName: item.productName,
-                    productPrice: item.productPrice
+                    productPrice: item.productPrice,
+                    stockQuantity: item.stockQuantity
                 }))
             };
             console.log('Order data:', payload);
-        } catch (error) {
-            console.error('Ошибка:', error);
+
+            const res = await fetch(`/api/admin/orders/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            });
+
+            if (!res.ok) {
+                const err = await res.json();
+                console.error('Ошибка:', err);
+                return;
+            }
+            toast.success('Заказ успешно обновлён!', { icon: '✅' });
+            setLoading(false);
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            location.href = '/admin/orders';
+        } catch (err) {
+            console.error('Ошибка при обновлении заказа:', err);
         }
     };
+
 
     if (loading) return <div>Загрузка...</div>;
     if (!order) return <div>Заказ не найден</div>;
@@ -629,7 +648,7 @@ export default function EditOrderPage() {
                                                         {fieldState.error && (
                                                             <span className="text-red-500 mr-2">⚠</span>
                                                         )}
-                                                        <SelectValue>
+                                                        <SelectValue placeholder="Выберите статус">
                                                             {getStatusLabel(field.value as OrderStatus)}
                                                         </SelectValue>
                                                     </SelectTrigger>

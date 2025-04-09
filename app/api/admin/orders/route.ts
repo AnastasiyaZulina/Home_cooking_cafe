@@ -51,6 +51,7 @@ export async function POST(request: Request) {
       deliveryTime,
       bonusDelta,
       items,
+      comment,
     } = parsed;
 
     // Создаём заказ
@@ -68,6 +69,7 @@ export async function POST(request: Request) {
         status,
         deliveryTime,
         bonusDelta,
+        comment,
         items: {
           create: items.map((item) => ({
             productId: item.productId,
