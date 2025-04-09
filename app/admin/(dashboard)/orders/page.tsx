@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useMemo, useState } from 'react';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import {
   MaterialReactTable,
   type MRT_ColumnDef,
@@ -21,6 +22,18 @@ import { Edit, Delete, Visibility, Add } from '@mui/icons-material';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
+import { LocalizationProvider } from '@mui/x-date-pickers';
+import updateLocale from 'dayjs/plugin/updateLocale';
+import dayjs from 'dayjs';
+
+dayjs.extend(updateLocale);
+dayjs.locale('ru'); // или другой язык
+dayjs.updateLocale('ru', {
+  formats: {
+    time: 'HH:mm', // 24-часовой формат
+    timePicker: 'HH:mm', // 24-часовой формат для пикера
+  },
+});
 
 type Order = {
   id: number;
@@ -113,53 +126,140 @@ const OrderTable = () => {
     }
   };
 
-  const columns = useMemo<MRT_ColumnDef<Order>[]>(() => [
-    {
-      accessorKey: 'id',
-      header: 'ID',
-      size: 80,
-    },
-    {
-      accessorKey: 'name',
-      header: 'Имя клиента',
-      size: 200,
-    },
-    {
-      accessorKey: 'email',
-      header: 'Email',
-      size: 200,
-    },
-    {
-      accessorKey: 'phone',
-      header: 'Телефон',
-      size: 150,
-    },
-    {
-      accessorKey: 'deliveryTime',
-      header: 'Время доставки',
-      size: 200,
-      Cell: ({ cell }) => new Date(cell.getValue<string>()).toLocaleString(),
-    },
-    {
-      accessorKey: 'deliveryType',
-      header: 'Тип доставки',
-      size: 150,
-      Cell: ({ cell }) => cell.getValue<string>() === 'PICKUP' ? 'Самовывоз' : 'Доставка',
-    },
-    {
-      accessorKey: 'status',
-      header: 'Статус',
-      size: 200,
-      Cell: ({ row }) =>
-        getStatusText(row.original.status, row.original.deliveryType, row.original.paymentMethod),
-    },
-    {
-      accessorKey: 'createdAt',
-      size: 200,
-      header: 'Дата создания',
-      Cell: ({ cell }) => new Date(cell.getValue<string>()).toLocaleString(),
-    },
-  ], []);
+  const columns = useMemo<MRT_ColumnDef<Order>[]>(
+    () => [
+      {
+        accessorKey: 'id',
+        header: 'ID',
+        filterVariant: 'range',
+       // size: 80,
+      },
+      {
+        accessorKey: 'status',
+        header: 'Статус',
+        filterVariant: 'select',
+        filterSelectOptions: [
+          'PENDING',
+          'SUCCEEDED',
+          'READY',
+          'DELIVERY',
+          'CANCELLED',
+          'COMPLETED',
+        ].map(status => ({
+          text: getStatusText(
+            status as Order['status'],
+            'DELIVERY',
+            'ONLINE'
+          ),
+          value: status,
+        })),
+        Cell: ({ row }) =>
+          getStatusText(
+            row.original.status,
+            row.original.deliveryType,
+            row.original.paymentMethod
+          ),
+       // size: 100,
+      },
+      {
+        accessorKey: 'paymentMethod',
+        header: 'Способ оплаты',
+        filterVariant: 'select',
+        filterSelectOptions: ['ONLINE', 'OFFLINE'].map(method => ({
+          text: method === 'ONLINE' ? 'Онлайн' : 'При получении',
+          value: method,
+        })),
+        Cell: ({ cell }) =>
+          cell.getValue<string>() === 'ONLINE' ? 'Онлайн' : 'При получении',
+        //size: 150,
+      },
+      {
+        accessorKey: 'deliveryType',
+        header: 'Тип доставки',
+        filterVariant: 'select',
+        filterSelectOptions: ['PICKUP', 'DELIVERY'].map(type => ({
+          text: type === 'PICKUP' ? 'Самовывоз' : 'Доставка',
+          value: type,
+        })),
+        Cell: ({ cell }) =>
+          cell.getValue<string>() === 'PICKUP' ? 'Самовывоз' : 'Доставка',
+        //size: 150,
+      },
+      {
+        accessorFn: (originalRow) => new Date(originalRow.deliveryTime),
+        accessorKey: 'deliveryTime',
+        header: 'Время доставки',
+        filterVariant: 'datetime-range',
+        muiFilterDateTimePickerProps: {
+          ampm: false,
+          format: 'DD.MM.YYYY HH:mm',
+        },
+        Cell: ({ cell }) =>
+          dayjs(cell.getValue<string>()).format('DD.MM.YYYY HH:mm'),
+      },
+      {
+        accessorKey: 'name',
+        header: 'Имя клиента',
+        filterVariant: 'text',
+       // size: 200,
+      },
+      {
+        accessorKey: 'address',
+        header: 'Адрес',
+        filterVariant: 'text',
+        //size: 200,
+      },
+      {
+        accessorKey: 'email',
+        header: 'Email',
+        filterVariant: 'text',
+        //size: 200,
+      },
+      {
+        accessorKey: 'phone',
+        header: 'Телефон',
+        filterVariant: 'text',
+       // size: 150,
+      },
+      {
+        accessorKey: 'comment',
+        header: 'Комментарий',
+        filterVariant: 'text',
+       // size: 200,
+      },
+      {
+        accessorKey: 'paymentId',
+        header: 'ID платежа',
+        filterVariant: 'text',
+       // size: 150,
+      },
+      {
+        accessorFn: (originalRow) => new Date(originalRow.createdAt),
+        accessorKey: 'createdAt',
+        header: 'Дата создания',
+        filterVariant: 'datetime-range',
+        muiFilterDateTimePickerProps: {
+          ampm: false,
+          format: 'DD.MM.YYYY HH:mm',
+        },
+        Cell: ({ cell }) =>
+          dayjs(cell.getValue<string>()).format('DD.MM.YYYY HH:mm'),
+      },
+      {
+        accessorFn: (originalRow) => new Date(originalRow.updatedAt),
+        accessorKey: 'updatedAt',
+        header: 'Дата обновления',
+        filterVariant: 'datetime-range',
+        muiFilterDateTimePickerProps: {
+          ampm: false,
+          format: 'DD.MM.YYYY HH:mm',
+        },
+        Cell: ({ cell }) =>
+          dayjs(cell.getValue<string>()).format('DD.MM.YYYY HH:mm'),
+      },
+    ],
+    []
+  );
 
   // Пересчитываем общую ширину таблицы при изменении колонок
   const totalTableWidth = useMemo(() => {
@@ -170,9 +270,8 @@ const OrderTable = () => {
     columns,
     data: data || [],
     state: { isLoading },
-    enableRowActions: true,
-    enableEditing: false,
-    layoutMode: 'grid',
+    enableEditing: true,
+    initialState: { columnOrder: columns.map(col => col.accessorKey as string) },
     renderTopToolbarCustomActions: () => (
       <Button
         variant="contained"
@@ -184,7 +283,7 @@ const OrderTable = () => {
       </Button>
     ),
     renderRowActions: ({ row }) => (
-      <Box sx={{ display: 'flex', gap: '8px', width: '400px' }}>
+      <Box sx={{ display: 'flex', gap: '8px' }}>
         <Tooltip title="Редактировать">
           <IconButton onClick={() => router.push(`/admin/orders/${row.original.id}/edit`)}>
             <Edit />
@@ -211,17 +310,14 @@ const OrderTable = () => {
 
   return (
     <>
-      <Box
-        sx={{
-          overflowX: 'auto',
-          width: '100%',
-        }}
-      >
-        <Box sx={{ minWidth: `${totalTableWidth+150}px` }}>
-          <MaterialReactTable table={table} />
-        </Box>
-      </Box>
 
+<LocalizationProvider
+  dateAdapter={AdapterDayjs}
+  adapterLocale="ru"
+>
+        <MaterialReactTable table={table} />
+      </LocalizationProvider>
+      
       <Dialog
         open={itemsDialogOpen}
         onClose={() => setItemsDialogOpen(false)}
