@@ -1,11 +1,11 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Controller } from 'react-hook-form';
+import { Controller, useFormContext } from 'react-hook-form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select';
 import { Button, FormInput } from '@/shared/components';
-import { useFormContext } from 'react-hook-form';
 import { Trash } from 'lucide-react';
+import type { FieldErrors } from 'react-hook-form';
 
 type Product = {
   id: number;
@@ -14,11 +14,23 @@ type Product = {
   price: number;
 };
 
+type OrderItemForm = {
+  productId: number;
+  quantity: number;
+  productName: string;
+  stockQuantity: number;
+  productPrice: number;
+};
+
 type ProductSelectorProps = {
   index: number;
   products: Product[];
   onRemove: () => void;
 };
+
+type FormErrors = FieldErrors<{
+  items: OrderItemForm[];
+}>;
 
 export const ProductSelector = ({
   index,
@@ -26,14 +38,18 @@ export const ProductSelector = ({
   onRemove
 }: ProductSelectorProps) => {
   const [open, setOpen] = useState(false);
-  const { control, watch, setValue, getValues, formState: { errors } } = useFormContext();
+  const { control, watch, setValue, getValues, formState: { errors } } = useFormContext<{ items: OrderItemForm[] }>();
+  
   const selectedProductId = watch(`items.${index}.productId`);
   const selectedProduct = products.find(p => p.id === selectedProductId);
-  const allSelectedIds = getValues('items').map((item: any) => item.productId);
+  const allSelectedIds = getValues('items').map((item) => item.productId);
   const filteredProducts = products.filter(product =>
     product.stockQuantity > 0 &&
     (product.id === selectedProductId || !allSelectedIds.includes(product.id))
   );
+
+  const itemsErrors = (errors as FormErrors).items?.[index];
+
   return (
     <div className="flex items-center gap-4 mb-4">
       <div className="flex-1">
@@ -72,9 +88,9 @@ export const ProductSelector = ({
                   ))}
                 </SelectContent>
               </Select>
-              {(errors.items as any)?.[index]?.productId && (
+              {itemsErrors?.productId && (
                 <p className="text-sm text-red-500 mt-1">
-                  {(errors.items as any)[index].productId.message}
+                  {itemsErrors.productId.message}
                 </p>
               )}
             </div>
@@ -115,9 +131,9 @@ export const ProductSelector = ({
                 disabled={!selectedProductId}
                 value={field.value}
               />
-              {(errors.items as any)?.[index]?.quantity && (
+              {itemsErrors?.quantity && (
                 <p className="text-sm text-red-500">
-                  {(errors.items as any)[index].quantity.message}
+                  {itemsErrors.quantity.message}
                 </p>
               )}
             </div>
@@ -134,6 +150,6 @@ export const ProductSelector = ({
       >
         <Trash className="h-4 w-4" />
       </Button>
-    </div >
+    </div>
   );
 };

@@ -6,8 +6,9 @@ import { authOptions } from '@/shared/constants/auth-options';
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const session = await getServerSession(authOptions);
   
   if (!session?.user || session.user.role !== "ADMIN") {
@@ -18,12 +19,13 @@ export async function PATCH(
 
   try {
     const updatedCategory = await prisma.category.update({
-      where: { id: Number(params.id) },
+      where: { id: Number(id) },
       data: { name, isAvailable },
     });
 
     return NextResponse.json(updatedCategory);
   } catch (error) {
+    console.error('error:', error);
     return NextResponse.json(
       { error: "Category update failed" },
       { status: 400 }
@@ -33,8 +35,9 @@ export async function PATCH(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const session = await getServerSession(authOptions);
   
   if (!session?.user || session.user.role !== "ADMIN") {
@@ -44,11 +47,12 @@ export async function DELETE(
   try {
     // Удаляем категорию
     await prisma.category.delete({
-      where: { id: Number(params.id) },
+      where: { id: Number(id) },
     });
 
     return NextResponse.json({ success: true });
   } catch (error) {
+    console.error('error:', error);
     return NextResponse.json(
       { error: "Category not found or could not be deleted" },
       { status: 404 }

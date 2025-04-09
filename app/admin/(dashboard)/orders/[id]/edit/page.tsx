@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { DeliveryType, PaymentMethod, OrderStatus } from '@prisma/client';
 import { Controller, useFieldArray, useForm } from 'react-hook-form';
@@ -20,6 +20,18 @@ import { OrderUpdateFormSchema, OrderUpdateFormValues } from '@/app/admin/schema
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select';
 import { ProductSelectorEdit } from '@/app/admin/components/product-selector-edit';
 import toast from 'react-hot-toast';
+
+type ApiOrderItem = {
+    productId: number;
+    productQuantity: number;
+    product: {
+      stockQuantity: number;
+      name: string;
+      price: number;
+    };
+    productName: string;
+    productPrice: number;
+  };
 
 type Product = {
     id: number;
@@ -118,7 +130,7 @@ export default function EditOrderPage() {
                 if (!(await productsRes).ok) throw new Error('Ошибка загрузки данных');
                 const productsData = await (await productsRes).json();
 
-                const allProductsExist = orderData.items.every((item: any) =>
+                const allProductsExist = orderData.items.every((item: OrderItem) =>
                     productsData.some((p: Product) => p.id === item.productId)
                 );
 
@@ -134,7 +146,7 @@ export default function EditOrderPage() {
                 const deliveryTime = new Date(orderData.deliveryTime);
 
                 const initialStock: Record<number, number> = {};
-                orderData.items.forEach((item: any) => {
+                orderData.items.forEach((item: ApiOrderItem) => {
                     initialStock[item.productId] = item.product.stockQuantity + item.productQuantity;
                 });
                 setOriginalProductsStock(initialStock);
@@ -143,7 +155,7 @@ export default function EditOrderPage() {
                     ...orderData,
                     deliveryPrice: orderData.deliveryCost,
                     deliveryTime,
-                    items: orderData.items.map((item: any) => ({
+                    items: orderData.items.map((item: ApiOrderItem) => ({
                         ...item,
                         productId: item.productId,
                         quantity: item.productQuantity,
@@ -184,24 +196,24 @@ export default function EditOrderPage() {
             setUserBonuses(0);
         }
     };
-    const getAvailableStatuses = (): OrderStatus[] => {
+    const getAvailableStatuses = useCallback((): OrderStatus[] => {
         if (deliveryType === 'DELIVERY') {
-            return ['PENDING', 'SUCCEEDED', 'DELIVERY', 'COMPLETED', 'CANCELLED'];
+          return ['PENDING', 'SUCCEEDED', 'DELIVERY', 'COMPLETED', 'CANCELLED'];
         }
-
+    
         if (paymentMethod === 'ONLINE') {
-            return ['PENDING', 'SUCCEEDED', 'READY', 'COMPLETED', 'CANCELLED'];
+          return ['PENDING', 'SUCCEEDED', 'READY', 'COMPLETED', 'CANCELLED'];
         }
-
+    
         return ['PENDING', 'READY', 'COMPLETED', 'CANCELLED'];
-    };
-    useEffect(() => {
+      }, [deliveryType, paymentMethod]);
+    
+      useEffect(() => {
         const availableStatuses = getAvailableStatuses();
         if (!availableStatuses.includes(form.getValues('status'))) {
-            // Устанавливаем первый доступный статус, если текущий недопустим
-            setValue('status', availableStatuses[0]);
+          setValue('status', availableStatuses[0]);
         }
-    }, [getAvailableStatuses, deliveryType, paymentMethod, setValue, form]);
+      }, [getAvailableStatuses, deliveryType, paymentMethod, setValue, form]);
 
     const [originalItems, setOriginalItems] = useState<OrderItem[]>([]);
     const handleEditItems = () => {
@@ -582,17 +594,7 @@ export default function EditOrderPage() {
                                     control={control}
                                     render={({ field, fieldState }) => {
                                         // Функция для получения списка доступных статусов
-                                        const getAvailableStatuses = (): OrderStatus[] => {
-                                            if (deliveryType === 'DELIVERY') {
-                                                return ['PENDING', 'SUCCEEDED', 'DELIVERY', 'COMPLETED', 'CANCELLED'];
-                                            }
-
-                                            if (paymentMethod === 'ONLINE') {
-                                                return ['PENDING', 'SUCCEEDED', 'READY', 'COMPLETED', 'CANCELLED'];
-                                            }
-
-                                            return ['PENDING', 'READY', 'COMPLETED', 'CANCELLED'];
-                                        };
+                                        const availableStatuses = getAvailableStatuses();
 
                                         // Функция для получения названия статуса
                                         const getStatusLabel = (status: OrderStatus) => {
@@ -615,9 +617,6 @@ export default function EditOrderPage() {
                                                     return status;
                                             }
                                         };
-
-                                        // Получаем текущий список доступных статусов
-                                        const availableStatuses = getAvailableStatuses();
 
                                         return (
                                             <div>

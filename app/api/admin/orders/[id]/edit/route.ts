@@ -5,8 +5,9 @@ import { authOptions } from '@/shared/constants/auth-options';
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const session = await getServerSession(authOptions);
   
   if (!session?.user || session.user.role !== "ADMIN") {
@@ -15,7 +16,7 @@ export async function GET(
 
   try {
     const order = await prisma.order.findUnique({
-      where: { id: Number(params.id) },
+      where: { id: Number(id) },
       include: {
         items: {
           include: {
@@ -31,6 +32,7 @@ export async function GET(
 
     return NextResponse.json(order);
   } catch (error) {
+    console.error('error:', error);
     return NextResponse.json(
       { error: "Failed to fetch order" },
       { status: 400 }

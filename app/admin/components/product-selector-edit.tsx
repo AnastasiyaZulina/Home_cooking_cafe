@@ -1,11 +1,11 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Controller } from 'react-hook-form';
+import { Controller, useFormContext } from 'react-hook-form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select';
 import { Button, FormInput } from '@/shared/components';
-import { useFormContext } from 'react-hook-form';
 import { Trash } from 'lucide-react';
+import type { FieldErrors } from 'react-hook-form';
 
 type Product = {
   id: number;
@@ -15,6 +15,14 @@ type Product = {
   isAvailable: boolean;
 };
 
+type OrderItemForm = {
+  productId: number;
+  quantity: number;
+  productName: string;
+  stockQuantity: number;
+  productPrice: number;
+};
+
 type ProductSelectorProps = {
   index: number;
   products: Product[];
@@ -22,24 +30,28 @@ type ProductSelectorProps = {
   allowEmpty?: boolean;
 };
 
+type FormErrors = FieldErrors<{
+  items: OrderItemForm[];
+}>;
+
 export const ProductSelectorEdit = ({
   index,
   products,
   onRemove,
 }: ProductSelectorProps) => {
   const [open, setOpen] = useState(false);
-  const { control, watch, setValue, getValues, formState: { errors } } = useFormContext();
+  const { control, watch, setValue, getValues, formState: { errors } } = useFormContext<{ items: OrderItemForm[] }>();
 
-  // Получаем все выбранные productId из формы
-  const allSelectedIds = getValues('items').map((item: any) => item.productId);
+  const allSelectedIds = getValues('items').map((item) => item.productId);
   const selectedProductId = watch(`items.${index}.productId`);
   const selectedProduct = products.find(p => p.id === selectedProductId);
 
-  // Фильтруем продукты, исключая уже выбранные в других селектах
   const filteredProducts = products.filter(product =>
     product.stockQuantity > 0 &&
     (product.id === selectedProductId || !allSelectedIds.includes(product.id))
   );
+
+  const itemsErrors = (errors as FormErrors).items?.[index];
 
   return (
     <div className="flex items-center gap-4 mb-4">
@@ -65,9 +77,7 @@ export const ProductSelectorEdit = ({
                     setValue(`items.${index}.stockQuantity`, product.stockQuantity);
                     setValue(`items.${index}.productPrice`, product.price);
                     
-                    // Получаем текущее значение количества
                     const currentQuantity = getValues(`items.${index}.quantity`);
-                    // Корректируем значение если нужно
                     const clampedValue = Math.min(
                       Math.max(currentQuantity, 1), 
                       product.stockQuantity
@@ -92,9 +102,9 @@ export const ProductSelectorEdit = ({
                   ))}
                 </SelectContent>
               </Select>
-              {(errors.items as any)?.[index]?.productId && (
+              {itemsErrors?.productId && (
                 <p className="text-sm text-red-500 mt-1">
-                  {(errors.items as any)[index].productId.message}
+                  {itemsErrors.productId.message}
                 </p>
               )}
             </div>
@@ -135,9 +145,9 @@ export const ProductSelectorEdit = ({
                 disabled={!selectedProductId}
                 value={field.value}
               />
-              {(errors.items as any)?.[index]?.quantity && (
+              {itemsErrors?.quantity && (
                 <p className="text-sm text-red-500">
-                  {(errors.items as any)[index].quantity.message}
+                  {itemsErrors.quantity.message}
                 </p>
               )}
             </div>

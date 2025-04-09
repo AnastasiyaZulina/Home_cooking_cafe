@@ -5,8 +5,9 @@ import { authOptions } from '@/shared/constants/auth-options';
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const session = await getServerSession(authOptions);
   
   if (!session?.user || session.user.role !== "ADMIN") {
@@ -15,7 +16,7 @@ export async function GET(
 
   try {
     const order = await prisma.order.findUnique({
-      where: { id: Number(params.id) },
+      where: { id: Number(id) },
       include: {
         items: {
           include: {
@@ -31,6 +32,7 @@ export async function GET(
 
     return NextResponse.json(order);
   } catch (error) {
+    console.error('error:', error);
     return NextResponse.json(
       { error: "Failed to fetch order" },
       { status: 400 }
@@ -40,8 +42,9 @@ export async function GET(
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const session = await getServerSession(authOptions);
   
   if (!session?.user || session.user.role !== "ADMIN") {
@@ -52,7 +55,7 @@ export async function PATCH(
 
   try {
     const updatedOrder = await prisma.order.update({
-      where: { id: Number(params.id) },
+      where: { id: Number(id) },
       data: {
         status: body.status,
         paymentMethod: body.paymentMethod,
@@ -64,6 +67,7 @@ export async function PATCH(
 
     return NextResponse.json(updatedOrder);
   } catch (error) {
+    console.error('error:', error);
     return NextResponse.json(
       { error: "Order update failed" },
       { status: 400 }
@@ -73,8 +77,9 @@ export async function PATCH(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const session = await getServerSession(authOptions);
   
   if (!session?.user || session.user.role !== "ADMIN") {
@@ -83,15 +88,16 @@ export async function DELETE(
 
   try {
     await prisma.orderItem.deleteMany({
-      where: { orderId: Number(params.id) },
+      where: { orderId: Number(id) },
     });
 
     await prisma.order.delete({
-      where: { id: Number(params.id) },
+      where: { id: Number(id) },
     });
 
     return NextResponse.json({ success: true });
   } catch (error) {
+    console.error('error:', error);
     return NextResponse.json(
       { error: "Order not found or could not be deleted" },
       { status: 404 }
