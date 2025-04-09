@@ -87,7 +87,7 @@ export default function EditOrderPage() {
         defaultValues: {
             deliveryType: 'DELIVERY',
             paymentMethod: 'ONLINE',
-            status: 'PENDING',
+            status: 'SUCCEEDED',
             deliveryPrice: 0,
             deliveryTime: new Date(),
             bonusDelta: 0,
@@ -122,7 +122,7 @@ export default function EditOrderPage() {
                 const allProductsExist = orderData.items.every((item: any) =>
                     productsData.some((p: Product) => p.id === item.productId)
                 );
-                
+
                 setCanEdit(!isCancelledOrSucceeded && allProductsExist);
                 setOriginalProducts(productsData);
                 setCurrentProducts(productsData);
@@ -168,6 +168,15 @@ export default function EditOrderPage() {
         fetchOrder();
     }, [id, reset]);
 
+    const prevDeliveryTypeRef = useRef<DeliveryType>(deliveryType);
+
+    // В эффекте изменения типа доставки
+    useEffect(() => {
+        if (deliveryType !== prevDeliveryTypeRef.current) {
+            setValue('status', 'COMPLETED');
+            prevDeliveryTypeRef.current = deliveryType;
+        }
+    }, [deliveryType, setValue]);
 
     const handleUserSelect = (userId: number | undefined) => {
         const selectedUser = users.find(u => u.id === userId);
@@ -177,6 +186,24 @@ export default function EditOrderPage() {
             setUserBonuses(0);
         }
     };
+    const getAvailableStatuses = (): OrderStatus[] => {
+        if (deliveryType === 'DELIVERY') {
+            return ['PENDING', 'SUCCEEDED', 'DELIVERY', 'COMPLETED', 'CANCELLED'];
+        }
+
+        if (paymentMethod === 'ONLINE') {
+            return ['PENDING', 'SUCCEEDED', 'READY', 'COMPLETED', 'CANCELLED'];
+        }
+
+        return ['PENDING', 'READY', 'COMPLETED', 'CANCELLED'];
+    };
+    useEffect(() => {
+        const availableStatuses = getAvailableStatuses();
+        if (!availableStatuses.includes(form.getValues('status'))) {
+            // Устанавливаем первый доступный статус, если текущий недопустим
+            setValue('status', availableStatuses[0]);
+        }
+    }, [deliveryType, paymentMethod, setValue, form]);
 
     const [originalItems, setOriginalItems] = useState<OrderItem[]>([]);
     const handleEditItems = () => {
@@ -238,6 +265,10 @@ export default function EditOrderPage() {
                 toast.error('Пожалуйста, добавьте хотя бы один товар в заказ!');
                 return;
             }
+            if (data.status === 'PENDING') {
+                form.setError('status', { message: 'Необходимо изменить статус заказа' });
+                return;
+            }
             const payload = {
                 ...data,
                 id: Number(id),
@@ -278,8 +309,6 @@ export default function EditOrderPage() {
             </div>
         </div>
     );
-
-    // ... остальной рендер формы ...
 
     return (
         <div className="container mx-auto px-4 py-8">
@@ -410,6 +439,7 @@ export default function EditOrderPage() {
                                     <RadioGroup.Root
                                         value={deliveryType}
                                         onValueChange={(value: DeliveryType) => {
+                                            const prevDeliveryType = deliveryType;
                                             setDeliveryType(value);
                                             setValue('deliveryType', value);
 
@@ -419,7 +449,11 @@ export default function EditOrderPage() {
                                             } else {
                                                 setValue('address', '');
                                                 setValue('deliveryPrice', 0);
-                                                setValue('status', 'PENDING');
+                                            }
+
+                                            // Принудительно обновляем статус
+                                            if (value !== prevDeliveryType) {
+                                                setValue('status', 'COMPLETED');
                                             }
                                         }}
                                         className="flex gap-4"
@@ -548,25 +582,78 @@ export default function EditOrderPage() {
                                 <Controller
                                     name="status"
                                     control={control}
-                                    render={({ field }) => (
-                                        <Select onValueChange={field.onChange} value={field.value}>
-                                            <SelectTrigger className="w-full">
-                                                <SelectValue placeholder="Выберите статус" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {['PENDING', 'SUCCEEDED', 'DELIVERY', 'READY', 'COMPLETED', 'CANCELLED'].map((status) => (
-                                                    <SelectItem key={status} value={status}>
-                                                        {status === 'PENDING' && 'Ожидает оплаты'}
-                                                        {status === 'SUCCEEDED' && 'Оплачен'}
-                                                        {status === 'DELIVERY' && 'В пути'}
-                                                        {status === 'READY' && 'Готов к получению'}
-                                                        {status === 'COMPLETED' && 'Завершён'}
-                                                        {status === 'CANCELLED' && 'Отменён'}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                    )}
+                                    render={({ field, fieldState }) => {
+                                        // Функция для получения списка доступных статусов
+                                        const getAvailableStatuses = (): OrderStatus[] => {
+                                            if (deliveryType === 'DELIVERY') {
+                                                return ['PENDING', 'SUCCEEDED', 'DELIVERY', 'COMPLETED', 'CANCELLED'];
+                                            }
+
+                                            if (paymentMethod === 'ONLINE') {
+                                                return ['PENDING', 'SUCCEEDED', 'READY', 'COMPLETED', 'CANCELLED'];
+                                            }
+
+                                            return ['PENDING', 'READY', 'COMPLETED', 'CANCELLED'];
+                                        };
+
+                                        // Функция для получения названия статуса
+                                        const getStatusLabel = (status: OrderStatus) => {
+                                            switch (status) {
+                                                case 'PENDING':
+                                                    return paymentMethod === 'ONLINE' ? 'Ожидает оплаты' : 'Принят';
+                                                case 'SUCCEEDED':
+                                                    return deliveryType === 'DELIVERY'
+                                                        ? 'Оплачен, готовится к отправке'
+                                                        : 'Оплачен, готовится';
+                                                case 'DELIVERY':
+                                                    return 'В пути';
+                                                case 'READY':
+                                                    return 'Готов к получению';
+                                                case 'COMPLETED':
+                                                    return 'Завершён';
+                                                case 'CANCELLED':
+                                                    return 'Отменён';
+                                                default:
+                                                    return status;
+                                            }
+                                        };
+
+                                        // Получаем текущий список доступных статусов
+                                        const availableStatuses = getAvailableStatuses();
+
+                                        return (
+                                            <div>
+                                                <label className="block text-sm font-medium mb-2">Статус заказа</label>
+                                                <Select
+                                                    onValueChange={field.onChange}
+                                                    value={field.value}
+                                                >
+                                                    <SelectTrigger className="w-full">
+                                                        {fieldState.error && (
+                                                            <span className="text-red-500 mr-2">⚠</span>
+                                                        )}
+                                                        <SelectValue>
+                                                            {getStatusLabel(field.value as OrderStatus)}
+                                                        </SelectValue>
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {availableStatuses.map((status) => (
+                                                            <SelectItem
+                                                                key={status}
+                                                                value={status}
+                                                                disabled={status === 'PENDING' && field.value !== 'PENDING'}
+                                                            >
+                                                                {getStatusLabel(status)}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                                {fieldState.error && (
+                                                    <p className="text-red-500 text-sm mt-1">{fieldState.error.message}</p>
+                                                )}
+                                            </div>
+                                        );
+                                    }}
                                 />
 
                                 <FormTextarea

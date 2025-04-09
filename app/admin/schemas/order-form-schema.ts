@@ -12,7 +12,12 @@ export const OrderFormSchema = z.object({
   deliveryPrice: z.number().optional().default(0),
   paymentId: z.string().optional(),
   status: z.nativeEnum(OrderStatus),
-  deliveryTime: z.date(),
+  deliveryTime: z.preprocess(
+    (arg) => {
+      if (typeof arg === "string" || arg instanceof Date) return new Date(arg);
+    },
+    z.date()
+  ),
   bonusDelta: z.number().default(0),
   items: z.array(
     z.object({
@@ -39,7 +44,12 @@ export const OrderUpdateFormSchema = z.object({
   deliveryPrice: z.number().optional().default(0),
   paymentId: z.string().optional(),
   status: z.nativeEnum(OrderStatus),
-  deliveryTime: z.date(),
+  deliveryTime: z.preprocess(
+    (arg) => {
+      if (typeof arg === "string" || arg instanceof Date) return new Date(arg);
+    },
+    z.date()
+  ),
   bonusDelta: z.number().default(0),
   items: z.array(
     z.object({

@@ -6,7 +6,6 @@ import { Controller, useFieldArray, useForm } from 'react-hook-form';
 import { Button } from '@/shared/components/ui/button';
 import * as RadioGroup from '@radix-ui/react-radio-group';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select';
 import { FormInput, FormTextarea, WhiteBlock } from '@/shared/components';
 import 'react-datetime/css/react-datetime.css';
 import { FormProvider } from 'react-hook-form';
@@ -18,6 +17,7 @@ import { UserSelect } from '@/app/admin/components/user-select';
 import { ProductSelector } from '@/app/admin/components/product-selector';
 import { OrderSummary } from '@/app/admin/components/order-summary';
 import { OrderFormSchema, OrderFormValues } from '@/app/admin/schemas/order-form-schema';
+import toast from 'react-hot-toast';
 
 type Product = {
   id: number;
@@ -44,7 +44,7 @@ const CreateOrderPage = () => {
   const [bonusOption, setBonusOption] = useState<'earn' | 'spend'>('earn');
   const [spentBonuses, setSpentBonuses] = useState(0);
   const [userBonuses, setUserBonuses] = useState(0);
-
+  const [loading, setLoading] = useState(false);
   const Datetime = dynamic(
     () => import('react-datetime'),
     {
@@ -132,9 +132,11 @@ const CreateOrderPage = () => {
     0
   );
 
-  const onSubmit = (data: OrderFormValues) => {
+  const onSubmit = async (data: OrderFormValues) => {
+    setLoading(true);
     const payload = {
       ...data,
+      deliveryTime: new Date(data.deliveryTime),
       bonusDelta: bonusOption === 'earn'
         ? Math.round(totalAmount * CHECKOUT_CONSTANTS.BONUS_MULTIPLIER)
         : -spentBonuses,
@@ -142,11 +144,36 @@ const CreateOrderPage = () => {
         productId: item.productId,
         quantity: item.quantity,
         productName: item.productName,
-        productPrice: item.productPrice
+        productPrice: item.productPrice,
+        stockQuantity: item.stockQuantity
       }))
     };
 
     console.log('Order data:', payload);
+    try {
+      const res = await fetch('/api/admin/orders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+  
+      if (!res.ok) {
+        const err = await res.json();
+        console.error('Ошибка:', err);
+        return;
+      }
+      toast.success('Заказ успешно оформлен!', { icon: '✅' });
+      setLoading(false);
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      location.href = '/admin/orders';
+      const createdOrder = await res.json();
+      console.log('Заказ успешно создан:', createdOrder);
+      // тут можно перенаправить или показать success message
+    } catch (err) {
+      console.error('Ошибка при отправке заказа:', err);
+    }
   };
 
   return (
@@ -361,28 +388,13 @@ const CreateOrderPage = () => {
             </WhiteBlock>
             <WhiteBlock title="Статус заказа" className="p-6">
               <div className="space-y-4">
-                <Controller
-                  name="status"
-                  control={control}
-                  render={({ field }) => (
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Выберите статус" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {['PENDING', 'SUCCEEDED', 'DELIVERY', 'READY', 'COMPLETED'].map((status) => (
-                          <SelectItem key={status} value={status}>
-                            {status === 'PENDING' && 'Ожидает оплаты'}
-                            {status === 'SUCCEEDED' && 'Оплачен'}
-                            {status === 'DELIVERY' && 'В пути'}
-                            {status === 'READY' && 'Готов к получению'}
-                            {status === 'COMPLETED' && 'Завершён'}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
+                <div>
+                  <label className="block text-sm font-medium mb-2">Статус заказа</label>
+                  <div className="p-2 border rounded bg-gray-50">
+                    {paymentMethod === 'ONLINE' ? 'Ожидает оплаты' : 'Принят'}
+                  </div>
+                  <input type="hidden" {...form.register('status')} value="PENDING" />
+                </div>
 
                 <FormTextarea
                   name="comment"
@@ -403,7 +415,7 @@ const CreateOrderPage = () => {
           </div>
 
           <div className="mt-6 flex justify-center">
-            <Button type="submit" className="px-6 py-3">
+            <Button type="submit" className="px-6 py-3" loading={loading}>
               Создать заказ
             </Button>
           </div>

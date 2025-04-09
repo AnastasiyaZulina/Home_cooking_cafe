@@ -71,7 +71,7 @@ const getStatusText = (
     case 'PENDING':
       return paymentMethod === 'ONLINE' ? 'Ожидает оплаты' : 'Принят';
     case 'SUCCEEDED':
-      return deliveryType === 'DELIVERY' ? 'Оплачен' : 'Готов к обработке';
+      return deliveryType === 'DELIVERY' ? 'Оплачен, готовится к отправке' : 'Оплачен, готовится';
     case 'DELIVERY':
       return 'В пути';
     case 'READY':
