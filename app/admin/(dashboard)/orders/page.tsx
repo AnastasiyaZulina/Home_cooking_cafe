@@ -1,13 +1,22 @@
-'use client';
-import { useMemo, useState } from 'react';
+'use client'
+
+import React, { useMemo, useState } from 'react';
 import {
   MaterialReactTable,
   type MRT_ColumnDef,
   useMaterialReactTable,
   type MRT_Row,
-  MRT_TableOptions,
 } from 'material-react-table';
-import { Box, Button, IconButton, Tooltip, Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem } from '@mui/material';
+import {
+  Box,
+  Button,
+  IconButton,
+  Tooltip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+} from '@mui/material';
 import { Edit, Delete, Visibility, Add } from '@mui/icons-material';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
@@ -65,7 +74,7 @@ const OrderTable = () => {
   const [selectedOrderItems, setSelectedOrderItems] = useState<OrderItem[]>([]);
   const [itemsDialogOpen, setItemsDialogOpen] = useState(false);
   const router = useRouter();
-  // Получение данных
+
   const { data, isLoading } = useQuery<Order[]>({
     queryKey: ['orders'],
     queryFn: async () => {
@@ -73,87 +82,89 @@ const OrderTable = () => {
       return response.json();
     },
   });
-  
-    // Мутация для удаления
-    const { mutateAsync: deleteOrder } = useMutation({
-      mutationFn: async (id: number) => {
-        const response = await fetch(`/api/admin/orders/${id}`, {
-          method: 'DELETE',
-        });
-        
-        if (!response.ok) {
-          throw new Error('Ошибка при удалении заказа');
-        }
-        return response.json();
-      },
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ['orders'] });
-      },
-    });
+
+  const { mutateAsync: deleteOrder } = useMutation({
+    mutationFn: async (id: number) => {
+      const response = await fetch(`/api/admin/orders/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Ошибка при удалении заказа');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+    },
+  });
 
   const handleDeleteOrder = async (row: MRT_Row<Order>) => {
     if (window.confirm(`Вы уверены, что хотите удалить заказ #${row.original.id}?`)) {
       try {
-        await toast.promise(
-          deleteOrder(row.original.id),
-          {
-            loading: 'Удаление заказа...',
-            success: 'Заказ успешно удален!',
-            error: (err) => err.message || 'Ошибка при удалении',
-          }
-        );
+        await toast.promise(deleteOrder(row.original.id), {
+          loading: 'Удаление заказа...',
+          success: 'Заказ успешно удален!',
+          error: (err) => err.message || 'Ошибка при удалении',
+        });
       } catch (error) {
         // Ошибка уже обработана в toast.promise
       }
     }
   };
 
-  const columns = useMemo<MRT_ColumnDef<Order>[]>(
-    () => [
-      {
-        accessorKey: 'id',
-        header: 'ID',
-        size: 80,
-      },
-      {
-        accessorKey: 'name',
-        header: 'Имя клиента',
-      },
-      {
-        accessorKey: 'email',
-        header: 'Email',
-      },
-      {
-        accessorKey: 'phone',
-        header: 'Телефон',
-      },
-      {
-        accessorKey: 'deliveryTime',
-        header: 'Время доставки',
-        Cell: ({ cell }) => new Date(cell.getValue<string>()).toLocaleString(),
-      },
-      {
-        accessorKey: 'deliveryType',
-        header: 'Тип доставки',
-        Cell: ({ cell }) => cell.getValue<string>() === 'PICKUP' ? 'Самовывоз' : 'Доставка',
-      },
-      {
-        accessorKey: 'status',
-        header: 'Статус',
-        Cell: ({ row }) => getStatusText(
-          row.original.status,
-          row.original.deliveryType,
-          row.original.paymentMethod
-        ),
-      },
-      {
-        accessorKey: 'createdAt',
-        header: 'Дата создания',
-        Cell: ({ cell }) => new Date(cell.getValue<string>()).toLocaleString(),
-      },
-    ],
-    []
-  );
+  const columns = useMemo<MRT_ColumnDef<Order>[]>(() => [
+    {
+      accessorKey: 'id',
+      header: 'ID',
+      size: 80,
+    },
+    {
+      accessorKey: 'name',
+      header: 'Имя клиента',
+      size: 200,
+    },
+    {
+      accessorKey: 'email',
+      header: 'Email',
+      size: 200,
+    },
+    {
+      accessorKey: 'phone',
+      header: 'Телефон',
+      size: 150,
+    },
+    {
+      accessorKey: 'deliveryTime',
+      header: 'Время доставки',
+      size: 200,
+      Cell: ({ cell }) => new Date(cell.getValue<string>()).toLocaleString(),
+    },
+    {
+      accessorKey: 'deliveryType',
+      header: 'Тип доставки',
+      size: 150,
+      Cell: ({ cell }) => cell.getValue<string>() === 'PICKUP' ? 'Самовывоз' : 'Доставка',
+    },
+    {
+      accessorKey: 'status',
+      header: 'Статус',
+      size: 200,
+      Cell: ({ row }) =>
+        getStatusText(row.original.status, row.original.deliveryType, row.original.paymentMethod),
+    },
+    {
+      accessorKey: 'createdAt',
+      size: 200,
+      header: 'Дата создания',
+      Cell: ({ cell }) => new Date(cell.getValue<string>()).toLocaleString(),
+    },
+  ], []);
+
+  // Пересчитываем общую ширину таблицы при изменении колонок
+  const totalTableWidth = useMemo(() => {
+    return columns.reduce((acc, col) => acc + (col.size ?? 150), 0); // 150 — дефолтная ширина, если не задана
+  }, [columns]);
 
   const table = useMaterialReactTable({
     columns,
@@ -161,6 +172,7 @@ const OrderTable = () => {
     state: { isLoading },
     enableRowActions: true,
     enableEditing: false,
+    layoutMode: 'grid',
     renderTopToolbarCustomActions: () => (
       <Button
         variant="contained"
@@ -172,7 +184,7 @@ const OrderTable = () => {
       </Button>
     ),
     renderRowActions: ({ row }) => (
-      <Box sx={{ display: 'flex', gap: '8px' }}>
+      <Box sx={{ display: 'flex', gap: '8px', width: '400px' }}>
         <Tooltip title="Редактировать">
           <IconButton onClick={() => router.push(`/admin/orders/${row.original.id}/edit`)}>
             <Edit />
@@ -189,10 +201,7 @@ const OrderTable = () => {
           </IconButton>
         </Tooltip>
         <Tooltip title="Удалить">
-          <IconButton 
-            color="error" 
-            onClick={() => handleDeleteOrder(row)}
-          >
+          <IconButton color="error" onClick={() => handleDeleteOrder(row)}>
             <Delete />
           </IconButton>
         </Tooltip>
@@ -202,8 +211,17 @@ const OrderTable = () => {
 
   return (
     <>
-      <MaterialReactTable table={table} />
-      
+      <Box
+        sx={{
+          overflowX: 'auto',
+          width: '100%',
+        }}
+      >
+        <Box sx={{ minWidth: `${totalTableWidth+150}px` }}>
+          <MaterialReactTable table={table} />
+        </Box>
+      </Box>
+
       <Dialog
         open={itemsDialogOpen}
         onClose={() => setItemsDialogOpen(false)}
@@ -222,14 +240,22 @@ const OrderTable = () => {
               </tr>
             </thead>
             <tbody>
-              {selectedOrderItems.map((item, index) => (
-                <tr key={index}>
-                  <td className="p-2">{item.productId}</td>
-                  <td className="p-2">{item.productName}</td>
-                  <td className="p-2">{item.productQuantity}</td>
-                  <td className="p-2">{item.productPrice} ₽</td>
+              {selectedOrderItems?.length > 0 ? (
+                selectedOrderItems.map((item, index) => (
+                  <tr key={index}>
+                    <td className="p-2">{item.productId}</td>
+                    <td className="p-2">{item.productName}</td>
+                    <td className="p-2">{item.productQuantity}</td>
+                    <td className="p-2">{item.productPrice} ₽</td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={4} className="p-2 text-center">
+                    Нет позиций в заказе
+                  </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </DialogContent>

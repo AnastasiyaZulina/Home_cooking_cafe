@@ -15,9 +15,15 @@ export async function GET(
 
   try {
     const order = await prisma.order.findMany({
+      include: {
+        items: {
+          include: {
+            product: true
+          }
+        }
+      },
       orderBy: { id: 'desc' },
     });
-
     if (!order) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }

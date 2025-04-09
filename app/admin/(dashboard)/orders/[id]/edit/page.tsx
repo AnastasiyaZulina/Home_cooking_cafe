@@ -113,15 +113,16 @@ export default function EditOrderPage() {
                 const orderRes = await fetch(`/api/admin/orders/${id}`);
                 if (!orderRes.ok) throw new Error('Ошибка загрузки заказа');
                 const orderData = await orderRes.json();
-                const isCancelledOrSucceeded = ['CANCELLED', 'SUCCEEDED'].includes(orderData.status);
+                const isCancelledOrSucceeded = ['CANCELLED', 'COMPLETED'].includes(orderData.status);
 
                 const productsRes = fetch(`/api/admin/orders/${id}/edit/products`);
                 if (!(await productsRes).ok) throw new Error('Ошибка загрузки данных');
                 const productsData = await (await productsRes).json();
+
                 const allProductsExist = orderData.items.every((item: any) =>
                     productsData.some((p: Product) => p.id === item.productId)
                 );
-
+                
                 setCanEdit(!isCancelledOrSucceeded && allProductsExist);
                 setOriginalProducts(productsData);
                 setCurrentProducts(productsData);
@@ -264,7 +265,7 @@ export default function EditOrderPage() {
             <div className="bg-white rounded-lg p-6 shadow">
                 <p className="text-lg text-red-500">
                     Редактирование этого заказа невозможно:
-                    {order.status === 'CANCELLED' || order.status === 'SUCCEEDED'
+                    {order.status === 'CANCELLED' || order.status === 'COMPLETED'
                         ? ' заказ уже завершен или отменен'
                         : ' некоторые товары из заказа больше не доступны'}
                 </p>
