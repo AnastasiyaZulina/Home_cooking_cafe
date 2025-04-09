@@ -3,7 +3,6 @@
 import React from 'react';
 import * as RadioGroup from '@radix-ui/react-radio-group';
 import { Slider } from '@/shared/components/ui/slider';
-import { useFormContext } from 'react-hook-form';
 import { CHECKOUT_CONSTANTS } from '@/shared/constants';
 
 type BonusOptionsProps = {

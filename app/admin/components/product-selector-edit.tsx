@@ -26,7 +26,6 @@ export const ProductSelectorEdit = ({
   index,
   products,
   onRemove,
-  allowEmpty = false
 }: ProductSelectorProps) => {
   const [open, setOpen] = useState(false);
   const { control, watch, setValue, getValues, formState: { errors } } = useFormContext();

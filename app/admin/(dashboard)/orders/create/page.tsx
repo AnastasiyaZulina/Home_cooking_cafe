@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
-import { DeliveryType, PaymentMethod, OrderStatus } from '@prisma/client';
+import { DeliveryType, PaymentMethod } from '@prisma/client';
 import { Controller, useFieldArray, useForm } from 'react-hook-form';
 import { Button } from '@/shared/components/ui/button';
 import * as RadioGroup from '@radix-ui/react-radio-group';
@@ -170,7 +170,6 @@ const CreateOrderPage = () => {
       setLoading(false);
       await new Promise(resolve => setTimeout(resolve, 2000));
       location.href = '/admin/orders';
-      const createdOrder = await res.json();
     } catch (err) {
       console.error('Ошибка при отправке заказа:', err);
     }

@@ -106,7 +106,8 @@ const CategoryTable = () => {
           }
         );
       } catch (error) {
-        // Ошибка уже обработана в toast.promise
+        console.error('[ERROR]:', error);
+        throw error;
       }
     }
   };
@@ -131,7 +132,8 @@ const CategoryTable = () => {
       );
       table.setCreatingRow(null); // Закрываем режим создания
     } catch (error) {
-      // Ошибка уже обработана в toast.promise
+      console.error('[ERROR]:', error);
+      throw error;
     }
   };
 
@@ -162,7 +164,8 @@ const CategoryTable = () => {
         }
       );
     } catch (error) {
-      // Ошибка уже обработана в toast.promise
+      console.error('[ERROR]:', error);
+      throw error;
     }
   };
 

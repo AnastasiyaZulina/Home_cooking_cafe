@@ -125,7 +125,8 @@ const OrderTable = () => {
           error: (err) => err.message || 'Ошибка при удалении',
         });
       } catch (error) {
-        // Ошибка уже обработана в toast.promise
+        console.error('[ERROR]:', error);
+        throw error;
       }
     }
   };

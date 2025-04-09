@@ -1,5 +1,4 @@
 import { PaymentCallbackData } from "@/@types/yookassa";
-import { updateProductStock } from "@/app/actions";
 import { prisma } from "@/prisma/prisma-client";
 import { OrderSuccessTemplate } from "@/shared/components/shared/email-templates/order-success";
 import { sendEmail } from "@/shared/lib";
@@ -9,7 +8,6 @@ import { NextRequest, NextResponse } from "next/server";
 export async function POST(req: NextRequest) {
     try {
         const body = (await req.json()) as PaymentCallbackData;
-        const cartId = Number(body.object.metadata.cartId);
 
         const order = await prisma.order.findFirst({
             where: { id: Number(body.object.metadata.order_id) },
@@ -47,7 +45,6 @@ export async function POST(req: NextRequest) {
         }));
 
         if (isSucceeded) { 
-            await updateProductStock(cartId);
             await sendEmail(order.email, 'Скатерть-самобранка / Ваш заказ оплачен!', html);
         }
         else {

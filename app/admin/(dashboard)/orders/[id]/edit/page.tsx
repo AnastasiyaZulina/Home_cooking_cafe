@@ -16,10 +16,10 @@ import dynamic from 'next/dynamic';
 import { CHECKOUT_CONSTANTS } from '@/shared/constants';
 import { UserSelect } from '@/app/admin/components/user-select';
 import { OrderSummary } from '@/app/admin/components/order-summary';
-import { OrderFormSchema, OrderUpdateFormSchema, OrderUpdateFormValues } from '@/app/admin/schemas/order-form-schema';
+import { OrderUpdateFormSchema, OrderUpdateFormValues } from '@/app/admin/schemas/order-form-schema';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select';
 import { ProductSelectorEdit } from '@/app/admin/components/product-selector-edit';
-import toast, { Toaster } from 'react-hot-toast';
+import toast from 'react-hot-toast';
 
 type Product = {
     id: number;
@@ -66,7 +66,6 @@ export default function EditOrderPage() {
     const [isEditingItems, setIsEditingItems] = useState(false);
     const datetimeRef = useRef<HTMLDivElement>(null);
     const [originalProductsStock, setOriginalProductsStock] = useState<Record<number, number>>({});
-    const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
     const [canEdit, setCanEdit] = useState(true);
 
     const Datetime = dynamic(
@@ -95,7 +94,7 @@ export default function EditOrderPage() {
         }
     });
 
-    const { control, handleSubmit, setValue, watch, reset, resetField } = form;
+    const { control, handleSubmit, setValue, watch, reset } = form;
     const currentStatus = watch('status');
     const { fields, append, remove } = useFieldArray({
         control: form.control,
@@ -127,7 +126,6 @@ export default function EditOrderPage() {
                 setOriginalProducts(productsData);
                 setCurrentProducts(productsData);
 
-                setSelectedUserId(orderData.userId);
                 const orderUser = usersData.find((u: User) => u.id === orderData.userId);
                 if (orderUser) {
                     setUserBonuses(orderUser.bonusBalance);
@@ -203,7 +201,7 @@ export default function EditOrderPage() {
             // Устанавливаем первый доступный статус, если текущий недопустим
             setValue('status', availableStatuses[0]);
         }
-    }, [deliveryType, paymentMethod, setValue, form]);
+    }, [getAvailableStatuses, deliveryType, paymentMethod, setValue, form]);
 
     const [originalItems, setOriginalItems] = useState<OrderItem[]>([]);
     const handleEditItems = () => {
@@ -356,7 +354,7 @@ export default function EditOrderPage() {
                         {!isEditingItems ? (
                             <WhiteBlock title="Товары в заказе" className="mt-6">
                                 <div className="space-y-4">
-                                    {fields.map((field, index) => (
+                                    {fields.map((field) => (
                                         <div
                                             key={field.id}
                                             className="flex justify-between items-center p-3 border rounded-lg"

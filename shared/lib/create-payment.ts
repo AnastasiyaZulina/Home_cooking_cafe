@@ -5,7 +5,6 @@ interface Props{
     description: string;
     orderId: number;
     amount: number;
-    cartId?: number;
 }
 
 export async function createPayment(details: Props) {
@@ -20,7 +19,6 @@ export async function createPayment(details: Props) {
             description: details.description,
             metadata: {
                 order_id: details.orderId,
-                cartId: details.cartId,
             },
             confirmation: {
                 type: 'redirect',

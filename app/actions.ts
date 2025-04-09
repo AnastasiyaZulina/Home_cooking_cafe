@@ -249,11 +249,20 @@ export async function createOrder(data: CheckoutFormValues) {
       })),
     });
 
-    // Обновляем количество товаров на складе (только для OFFLINE оплаты)
-    if (data.paymentMethod === 'OFFLINE') {
-      
-      updateProductStock(userCart.id);
+    updateProductStock(userCart.id);
 
+    if (order.userId) {
+      await prisma.user.update({
+        where: { id: order.userId },
+        data: {
+          bonusBalance: {
+            increment: order.bonusDelta,
+          },
+        },
+      });
+    }
+
+    if (data.paymentMethod === 'OFFLINE') {
       await sendEmail(
         data.email,
         `Скатерть-самобранка | Заказ #${order.id} принят`,
@@ -267,7 +276,6 @@ export async function createOrder(data: CheckoutFormValues) {
     const paymentData = await createPayment({
       amount: totalAmount + data.deliveryPrice,
       orderId: order.id,
-      cartId: userCart.id,
       description: 'Оплата заказа #' + order.id,
     });
 
@@ -397,7 +405,6 @@ export type FeedbackWithUser = {
   };
 };
 
-// Добавьте эти функции в конец файла
 export async function createFeedback(feedbackText: string) {
   try {
     const session = await getUserSession();
