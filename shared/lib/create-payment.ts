@@ -5,7 +5,7 @@ interface Props{
     description: string;
     orderId: number;
     amount: number;
-    cartId: number;
+    cartId?: number;
 }
 
 export async function createPayment(details: Props) {

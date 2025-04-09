@@ -4,10 +4,13 @@ import { getServerSession } from "next-auth";
 import { authOptions } from '@/shared/constants/auth-options';
 import { z } from 'zod';
 import { OrderFormSchema } from '@/app/admin/schemas/order-form-schema';
+import { createPayment, sendEmail } from '@/shared/lib';
+import { OrderCreatedTemplate, PayOrderTemplate } from '@/shared/components';
+import { decrementProductStockAdmin } from '@/app/admin/lib/functions';
 
 export async function GET() {
   const session = await getServerSession(authOptions);
-  
+
   if (!session?.user || session.user.role !== "ADMIN") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
@@ -50,60 +53,97 @@ export async function POST(request: Request) {
       items,
     } = parsed;
 
-    const createdOrder = await prisma.$transaction(async (tx) => {
-      const order = await tx.order.create({
+    // Создаём заказ
+    const createdOrder = await prisma.order.create({
+      data: {
+        userId,
+        name,
+        email,
+        phone,
+        address,
+        deliveryType,
+        paymentMethod,
+        deliveryCost: deliveryPrice || 0,
+        paymentId,
+        status,
+        deliveryTime,
+        bonusDelta,
+        items: {
+          create: items.map((item) => ({
+            productId: item.productId,
+            productName: item.productName,
+            productQuantity: item.quantity,
+            productPrice: item.productPrice,
+          })),
+        },
+      },
+      include: {
+        items: true,
+      },
+    });
+
+    // Обновляем бонусы пользователя
+    if (userId) {
+      await prisma.user.update({
+        where: { id: userId },
         data: {
-          userId,
-          name,
-          email,
-          phone,
-          address,
-          deliveryType,
-          paymentMethod,
-          deliveryCost: deliveryPrice,
-          paymentId,
-          status,
-          deliveryTime,
-          bonusDelta,
-          items: {
-            create: items.map((item) => ({
-              productId: item.productId,
-              productName: item.productName,
-              productQuantity: item.quantity,
-              productPrice: item.productPrice,
-            })),
+          bonusBalance: {
+            increment: bonusDelta,
           },
         },
-        include: {
-          items: true,
+      });
+    }
+
+    // Рассчитываем общую стоимость
+    const totalAmount = items.reduce(
+      (sum, item) => sum + (item.productPrice * item.quantity),
+      0
+    );
+
+    // Отправка писем
+    if (createdOrder.paymentMethod === 'OFFLINE') {
+      await sendEmail(
+        createdOrder.email,
+        `Скатерть-самобранка | Заказ #${createdOrder.id} принят`,
+        Promise.resolve(OrderCreatedTemplate({
+          orderId: createdOrder.id,
+        }))
+      );
+    } else {
+      const paymentData = await createPayment({
+        amount: totalAmount + (createdOrder.deliveryCost || 0),
+        orderId: createdOrder.id,
+        description: 'Оплата заказа #' + createdOrder.id,
+      });
+
+      if (!paymentData) {
+        throw new Error('Payment data not found');
+      }
+
+      await prisma.order.update({
+        where: {
+          id: createdOrder.id,
+        },
+        data: {
+          paymentId: paymentData.id,
         },
       });
 
-      if (userId) {
-        await tx.user.update({
-          where: { id: userId },
-          data: {
-            bonusBalance: {
-              increment: bonusDelta,
-            },
-          },
-        });
-      }
+      const paymentUrl = paymentData.confirmation.confirmation_url;
 
-      for (const item of items) {
-        await tx.product.update({
-          where: { id: item.productId },
-          data: {
-            stockQuantity: {
-              decrement: item.quantity,
-            },
-          },
-        });
-      }
-
-      return order;
-    });
-
+      await sendEmail(
+        createdOrder.email,
+        `Скатерть-самобранка | Оплатите заказ #${createdOrder.id}`,
+        Promise.resolve(PayOrderTemplate({
+          orderId: createdOrder.id,
+          totalPrice: totalAmount + (createdOrder.deliveryCost || 0),
+          paymentUrl
+        }))
+      );
+    }
+    await decrementProductStockAdmin(
+      items.map(({ productId, quantity }) => ({ productId, quantity }))
+    );
     return NextResponse.json(createdOrder, { status: 201 });
   } catch (err) {
     if (err instanceof z.ZodError) {
@@ -114,3 +154,4 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Ошибка при создании заказа' }, { status: 500 });
   }
 }
+

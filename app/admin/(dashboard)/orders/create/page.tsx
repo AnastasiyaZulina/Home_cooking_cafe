@@ -137,9 +137,11 @@ const CreateOrderPage = () => {
     const payload = {
       ...data,
       deliveryTime: new Date(data.deliveryTime),
-      bonusDelta: bonusOption === 'earn'
-        ? Math.round(totalAmount * CHECKOUT_CONSTANTS.BONUS_MULTIPLIER)
-        : -spentBonuses,
+      bonusDelta: data.userId === undefined || data.userId === null
+        ? 0
+        : bonusOption === 'earn'
+          ? Math.round(totalAmount * CHECKOUT_CONSTANTS.BONUS_MULTIPLIER)
+          : -spentBonuses,
       items: data.items.map(item => ({
         productId: item.productId,
         quantity: item.quantity,
@@ -169,8 +171,6 @@ const CreateOrderPage = () => {
       await new Promise(resolve => setTimeout(resolve, 2000));
       location.href = '/admin/orders';
       const createdOrder = await res.json();
-      console.log('Заказ успешно создан:', createdOrder);
-      // тут можно перенаправить или показать success message
     } catch (err) {
       console.error('Ошибка при отправке заказа:', err);
     }
