@@ -42,7 +42,7 @@ export async function GET(
 }
 //СДЕЛАТЬ
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  
+
   const { id } = await params;
   const session = await getServerSession(authOptions);
 
@@ -120,20 +120,22 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       (sum: number, item: { productPrice: number; quantity: number }) => sum + (item.productPrice * item.quantity),
       0
     );
-    
+
     chooseAndSendEmail(updatedOrder, totalAmount);
     if (updatedOrder.status === 'CANCELLED') {
       // Возврат товаров в наличие при отмене заказа
       for (const item of updatedOrder.items) {
-        await prisma.product.update({
-          where: { id: item.productId },
-          data: {
-            stockQuantity: {
-              increment: item.productQuantity,
+        if (item.productId) {
+          await prisma.product.update({
+            where: { id: item.productId },
+            data: {
+              stockQuantity: {
+                increment: item.productQuantity,
+              },
+              isAvailable: true,
             },
-            isAvailable: true,
-          },
-        });
+          });
+        }
       }
       if (updatedOrder.userId && updatedOrder.bonusDelta !== 0) {
         await prisma.user.update({
@@ -162,38 +164,42 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       // Обработка изменений в количестве товаров
       const oldItemsMap = new Map<number, number>();
       for (const item of existingOrder.items) {
-        oldItemsMap.set(item.productId, item.productQuantity);
+        if (item.productId) {
+          oldItemsMap.set(item.productId, item.productQuantity);
+        }
       }
 
       // Обновляем количество для новых и измененных товаров
       for (const newItem of updatedOrder.items) {
-        const oldQty = oldItemsMap.get(newItem.productId) || 0;
-        const diff = newItem.productQuantity - oldQty;
+        if (newItem.productId) {
+          const oldQty = oldItemsMap.get(newItem.productId) || 0;
+          const diff = newItem.productQuantity - oldQty;
 
-        if (diff !== 0) {
-          const updatedProduct = await prisma.product.update({
-            where: { id: newItem.productId },
-            data: {
-              stockQuantity: {
-                decrement: diff,
-              },
-            },
-            select: {
-              stockQuantity: true,
-            },
-          });
-
-          if (updatedProduct.stockQuantity === 0) {
-            await prisma.product.update({
+          if (diff !== 0) {
+            const updatedProduct = await prisma.product.update({
               where: { id: newItem.productId },
               data: {
-                isAvailable: false,
+                stockQuantity: {
+                  decrement: diff,
+                },
+              },
+              select: {
+                stockQuantity: true,
               },
             });
-          }
-        }
 
-        oldItemsMap.delete(newItem.productId);
+            if (updatedProduct.stockQuantity === 0) {
+              await prisma.product.update({
+                where: { id: newItem.productId },
+                data: {
+                  isAvailable: false,
+                },
+              });
+            }
+          }
+
+          oldItemsMap.delete(newItem.productId);
+        }
       }
 
       // Возвращаем в наличие удаленные товары

@@ -74,13 +74,14 @@ export const MyOrders = ({ orders }: MyOrdersProps) => {
               newQty: quantityToAdd
             });
           }
-  
+
+          if (item.productId){
           // Добавляем товар с учетом доступного количества
           await addCartItem({
             productId: item.productId,
             quantity: quantityToAdd
           });
-  
+          }
           successCount++;
         } catch (error) {
           console.error(`Error adding product ${item.productId} to cart:`, error);

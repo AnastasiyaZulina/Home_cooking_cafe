@@ -65,7 +65,8 @@ type OrderDetails = OrderUpdateFormValues & {
 export default function EditOrderPage() {
     const { id } = useParams();
     const router = useRouter();
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
+    const [formloading, setFormLoading] = useState(true);
     const [order, setOrder] = useState<OrderDetails | null>(null);
     const [originalProducts, setOriginalProducts] = useState<Product[]>([]);
     const [currentProducts, setCurrentProducts] = useState<Product[]>([]);
@@ -78,7 +79,6 @@ export default function EditOrderPage() {
     const [isEditingItems, setIsEditingItems] = useState(false);
     const datetimeRef = useRef<HTMLDivElement>(null);
     const [originalProductsStock, setOriginalProductsStock] = useState<Record<number, number>>({});
-    const [canEdit, setCanEdit] = useState(true);
 
     const Datetime = dynamic(
         () => import('react-datetime'),
@@ -113,6 +113,7 @@ export default function EditOrderPage() {
 
     // Загрузка данных заказа
     useEffect(() => {
+        let isCancelled = false;
         const fetchOrder = async () => {
             try {
                 const usersRes = await fetch('/api/admin/users');
@@ -122,17 +123,22 @@ export default function EditOrderPage() {
                 const orderRes = await fetch(`/api/admin/orders/${id}`);
                 if (!orderRes.ok) throw new Error('Ошибка загрузки заказа');
                 const orderData = await orderRes.json();
-                const isCancelledOrSucceeded = ['CANCELLED', 'COMPLETED'].includes(orderData.status);
 
                 const productsRes = fetch(`/api/admin/orders/${id}/products`);
                 if (!(await productsRes).ok) throw new Error('Ошибка загрузки данных');
                 const productsData = await (await productsRes).json();
 
-                const allProductsExist = orderData.items.every((item: OrderItem) =>
+                const existingItems = orderData.items || [];
+                const hasInvalidItems = existingItems.some((item: OrderItem) => item.productId == null);
+                const allProductsExist = !hasInvalidItems && existingItems.every((item: OrderItem) =>
                     productsData.some((p: Product) => p.id === item.productId)
                 );
 
-                setCanEdit(!isCancelledOrSucceeded && allProductsExist);
+                const isCancelledOrSucceeded = ['CANCELLED', 'COMPLETED'].includes(orderData.status);
+                const editable = !isCancelledOrSucceeded && allProductsExist;
+
+                if (!editable) {setFormLoading(false); return;}
+
                 setOriginalProducts(productsData);
                 setCurrentProducts(productsData);
 
@@ -167,10 +173,10 @@ export default function EditOrderPage() {
                 setOrder(orderData);
                 setSpentBonuses(Math.abs(orderData.bonusDelta));
                 setBonusOption(orderData.bonusDelta >= 0 ? 'earn' : 'spend');
-                setLoading(false);
+                setFormLoading(false);
             } catch (error) {
                 console.error('Ошибка:', error);
-                setLoading(false);
+                setFormLoading(false);
             }
         };
 
@@ -269,6 +275,7 @@ export default function EditOrderPage() {
 
     const onSubmit = async (data: z.infer<typeof OrderUpdateFormSchema>) => {
         try {
+            setLoading(true);
             if (!data.items || data.items.some(item => item.productId < 1) || data.items.length === 0) {
                 toast.error('Пожалуйста, добавьте хотя бы один товар в заказ!');
                 return;
@@ -317,17 +324,13 @@ export default function EditOrderPage() {
     };
 
 
-    if (loading) return <div>Загрузка...</div>;
-    if (!order) return <div>Заказ не найден</div>;
-    if (!canEdit) return (
+    if (formloading) return <div>Загрузка...</div>;
+    if (!order) return (
         <div className="container mx-auto px-4 py-8">
-            <h1 className="text-2xl font-bold mb-6">Редактирование заказа #{order.id}</h1>
+            <h1 className="text-2xl font-bold mb-6">Редактирование заказа невозможно</h1>
             <div className="bg-white rounded-lg p-6 shadow">
                 <p className="text-lg text-red-500">
-                    Редактирование этого заказа невозможно:
-                    {order.status === 'CANCELLED' || order.status === 'COMPLETED'
-                        ? ' заказ уже завершен или отменен'
-                        : ' некоторые товары из заказа больше не доступны'}
+                    Заказ не найден, завершён, отменён или содержит недоступные товары.
                 </p>
                 <Button
                     onClick={() => router.back()}
@@ -699,7 +702,7 @@ export default function EditOrderPage() {
                         >
                             Назад
                         </Button>
-                        <Button type="submit" className="px-6 py-3">
+                        <Button type="submit" className="px-6 py-3" loading={loading}>
                             Сохранить изменения
                         </Button>
                     </div>

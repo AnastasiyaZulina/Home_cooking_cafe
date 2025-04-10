@@ -41,6 +41,7 @@ export async function POST(req: NextRequest) {
         }
         else {
             for (const item of updatedOrder.items) {
+              if (item.productId){
                 await prisma.product.update({
                   where: { id: item.productId },
                   data: {
@@ -50,6 +51,7 @@ export async function POST(req: NextRequest) {
                     isAvailable: true,
                   },
                 });
+              }
               }
               if (updatedOrder.userId && updatedOrder.bonusDelta !== 0) {
                 await prisma.user.update({
