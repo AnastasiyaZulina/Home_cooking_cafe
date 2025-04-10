@@ -19,13 +19,14 @@ export async function POST(req: NextRequest) {
 
         const isSucceeded = body.object.status === 'succeeded';
 
-        await prisma.order.update({
+        const updatedOrder = await prisma.order.update({
             where: {
                 id: order.id,
             },
             data: {
                 status: isSucceeded ? OrderStatus.SUCCEEDED : OrderStatus.CANCELLED,
             },
+            include: { items: true },
         });
 
         const items = order?.items || [];
@@ -36,10 +37,31 @@ export async function POST(req: NextRequest) {
           );
 
         if (isSucceeded) { 
-            chooseAndSendEmail(order, totalAmount);
+            chooseAndSendEmail(updatedOrder, totalAmount);
         }
         else {
-            return NextResponse.json({ error: 'Server error' });
+            for (const item of updatedOrder.items) {
+                await prisma.product.update({
+                  where: { id: item.productId },
+                  data: {
+                    stockQuantity: {
+                      increment: item.productQuantity,
+                    },
+                    isAvailable: true,
+                  },
+                });
+              }
+              if (updatedOrder.userId && updatedOrder.bonusDelta !== 0) {
+                await prisma.user.update({
+                  where: { id: updatedOrder.userId },
+                  data: {
+                    bonusBalance: {
+                      decrement: updatedOrder.bonusDelta,
+                    },
+                  },
+                });
+              }
+            chooseAndSendEmail(updatedOrder, totalAmount);
         }
     } catch (error) {
         console.log('[Checkout Callback] Error', error);

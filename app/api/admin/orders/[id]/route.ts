@@ -2,6 +2,7 @@ import { prisma } from '@/prisma/prisma-client';
 import { NextResponse } from 'next/server';
 import { getServerSession } from "next-auth";
 import { authOptions } from '@/shared/constants/auth-options';
+import { chooseAndSendEmail } from '@/shared/components/shared/email-templates/choose-and-send-email';
 
 export async function GET(
   request: Request,
@@ -39,10 +40,10 @@ export async function GET(
     );
   }
 }
-
 //СДЕЛАТЬ
-export async function PUT(request: Request, { params }: { params: { id: string } }) {
-  const { id } = params;
+export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  
+  const { id } = await params;
   const session = await getServerSession(authOptions);
 
   if (!session?.user || session.user.role !== "ADMIN") {
@@ -120,7 +121,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
       0
     );
     
-    
+    chooseAndSendEmail(updatedOrder, totalAmount);
     if (updatedOrder.status === 'CANCELLED') {
       // Возврат товаров в наличие при отмене заказа
       for (const item of updatedOrder.items) {

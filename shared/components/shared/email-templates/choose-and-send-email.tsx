@@ -40,7 +40,7 @@ export async function chooseAndSendEmail(
     status,
   } = order;
 
-  const totalPrice = totalAmount + (deliveryCost || 0);
+  const totalPrice = totalAmount + (deliveryCost || 0) + (bonusDelta < 0 ? bonusDelta : 0);
 
   // Формирование HTML списка товаров
   const itemsHtml = items
