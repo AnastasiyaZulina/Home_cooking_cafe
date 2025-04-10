@@ -1,8 +1,6 @@
 import { PaymentCallbackData } from "@/@types/yookassa";
 import { prisma } from "@/prisma/prisma-client";
 import { chooseAndSendEmail } from "@/shared/components/shared/email-templates/choose-and-send-email";
-import { OrderSuccessTemplate } from "@/shared/components/shared/email-templates/order-success";
-import { sendEmail } from "@/shared/lib";
 import { OrderStatus } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -32,19 +30,6 @@ export async function POST(req: NextRequest) {
 
         const items = order?.items || [];
         
-        const html = Promise.resolve(OrderSuccessTemplate({
-            orderId: order.id,
-            items: items.map((item: { 
-              productName: string; 
-              productPrice: number; 
-              productQuantity: number 
-            }) => ({
-              productName: item.productName,
-              productPrice: item.productPrice,
-              productQuantity: item.productQuantity,
-            })),
-        }));
-
         const totalAmount = items.reduce(
             (sum, item) => sum + (item.productPrice * item.productQuantity),
             0
@@ -52,7 +37,6 @@ export async function POST(req: NextRequest) {
 
         if (isSucceeded) { 
             chooseAndSendEmail(order, totalAmount);
-            await sendEmail(order.email, 'Скатерть-самобранка / Ваш заказ оплачен!', html);
         }
         else {
             return NextResponse.json({ error: 'Server error' });

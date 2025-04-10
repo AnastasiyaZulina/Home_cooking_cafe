@@ -4,8 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from '@/shared/constants/auth-options';
 import { z } from 'zod';
 import { OrderFormSchema } from '@/app/admin/schemas/order-form-schema';
-import { createPayment, sendEmail } from '@/shared/lib';
-import { OrderCreatedTemplate, PayOrderTemplate } from '@/shared/components';
+import { createPayment } from '@/shared/lib';
 import { decrementProductStockAdmin } from '@/app/admin/lib/functions';
 import { chooseAndSendEmail } from '@/shared/components/shared/email-templates/choose-and-send-email';
 
@@ -107,13 +106,6 @@ export async function POST(request: Request) {
     // Отправка писем
     if (createdOrder.paymentMethod === 'OFFLINE') {
       chooseAndSendEmail(createdOrder, totalAmount);
-      await sendEmail(
-        createdOrder.email,
-        `Скатерть-самобранка | Заказ #${createdOrder.id} принят`,
-        Promise.resolve(OrderCreatedTemplate({
-          orderId: createdOrder.id,
-        }))
-      );
     } else {
       const paymentData = await createPayment({
         amount: totalAmount + (createdOrder.deliveryCost || 0),
@@ -137,16 +129,6 @@ export async function POST(request: Request) {
       const paymentUrl = paymentData.confirmation.confirmation_url;
 
       chooseAndSendEmail(createdOrder, totalAmount, paymentUrl);
-
-      await sendEmail(
-        createdOrder.email,
-        `Скатерть-самобранка | Оплатите заказ #${createdOrder.id}`,
-        Promise.resolve(PayOrderTemplate({
-          orderId: createdOrder.id,
-          totalPrice: totalAmount + (createdOrder.deliveryCost || 0),
-          paymentUrl
-        }))
-      );
     }
 
     

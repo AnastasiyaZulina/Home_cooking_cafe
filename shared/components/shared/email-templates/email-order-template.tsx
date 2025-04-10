@@ -10,7 +10,7 @@ export const EmailOrderTemplate = ({
 }) => (
   <div>
     {paymentUrl && (
-      <p style={{ marginBottom: "20px" }}>
+      <p style={{ marginBottom: "20px", fontSize: "16px" }}>
         Ссылка для оплаты:{" "}
         <a href={paymentUrl} style={{ color: "#2563eb", textDecoration: "underline" }}>
           {paymentUrl}

@@ -6,7 +6,7 @@ import { OrderStatus, Prisma } from '@prisma/client';
 import { createPayment, sendEmail } from '@/shared/lib';
 import { hashSync } from 'bcrypt';
 import { getUserSession } from '@/shared/lib/get-user-session';
-import { OrderCreatedTemplate, PayOrderTemplate, VerificationUserTemplate } from '@/shared/components';
+import { VerificationUserTemplate } from '@/shared/components';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/shared/constants/auth-options';
 import * as bcrypt from 'bcrypt';
@@ -274,14 +274,6 @@ export async function createOrder(data: CheckoutFormValues) {
 
     if (data.paymentMethod === 'OFFLINE') {
       chooseAndSendEmail(orderWithItems, totalAmount);
-
-      await sendEmail(
-        data.email,
-        `Скатерть-самобранка | Заказ #${order.id} принят`,
-        Promise.resolve(OrderCreatedTemplate({
-          orderId: order.id,
-        }))
-      );
       return '/';
     }
 
@@ -306,15 +298,6 @@ export async function createOrder(data: CheckoutFormValues) {
 
     const paymentUrl = paymentData.confirmation.confirmation_url;
     chooseAndSendEmail(orderWithItems, totalAmount, paymentUrl);
-    await sendEmail(
-      data.email,
-      'Скатерть-самобранка | Оплатите заказ #' + order.id,
-      Promise.resolve(PayOrderTemplate({
-        orderId: order.id,
-        totalPrice: totalAmount + data.deliveryPrice,
-        paymentUrl
-      })),
-    );
 
     return paymentUrl;
   } catch (err) {

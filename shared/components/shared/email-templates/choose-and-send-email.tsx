@@ -2,6 +2,25 @@ import { Prisma } from "@prisma/client";
 import React from "react";
 import { EmailOrderTemplate } from "./email-order-template";
 import { sendEmail } from "@/shared/lib";
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
+import { CHECKOUT_CONSTANTS } from "@/shared/constants";
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
+
+// Функция для форматирования времени
+const formatDeliveryTime = (date: Date | string) => {
+  const dateString = typeof date === 'string' ? date : date.toISOString();
+  const start = dayjs(dateString).tz('Asia/Novosibirsk');
+  const end = start.add(CHECKOUT_CONSTANTS.WORKING_HOURS.TIME_SLOT_DURATION, 'minute');
+  
+  return {
+    timeRange: `${start.format('HH:mm')}-${end.format('HH:mm')}`,
+    date: start.format('DD.MM.YYYY')
+  };
+};
 
 export async function chooseAndSendEmail(
   order: Prisma.OrderGetPayload<{ include: { items: true } }>,
@@ -48,12 +67,14 @@ export async function chooseAndSendEmail(
             <div style="background: #f7fafc; padding: 15px; border-radius: 8px; margin: 15px 0;">
               <p>🚚 Стоимость доставки: ${deliveryCost}₽</p>
               <p>📍 Адрес доставки: ${address}</p>
-              <p>⏰ Время доставки: ${deliveryTime}</p>
+              <p>⏰ Время доставки: ${formatDeliveryTime(deliveryTime).timeRange} 
+              </p>
             </div>
           `
           : `
             <div style="background: #f7fafc; padding: 15px; border-radius: 8px; margin: 15px 0;">
-              <p>🏪 Время самовывоза: ${deliveryTime}</p>
+              <p>🏪 Время самовывоза: ${formatDeliveryTime(deliveryTime).timeRange} 
+              </p>
             </div>
           `
       }
@@ -69,6 +90,9 @@ export async function chooseAndSendEmail(
       }
       <p style="font-size: 18px; font-weight: bold; color: #1a365d;">
         💰 Итого: ${totalPrice}₽
+      </p></hr>
+            <p style="font-size: 12px;">
+            ${formatDeliveryTime(deliveryTime).date}
       </p>
     </div>
   `;
@@ -83,7 +107,7 @@ export async function chooseAndSendEmail(
           email,
           `Скатерть-самобранка | Заказ #${id}: ожидает оплаты`,
           <EmailOrderTemplate
-            content={`<p style="font-size: 16px; margin-bottom: 20px;">Оплатите заказ по ссылке:</p>${OrderListHTML}`}
+            content={`${OrderListHTML}`}
             paymentUrl={paymentUrl}
           />
         );
@@ -108,7 +132,7 @@ export async function chooseAndSendEmail(
           <EmailOrderTemplate
             content={`<p style="font-size: 16px;">
               🚚 Ваш заказ отправлен по адресу: ${address}.<br/>
-              ⏰ Ожидайте в ${deliveryTime}.
+              ⏰ Ожидайте в ${formatDeliveryTime(deliveryTime).timeRange}.
             </p>${OrderListHTML}`}
           />
         );
