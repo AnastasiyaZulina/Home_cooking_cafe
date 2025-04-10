@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   MaterialReactTable,
   type MRT_ColumnDef,
@@ -12,18 +12,29 @@ import {
   Button,
   IconButton,
   Tooltip,
+  TextField,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
+  MenuItem,
+  FormControlLabel,
+  Checkbox,
+  FormHelperText,
+  Typography,
 } from '@mui/material';
-import { Edit, Delete, Visibility, Add } from '@mui/icons-material';
+import { Edit, Delete, Add } from '@mui/icons-material';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
+
+type Category = {
+  id: number;
+  name: string;
+};
 
 type Product = {
   id: number;
@@ -37,149 +48,374 @@ type Product = {
   stockQuantity: number;
   createdAt: string;
   updatedAt: string;
-  category: {
-    id: number;
-    name: string;
-  };
+  category: Category;
+};
+
+type ProductFormValues = {
+  name: string;
+  description: string;
+  price: number;
+  weight: number;
+  eValue: number;
+  isAvailable: boolean;
+  stockQuantity: number;
+  categoryId: number;
+  image?: File;
 };
 
 const ProductTable = () => {
   const queryClient = useQueryClient();
   const router = useRouter();
+
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
 
-  const { data, isLoading } = useQuery<Product[]>({
+  // Form states
+  const [createFormValues, setCreateFormValues] = useState<Omit<ProductFormValues, 'image'>>({
+    name: '',
+    description: '',
+    price: 0,
+    weight: 0,
+    eValue: 0,
+    isAvailable: true,
+    stockQuantity: 0,
+    categoryId: 0,
+  });
+
+  const [editFormValues, setEditFormValues] = useState<ProductFormValues>({
+    name: '',
+    description: '',
+    price: 0,
+    weight: 0,
+    eValue: 0,
+    isAvailable: true,
+    stockQuantity: 0,
+    categoryId: 0,
+  });
+
+  // Fetch products data
+  const { data: products, isLoading } = useQuery<Product[]>({
     queryKey: ['products'],
     queryFn: async () => {
       const response = await fetch('/api/admin/products');
+      if (!response.ok) throw new Error('Failed to fetch products');
       return response.json();
     },
   });
 
+  // Fetch categories data
+  const { data: categories } = useQuery<Category[]>({
+    queryKey: ['categories'],
+    queryFn: async () => {
+      const response = await fetch('/api/admin/categories');
+      if (!response.ok) throw new Error('Failed to fetch categories');
+      return response.json();
+    },
+  });
+
+  // Mutations
   const { mutateAsync: deleteProduct } = useMutation({
     mutationFn: async (id: number) => {
       const response = await fetch(`/api/admin/products/${id}`, {
         method: 'DELETE',
       });
+      if (!response.ok) throw new Error('Failed to delete product');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      toast.success('Товар успешно удален');
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Ошибка при удалении товара');
+    },
+  });
 
+  const { mutateAsync: createProduct } = useMutation({
+    mutationFn: async (formData: FormData) => {
+      const response = await fetch('/api/admin/products', {
+        method: 'POST',
+        body: formData,
+      });
       if (!response.ok) {
-        throw new Error('Ошибка при удалении товара');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to create product');
       }
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
+      toast.success('Товар успешно создан');
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Ошибка при создании товара');
     },
   });
+
+  const { mutateAsync: updateProduct } = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: Partial<ProductFormValues> }) => {
+      const response = await fetch(`/api/admin/products/${id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to update product');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      toast.success('Товар успешно обновлен');
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Ошибка при обновлении товара');
+    },
+  });
+
+  // Handlers
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+  
+    // Проверка формата файла
+    const allowedTypes = ['image/svg+xml', 'image/jpeg', 'image/png', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error('Допустимые форматы: SVG, JPG, JPEG, PNG, WEBP');
+      return;
+    }
+
+    try {
+      // Создаем URL для файла
+      const imageUrl = URL.createObjectURL(file);
+
+      // Загружаем изображение
+      const img = new Image();
+      img.src = imageUrl;
+
+      // Ждем загрузки изображения
+      await new Promise((resolve) => {
+        img.onload = resolve;
+      });
+
+      // Создаем canvas для обрезки
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error('Canvas context not available');
+
+      // Определяем размеры для обрезки (1:1)
+      const size = Math.min(img.width, img.height);
+      canvas.width = size;
+      canvas.height = size;
+
+      // Вычисляем координаты для обрезки (центрирование)
+      const offsetX = (img.width - size) / 2;
+      const offsetY = (img.height - size) / 2;
+
+      // Обрезаем изображение
+      ctx.drawImage(
+        img,
+        offsetX,
+        offsetY,
+        size,
+        size,
+        0,
+        0,
+        size,
+        size
+      );
+
+      // Конвертируем canvas обратно в файл
+      canvas.toBlob((blob) => {
+        if (!blob) return;
+
+        // Создаем новый файл с обрезанным изображением
+        const croppedFile = new File([blob], file.name, {
+          type: 'image/jpeg',
+          lastModified: Date.now(),
+        });
+
+        // Обновляем состояние
+        setSelectedImage(croppedFile);
+        setImagePreviewUrl(URL.createObjectURL(croppedFile));
+
+        // Очищаем URL
+        URL.revokeObjectURL(imageUrl);
+      }, 'image/jpeg', 0.9);
+    } catch (error) {
+      console.error('Error processing image:', error);
+      toast.error('Ошибка при обработке изображения');
+    }
+  };
 
   const handleDeleteProduct = async (row: MRT_Row<Product>) => {
     if (window.confirm(`Вы уверены, что хотите удалить товар "${row.original.name}"?`)) {
       try {
-        await toast.promise(deleteProduct(row.original.id), {
-          loading: 'Удаление товара...',
-          success: 'Товар успешно удален!',
-          error: (err) => err.message || 'Ошибка при удалении',
-        });
+        await deleteProduct(row.original.id);
       } catch (error) {
-        console.error('[ERROR]:', error);
-        throw error;
+        console.error('Delete error:', error);
       }
     }
   };
 
+  const handleEditRow = (product: Product) => {
+    setEditFormValues({
+      name: product.name,
+      description: product.description || '',
+      price: product.price,
+      weight: product.weight,
+      eValue: product.eValue,
+      isAvailable: product.isAvailable,
+      stockQuantity: product.stockQuantity,
+      categoryId: product.category.id,
+    });
+    setSelectedProduct(product);
+    setEditDialogOpen(true);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!selectedProduct) return;
+
+    try {
+      await updateProduct({
+        id: selectedProduct.id,
+        data: editFormValues,
+      });
+      setEditDialogOpen(false);
+    } catch (error) {
+      console.error('Update error:', error);
+    }
+  };
+
+  const handleCreateProduct = async () => {
+    if (!selectedImage) {
+      toast.error('Пожалуйста, загрузите изображение товара');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('name', createFormValues.name);
+    formData.append('description', createFormValues.description);
+    formData.append('price', createFormValues.price.toString());
+    formData.append('weight', createFormValues.weight.toString());
+    formData.append('eValue', createFormValues.eValue.toString());
+    formData.append('stockQuantity', createFormValues.stockQuantity.toString());
+    formData.append('isAvailable', createFormValues.isAvailable.toString());
+    formData.append('categoryId', createFormValues.categoryId.toString());
+    formData.append('image', selectedImage);
+
+    try {
+      const response = await createProduct(formData);
+      console.log('Product created successfully:', response);
+      setCreateFormValues({
+        name: '',
+        description: '',
+        price: 0,
+        weight: 0,
+        eValue: 0,
+        isAvailable: true,
+        stockQuantity: 0,
+        categoryId: 0,
+      });
+      setSelectedImage(null);
+      setImagePreviewUrl(null);
+    } catch (error) {
+      console.error('Create error:', error);
+    }
+  };
+
+  const validateForm = (values: Omit<ProductFormValues, 'image'>) => {
+    const errors: Partial<Record<keyof typeof values, string>> = {};
+
+    if (!values.name.trim()) errors.name = 'Обязательное поле';
+    if (values.price <= 0) errors.price = 'Цена должна быть больше 0';
+    if (values.weight <= 0) errors.weight = 'Вес должен быть больше 0';
+    if (values.eValue <= 0) errors.eValue = 'Энергетическая ценность должна быть больше 0';
+    if (values.stockQuantity < 0) errors.stockQuantity = 'Количество не может быть отрицательным';
+    if (values.categoryId === 0) errors.categoryId = 'Выберите категорию';
+
+    return errors;
+  };
+
+  const createErrors = validateForm(createFormValues);
+  const editErrors = validateForm(editFormValues);
+
+  // Table columns
   const columns = useMemo<MRT_ColumnDef<Product>[]>(
     () => [
-      {
-        accessorKey: 'id',
-        header: 'ID',
-        filterVariant: 'range',
-        size: 80,
-      },
-      {
-        accessorKey: 'name',
-        header: 'Название',
-        filterVariant: 'text',
-      },
+      { accessorKey: 'id', header: 'ID', size: 80 },
+      { accessorKey: 'name', header: 'Название' },
       {
         accessorKey: 'category.name',
         header: 'Категория',
         filterVariant: 'select',
-        filterSelectOptions: data
-          ? Array.from(new Set(data.map((product) => product.category.name)))
+        filterSelectOptions: products
+          ? Array.from(new Set(products.map((p) => p.category.name)))
           : [],
       },
       {
         accessorKey: 'price',
         header: 'Цена',
-        filterVariant: 'range',
         Cell: ({ cell }) => `${cell.getValue<number>().toLocaleString()} ₽`,
       },
-      {
-        accessorKey: 'stockQuantity',
-        header: 'Остаток',
-        filterVariant: 'range',
-      },
+      { accessorKey: 'stockQuantity', header: 'Остаток' },
       {
         accessorKey: 'isAvailable',
         header: 'Доступен',
-        filterVariant: 'select',
-        filterSelectOptions: [
-          { value: 'true', text: 'Да' },
-          { value: 'false', text: 'Нет' },
-        ],
         Cell: ({ cell }) => (cell.getValue() ? 'Да' : 'Нет'),
-        size: 100,
+      },
+      { accessorKey: 'weight', header: 'Вес (г)' },
+      { accessorKey: 'eValue', header: 'Энерг. ценность' },
+      {
+        accessorKey: 'image',
+        header: 'Изображение',
+        size: 200,
+        Cell: ({ cell }) => (
+          <Button
+            variant="outlined"
+            onClick={() => {
+              setSelectedProduct({
+                ...cell.row.original,
+                image: cell.getValue() as string,
+              });
+              setDetailsDialogOpen(true);
+            }}
+          >
+            Посмотреть
+          </Button>
+        ),
       },
       {
-        accessorKey: 'weight',
-        header: 'Вес (г)',
-        filterVariant: 'range',
-      },
-      {
-        accessorKey: 'eValue',
-        header: 'Энерг. ценность',
-        filterVariant: 'range',
-      },
-      {
-        accessorFn: (originalRow) => new Date(originalRow.createdAt),
         accessorKey: 'createdAt',
         header: 'Дата создания',
-        filterVariant: 'datetime-range',
-        muiFilterDateTimePickerProps: {
-          ampm: false,
-          format: 'DD.MM.YYYY HH:mm',
-        },
-        Cell: ({ cell }) =>
-          dayjs(cell.getValue<string>()).format('DD.MM.YYYY HH:mm'),
+        Cell: ({ cell }) => dayjs(cell.getValue<string>()).format('DD.MM.YYYY HH:mm'),
       },
       {
-        accessorFn: (originalRow) => new Date(originalRow.updatedAt),
         accessorKey: 'updatedAt',
         header: 'Дата обновления',
-        filterVariant: 'datetime-range',
-        muiFilterDateTimePickerProps: {
-          ampm: false,
-          format: 'DD.MM.YYYY HH:mm',
-        },
-        Cell: ({ cell }) =>
-          dayjs(cell.getValue<string>()).format('DD.MM.YYYY HH:mm'),
+        Cell: ({ cell }) => dayjs(cell.getValue<string>()).format('DD.MM.YYYY HH:mm'),
       },
     ],
-    [data]
+    [products]
   );
 
+  // Table instance
   const table = useMaterialReactTable({
     columns,
-    data: data || [],
+    data: products || [],
     state: { isLoading },
     enableEditing: true,
-    initialState: { columnOrder: columns.map(col => col.accessorKey as string) },
     renderTopToolbarCustomActions: () => (
       <Button
         variant="contained"
         startIcon={<Add />}
-        onClick={() => router.push(`/admin/products/create`)}
+        onClick={() => table.setCreatingRow(true)}
         sx={{ mr: 2 }}
       >
         Создать товар
@@ -188,18 +424,8 @@ const ProductTable = () => {
     renderRowActions: ({ row }) => (
       <Box sx={{ display: 'flex', gap: '8px' }}>
         <Tooltip title="Редактировать">
-          <IconButton onClick={() => router.push(`/admin/products/${row.original.id}/edit`)}>
+          <IconButton onClick={() => handleEditRow(row.original)}>
             <Edit />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Просмотр деталей">
-          <IconButton
-            onClick={() => {
-              setSelectedProduct(row.original);
-              setDetailsDialogOpen(true);
-            }}
-          >
-            <Visibility />
           </IconButton>
         </Tooltip>
         <Tooltip title="Удалить">
@@ -209,65 +435,283 @@ const ProductTable = () => {
         </Tooltip>
       </Box>
     ),
+    renderCreateRowDialogContent: ({ table }) => (
+      <>
+        <DialogTitle>Создать новый товар</DialogTitle>
+        <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+          <TextField
+            label="Название"
+            required
+            value={createFormValues.name}
+            onChange={(e) => setCreateFormValues(prev => ({ ...prev, name: e.target.value }))}
+            error={!!createErrors.name}
+            helperText={createErrors.name}
+          />
+
+          <TextField
+            label="Описание"
+            multiline
+            rows={3}
+            value={createFormValues.description}
+            onChange={(e) => setCreateFormValues(prev => ({ ...prev, description: e.target.value }))}
+          />
+
+          <TextField
+            select
+            label="Категория"
+            required
+            value={createFormValues.categoryId}
+            onChange={(e) => setCreateFormValues(prev => ({ ...prev, categoryId: Number(e.target.value) }))}
+            error={!!createErrors.categoryId}
+            helperText={createErrors.categoryId}
+          >
+            <MenuItem value={0} disabled>
+              Выберите категорию
+            </MenuItem>
+            {categories?.map((category) => (
+              <MenuItem key={category.id} value={category.id}>
+                {category.name}
+              </MenuItem>
+            ))}
+          </TextField>
+
+          <TextField
+            label="Цена"
+            type="number"
+            required
+            value={createFormValues.price}
+            onChange={(e) => setCreateFormValues(prev => ({ ...prev, price: Number(e.target.value) }))}
+            error={!!createErrors.price}
+            helperText={createErrors.price}
+            InputProps={{ endAdornment: '₽' }}
+          />
+
+          <TextField
+            label="Вес (г)"
+            type="number"
+            required
+            value={createFormValues.weight}
+            onChange={(e) => setCreateFormValues(prev => ({ ...prev, weight: Number(e.target.value) }))}
+            error={!!createErrors.weight}
+            helperText={createErrors.weight}
+          />
+
+          <TextField
+            label="Энергетическая ценность"
+            type="number"
+            required
+            value={createFormValues.eValue}
+            onChange={(e) => setCreateFormValues(prev => ({ ...prev, eValue: Number(e.target.value) }))}
+            error={!!createErrors.eValue}
+            helperText={createErrors.eValue}
+          />
+
+          <TextField
+            label="Количество на складе"
+            type="number"
+            required
+            value={createFormValues.stockQuantity}
+            onChange={(e) => setCreateFormValues(prev => ({ ...prev, stockQuantity: Number(e.target.value) }))}
+            error={!!createErrors.stockQuantity}
+            helperText={createErrors.stockQuantity}
+          />
+
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={createFormValues.isAvailable}
+                onChange={(e) => setCreateFormValues(prev => ({ ...prev, isAvailable: e.target.checked }))}
+              />
+            }
+            label="Доступен для заказа"
+          />
+
+          <Box>
+            <Button variant="outlined" component="label">
+              Загрузить изображение
+              <input
+                type="file"
+                accept="image/svg+xml, image/jpeg, image/png, image/webp"
+                hidden
+                onChange={handleImageChange}
+              />
+            </Button>
+            {!selectedImage && (
+              <FormHelperText error>Пожалуйста, загрузите изображение. Допустимый формат: SVG, JPG, JPEG, PNG, WEBP</FormHelperText>
+            )}
+          </Box>
+
+          {imagePreviewUrl && (
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="subtitle2">Изображение сохранится в размере 1:1</Typography>
+              <img
+                src={imagePreviewUrl}
+                alt="Превью"
+                style={{
+                  width: '200px',
+                  height: '200px',
+                  objectFit: 'cover',
+                  borderRadius: '4px',
+                  border: '1px solid #ddd'
+                }}
+              />
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => table.setCreatingRow(null)}>Отмена</Button>
+          <Button
+            variant="contained"
+            onClick={handleCreateProduct}
+            disabled={
+              Object.keys(createErrors).length > 0 || !selectedImage
+            }
+          >
+            Создать
+          </Button>
+        </DialogActions>
+      </>
+    ),
   });
 
   return (
-    <>
-      <LocalizationProvider
-        dateAdapter={AdapterDayjs}
-        adapterLocale="ru"
-      >
-        <MaterialReactTable table={table} />
-      </LocalizationProvider>
+    <LocalizationProvider dateAdapter={AdapterDayjs}>
+      <MaterialReactTable table={table} />
 
-      <Dialog
-        open={detailsDialogOpen}
-        onClose={() => setDetailsDialogOpen(false)}
-        maxWidth="md"
-        fullWidth
-      >
-        <DialogTitle>Детали товара</DialogTitle>
+      {/* Edit Dialog */}
+      <Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)} maxWidth="md" fullWidth>
+        <DialogTitle>Редактировать товар</DialogTitle>
+        <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+          <TextField
+            label="Название"
+            required
+            value={editFormValues.name}
+            onChange={(e) => setEditFormValues(prev => ({ ...prev, name: e.target.value }))}
+            error={!!editErrors.name}
+            helperText={editErrors.name}
+            fullWidth
+            margin="normal"
+          />
+
+          <TextField
+            label="Описание"
+            multiline
+            rows={3}
+            value={editFormValues.description}
+            onChange={(e) => setEditFormValues(prev => ({ ...prev, description: e.target.value }))}
+            fullWidth
+            margin="normal"
+          />
+
+          <TextField
+            select
+            label="Категория"
+            required
+            value={editFormValues.categoryId}
+            onChange={(e) => setEditFormValues(prev => ({ ...prev, categoryId: Number(e.target.value) }))}
+            error={!!editErrors.categoryId}
+            helperText={editErrors.categoryId}
+            fullWidth
+            margin="normal"
+          >
+            <MenuItem value={0} disabled>
+              Выберите категорию
+            </MenuItem>
+            {categories?.map((category) => (
+              <MenuItem key={category.id} value={category.id}>
+                {category.name}
+              </MenuItem>
+            ))}
+          </TextField>
+
+          <TextField
+            label="Цена"
+            type="number"
+            required
+            value={editFormValues.price}
+            onChange={(e) => setEditFormValues(prev => ({ ...prev, price: Number(e.target.value) }))}
+            error={!!editErrors.price}
+            helperText={editErrors.price}
+            InputProps={{ endAdornment: '₽' }}
+            fullWidth
+            margin="normal"
+          />
+
+          <TextField
+            label="Вес (г)"
+            type="number"
+            required
+            value={editFormValues.weight}
+            onChange={(e) => setEditFormValues(prev => ({ ...prev, weight: Number(e.target.value) }))}
+            error={!!editErrors.weight}
+            helperText={editErrors.weight}
+            fullWidth
+            margin="normal"
+          />
+
+          <TextField
+            label="Энергетическая ценность"
+            type="number"
+            required
+            value={editFormValues.eValue}
+            onChange={(e) => setEditFormValues(prev => ({ ...prev, eValue: Number(e.target.value) }))}
+            error={!!editErrors.eValue}
+            helperText={editErrors.eValue}
+            fullWidth
+            margin="normal"
+          />
+
+          <TextField
+            label="Количество на складе"
+            type="number"
+            required
+            value={editFormValues.stockQuantity}
+            onChange={(e) => setEditFormValues(prev => ({ ...prev, stockQuantity: Number(e.target.value) }))}
+            error={!!editErrors.stockQuantity}
+            helperText={editErrors.stockQuantity}
+            fullWidth
+            margin="normal"
+          />
+
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={editFormValues.isAvailable}
+                onChange={(e) => setEditFormValues(prev => ({ ...prev, isAvailable: e.target.checked }))}
+              />
+            }
+            label="Доступен для заказа"
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setEditDialogOpen(false)}>Отмена</Button>
+          <Button
+            variant="contained"
+            onClick={handleSaveEdit}
+            disabled={Object.keys(editErrors).length > 0}
+          >
+            Сохранить
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Image Preview Dialog */}
+      <Dialog open={detailsDialogOpen} onClose={() => setDetailsDialogOpen(false)}>
+        <DialogTitle>Изображение товара</DialogTitle>
         <DialogContent>
           {selectedProduct && (
-            <div className="grid grid-cols-2 gap-4 mt-4">
-              <div className="col-span-2">
-                <img
-                  src={selectedProduct.image}
-                  alt={selectedProduct.name}
-                  className="w-full h-64 object-contain"
-                />
-              </div>
-              <div><strong>Название:</strong></div>
-              <div>{selectedProduct.name}</div>
-              
-              <div><strong>Категория:</strong></div>
-              <div>{selectedProduct.category.name}</div>
-              
-              <div><strong>Описание:</strong></div>
-              <div>{selectedProduct.description || 'Нет описания'}</div>
-              
-              <div><strong>Цена:</strong></div>
-              <div>{selectedProduct.price.toLocaleString()} ₽</div>
-              
-              <div><strong>Вес:</strong></div>
-              <div>{selectedProduct.weight} г</div>
-              
-              <div><strong>Энергетическая ценность:</strong></div>
-              <div>{selectedProduct.eValue} ккал</div>
-              
-              <div><strong>Доступен:</strong></div>
-              <div>{selectedProduct.isAvailable ? 'Да' : 'Нет'}</div>
-              
-              <div><strong>Остаток на складе:</strong></div>
-              <div>{selectedProduct.stockQuantity} шт.</div>
-            </div>
+            <img
+              src={selectedProduct.image}
+              alt={selectedProduct.name}
+              style={{ width: '100%', maxHeight: '70vh', objectFit: 'contain' }}
+            />
           )}
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDetailsDialogOpen(false)}>Закрыть</Button>
         </DialogActions>
       </Dialog>
-    </>
+    </LocalizationProvider>
   );
 };
 
