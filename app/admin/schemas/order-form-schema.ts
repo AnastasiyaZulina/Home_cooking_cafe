@@ -35,17 +35,17 @@ export const OrderFormSchema = z.object({
 });
 
 export const OrderUpdateFormSchema = z.object({
-  userId: z.number().optional(),
+  userId: z.number().optional().nullable(),
   name: z.string().min(2, { message: 'Имя должно содержать не менее двух символов' }),
   email: z.string().email({ message: 'Введите корректную почту' }),
   phone: z.string().min(11, { message: 'Введите корректный номер телефона' }),
-  address: z.string().optional(),
+  address: z.string().optional().nullable(),
   deliveryType: z.nativeEnum(DeliveryType),
   paymentMethod: z.nativeEnum(PaymentMethod),
   deliveryPrice: z.number().optional().default(0),
-  paymentId: z.string().optional(),
+  paymentId: z.string().optional().nullable(),
   status: z.nativeEnum(OrderStatus, {message: "Выберите статус заказа"}),
-  comment: z.string().optional(),
+  comment: z.string().optional().nullable(),
   deliveryTime: z.preprocess(
     (arg) => {
       if (typeof arg === "string" || arg instanceof Date) return new Date(arg);

@@ -145,7 +145,7 @@ export async function chooseAndSendEmail(
           `Скатерть-самобранка | Заказ #${id}: готов к выдаче`,
           <EmailOrderTemplate
             content={`<p style="font-size: 16px;">
-              🎉 Заказ готов к самовывозу в ${deliveryTime}.
+              🎉 Заказ готов к самовывозу.
             </p>${OrderListHTML}`}
           />
         );
@@ -157,7 +157,7 @@ export async function chooseAndSendEmail(
           `Скатерть-самобранка | Заказ #${id}: принят`,
           <EmailOrderTemplate
             content={`<p style="font-size: 16px;">
-              👨🍳 Соберём Ваш заказ к ${deliveryTime}.
+              👨🍳 Соберём Ваш заказ к ${formatDeliveryTime(deliveryTime).timeRange}.
             </p>${OrderListHTML}`}
           />
         );

@@ -3,7 +3,6 @@ import { authOptions } from "@/shared/constants/auth-options";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 
-// app/api/admin/products/route.ts 
 export async function GET() {
     const session = await getServerSession(authOptions);
 

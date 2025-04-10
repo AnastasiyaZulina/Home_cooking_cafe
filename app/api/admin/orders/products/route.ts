@@ -11,10 +11,11 @@ export async function GET() {
     }
 
     const products = await prisma.product.findMany({
-        orderBy: { name: 'asc' },
-        include: {
-          category: true,
+        where: {
+          isAvailable: true,
+          stockQuantity: { gt: 0 }
         },
+        orderBy: { name: 'asc' }, // Сортировка по имени
       });
 
     return NextResponse.json(products);

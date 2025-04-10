@@ -80,7 +80,7 @@ const CreateOrderPage = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await fetch('/api/admin/products');
+        const response = await fetch('/api/admin/orders/products');
         if (!response.ok) throw new Error('Ошибка загрузки товаров');
         const data = await response.json();
         setProducts(data);
