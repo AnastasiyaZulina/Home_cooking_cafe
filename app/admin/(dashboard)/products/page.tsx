@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   MaterialReactTable,
   type MRT_ColumnDef,
@@ -65,7 +65,6 @@ type ProductFormValues = {
 
 const ProductTable = () => {
   const queryClient = useQueryClient();
-  const router = useRouter();
 
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
@@ -74,6 +73,8 @@ const ProductTable = () => {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editImage, setEditImage] = useState<File | null>(null);
   const [editPreviewUrl, setEditPreviewUrl] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [newStockQuantity, setNewStockQuantity] = useState<number>(0);
 
   // Form states
   const [createFormValues, setCreateFormValues] = useState<Omit<ProductFormValues, 'image'>>({
@@ -118,6 +119,25 @@ const ProductTable = () => {
     },
   });
 
+  useEffect(() => {
+    if (editFormValues.stockQuantity <= 0) {
+      setEditFormValues(prev => ({
+        ...prev,
+        isAvailable: false
+      }));
+    }
+  }, [editFormValues.stockQuantity]);
+
+
+  useEffect(() => {
+    if (createFormValues.stockQuantity <= 0) {
+      setCreateFormValues(prev => ({
+        ...prev,
+        isAvailable: false
+      }));
+    }
+  }, [createFormValues.stockQuantity]);
+
   // Mutations
   const { mutateAsync: deleteProduct } = useMutation({
     mutationFn: async (id: number) => {
@@ -133,6 +153,30 @@ const ProductTable = () => {
     },
     onError: (error: Error) => {
       toast.error(error.message || 'Ошибка при удалении товара');
+    },
+  });
+
+  const { mutateAsync: bulkUpdateStock } = useMutation({
+    mutationFn: async (data: { ids: number[]; quantity: number }) => {
+      const response = await fetch('/api/admin/products/stock', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Ошибка обновления');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      toast.success('Наличие успешно обновлено');
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Ошибка при обновлении наличия');
     },
   });
 
@@ -179,6 +223,29 @@ const ProductTable = () => {
   });
 
   // Handlers
+
+  const handleBulkUpdate = async () => {
+    if (selectedIds.length === 0) {
+      toast.error('Выберите товары для обновления');
+      return;
+    }
+    if (newStockQuantity < 0) {
+      toast.error('Количество не может быть отрицательным');
+      return;
+    }
+
+    try {
+      await bulkUpdateStock({
+        ids: selectedIds,
+        quantity: newStockQuantity
+      });
+      setSelectedIds([]);
+      setNewStockQuantity(0);
+    } catch (error) {
+      console.error('Bulk update error:', error);
+    }
+  };
+
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -369,6 +436,11 @@ const ProductTable = () => {
       if (editImage) {
         formData.append('image', editImage);
       }
+      const stock = Number(editFormValues.stockQuantity);
+      const isAvailable = stock > 0 ? editFormValues.isAvailable : false;
+
+      formData.append('stockQuantity', stock.toString());
+      formData.append('isAvailable', isAvailable.toString());
 
       await updateProduct({
         id: selectedProduct.id,
@@ -499,17 +571,53 @@ const ProductTable = () => {
   const table = useMaterialReactTable({
     columns,
     data: products || [],
-    state: { isLoading },
+    getRowId: (row) => row.id.toString(),
+    state: {
+      isLoading,
+      rowSelection: selectedIds.reduce((acc, id) => {
+        acc[id.toString()] = true;
+        return acc;
+      }, {} as Record<string, boolean>),
+    },
     enableEditing: true,
+    enableRowSelection: true,
+    onRowSelectionChange: (updater) => {
+      const newSelection = updater instanceof Function
+        ? updater(table.getState().rowSelection)
+        : updater;
+      const ids = Object.keys(newSelection)
+        .filter(key => newSelection[key])
+        .map(key => parseInt(key));
+      setSelectedIds(ids);
+    },
     renderTopToolbarCustomActions: () => (
-      <Button
-        variant="contained"
-        startIcon={<Add />}
-        onClick={() => table.setCreatingRow(true)}
-        sx={{ mr: 2 }}
-      >
-        Создать товар
-      </Button>
+      <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+        <Button
+          variant="contained"
+          startIcon={<Add />}
+          onClick={() => table.setCreatingRow(true)}
+        >
+          Создать товар
+        </Button>
+
+        <TextField
+          size="small"
+          type="number"
+          label="Новое количество"
+          value={newStockQuantity}
+          onChange={(e) => setNewStockQuantity(Number(e.target.value))}
+          inputProps={{ min: 0 }}
+          sx={{ width: 100}}
+        />
+
+        <Button
+          variant="outlined"
+          onClick={handleBulkUpdate}
+          disabled={selectedIds.length === 0 || newStockQuantity < 0}
+        >
+          Обновить наличие
+        </Button>
+      </Box>
     ),
     renderRowActions: ({ row }) => (
       <Box sx={{ display: 'flex', gap: '8px' }}>
@@ -609,8 +717,12 @@ const ProductTable = () => {
           <FormControlLabel
             control={
               <Checkbox
-                checked={createFormValues.isAvailable}
-                onChange={(e) => setCreateFormValues(prev => ({ ...prev, isAvailable: e.target.checked }))}
+                checked={createFormValues.stockQuantity > 0 ? createFormValues.isAvailable : false}
+                onChange={(e) => setCreateFormValues(prev => ({
+                  ...prev,
+                  isAvailable: e.target.checked
+                }))}
+                disabled={createFormValues.stockQuantity <= 0}
               />
             }
             label="Доступен для заказа"
@@ -773,8 +885,12 @@ const ProductTable = () => {
           <FormControlLabel
             control={
               <Checkbox
-                checked={editFormValues.isAvailable}
-                onChange={(e) => setEditFormValues(prev => ({ ...prev, isAvailable: e.target.checked }))}
+                checked={editFormValues.stockQuantity > 0 ? editFormValues.isAvailable : false}
+                onChange={(e) => setEditFormValues(prev => ({
+                  ...prev,
+                  isAvailable: e.target.checked
+                }))}
+                disabled={editFormValues.stockQuantity <= 0}
               />
             }
             label="Доступен для заказа"
