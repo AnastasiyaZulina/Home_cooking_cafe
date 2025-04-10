@@ -72,6 +72,8 @@ const ProductTable = () => {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editImage, setEditImage] = useState<File | null>(null);
+  const [editPreviewUrl, setEditPreviewUrl] = useState<string | null>(null);
 
   // Form states
   const [createFormValues, setCreateFormValues] = useState<Omit<ProductFormValues, 'image'>>({
@@ -156,13 +158,10 @@ const ProductTable = () => {
   });
 
   const { mutateAsync: updateProduct } = useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: Partial<ProductFormValues> }) => {
+    mutationFn: async ({ id, data }: { id: number; data: FormData }) => {
       const response = await fetch(`/api/admin/products/${id}`, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
+        body: data, // Отправляем FormData напрямую
       });
       if (!response.ok) {
         const errorData = await response.json();
@@ -183,7 +182,7 @@ const ProductTable = () => {
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-  
+
     // Проверка формата файла
     const allowedTypes = ['image/svg+xml', 'image/jpeg', 'image/png', 'image/webp'];
     if (!allowedTypes.includes(file.type)) {
@@ -254,6 +253,80 @@ const ProductTable = () => {
     }
   };
 
+  const handleEditImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Проверка формата файла
+    const allowedTypes = ['image/svg+xml', 'image/jpeg', 'image/png', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error('Допустимые форматы: SVG, JPG, JPEG, PNG, WEBP');
+      return;
+    }
+
+    try {
+      // Создаем URL для файла
+      const imageUrl = URL.createObjectURL(file);
+
+      // Загружаем изображение
+      const img = new Image();
+      img.src = imageUrl;
+
+      // Ждем загрузки изображения
+      await new Promise((resolve) => {
+        img.onload = resolve;
+      });
+
+      // Создаем canvas для обрезки
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error('Canvas context not available');
+
+      // Определяем размеры для обрезки (1:1)
+      const size = Math.min(img.width, img.height);
+      canvas.width = size;
+      canvas.height = size;
+
+      // Вычисляем координаты для обрезки (центрирование)
+      const offsetX = (img.width - size) / 2;
+      const offsetY = (img.height - size) / 2;
+
+      // Обрезаем изображение
+      ctx.drawImage(
+        img,
+        offsetX,
+        offsetY,
+        size,
+        size,
+        0,
+        0,
+        size,
+        size
+      );
+
+      // Конвертируем canvas обратно в файл
+      canvas.toBlob((blob) => {
+        if (!blob) return;
+
+        // Создаем новый файл с обрезанным изображением
+        const croppedFile = new File([blob], file.name, {
+          type: 'image/jpeg',
+          lastModified: Date.now(),
+        });
+
+        // Обновляем состояние
+        setEditImage(croppedFile);
+        setEditPreviewUrl(URL.createObjectURL(croppedFile)); // Исправлено здесь
+
+        // Очищаем URL
+        URL.revokeObjectURL(imageUrl);
+      }, 'image/jpeg', 0.9);
+    } catch (error) {
+      console.error('Error processing image:', error);
+      toast.error('Ошибка при обработке изображения');
+    }
+  };
+
   const handleDeleteProduct = async (row: MRT_Row<Product>) => {
     if (window.confirm(`Вы уверены, что хотите удалить товар "${row.original.name}"?`)) {
       try {
@@ -283,11 +356,28 @@ const ProductTable = () => {
     if (!selectedProduct) return;
 
     try {
+      const formData = new FormData();
+      formData.append('name', editFormValues.name);
+      formData.append('description', editFormValues.description);
+      formData.append('price', editFormValues.price.toString());
+      formData.append('weight', editFormValues.weight.toString());
+      formData.append('eValue', editFormValues.eValue.toString());
+      formData.append('stockQuantity', editFormValues.stockQuantity.toString());
+      formData.append('isAvailable', editFormValues.isAvailable.toString());
+      formData.append('categoryId', editFormValues.categoryId.toString());
+
+      if (editImage) {
+        formData.append('image', editImage);
+      }
+
       await updateProduct({
         id: selectedProduct.id,
-        data: editFormValues,
+        data: formData
       });
+
       setEditDialogOpen(false);
+      setEditImage(null);
+      setEditPreviewUrl(null);
     } catch (error) {
       console.error('Update error:', error);
     }
@@ -579,7 +669,14 @@ const ProductTable = () => {
       <MaterialReactTable table={table} />
 
       {/* Edit Dialog */}
-      <Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)} maxWidth="md" fullWidth>
+      <Dialog
+        open={editDialogOpen}
+        onClose={() => {
+          setEditDialogOpen(false);
+          setEditPreviewUrl(null);
+          setEditImage(null);
+        }}
+      >
         <DialogTitle>Редактировать товар</DialogTitle>
         <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
           <TextField
@@ -682,6 +779,37 @@ const ProductTable = () => {
             }
             label="Доступен для заказа"
           />
+
+          <Box>
+            <Typography variant="subtitle2">Текущее изображение:</Typography>
+            <img
+              src={editPreviewUrl || selectedProduct?.image}
+              alt="Превью"
+              style={{
+                width: '200px',
+                height: '200px',
+                objectFit: 'cover',
+                borderRadius: '4px',
+                border: '1px solid #ddd',
+                margin: '10px 0'
+              }}
+            />
+          </Box>
+
+          <Box>
+            <Button variant="outlined" component="label">
+              Заменить изображение
+              <input
+                type="file"
+                accept="image/svg+xml, image/jpeg, image/png, image/webp"
+                hidden
+                onChange={handleEditImageChange}
+              />
+            </Button>
+            <FormHelperText>
+              Допустимые форматы: SVG, JPG, PNG, WEBP
+            </FormHelperText>
+          </Box>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setEditDialogOpen(false)}>Отмена</Button>
