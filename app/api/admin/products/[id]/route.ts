@@ -8,9 +8,9 @@ import path from 'path';
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = params;
+  const { id } = await params;
   const session = await getServerSession(authOptions);
   
   if (!session?.user || session.user.role !== "ADMIN") {
@@ -66,15 +66,16 @@ export async function DELETE(
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const session = await getServerSession(authOptions);
   
   if (!session?.user || session.user.role !== "ADMIN") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const productId = params.id;
+  const productId = Number(id);
   let updatedProduct;
   
   try {
@@ -118,7 +119,7 @@ export async function PATCH(
 
       // Сохраняем новое изображение
       const ext = image.type.split('/')[1] === 'svg+xml' ? 'svg' : image.type.split('/')[1];
-      const uploadDir = path.join(process.cwd(), 'public', 'images', 'items', productId);
+      const uploadDir = path.join(process.cwd(), 'public', 'images', 'items', String(productId));
       const filename = `product-${productId}.${ext}`;
       const fullPath = path.join(uploadDir, filename);
 

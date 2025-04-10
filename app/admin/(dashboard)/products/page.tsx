@@ -26,10 +26,10 @@ import {
 import { Edit, Delete, Add } from '@mui/icons-material';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { useRouter } from 'next/navigation';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
+import Image from 'next/image';
 
 type Category = {
   id: number;
@@ -262,7 +262,7 @@ const ProductTable = () => {
       const imageUrl = URL.createObjectURL(file);
 
       // Загружаем изображение
-      const img = new Image();
+      const img = new window.Image();
       img.src = imageUrl;
 
       // Ждем загрузки изображения
@@ -336,7 +336,7 @@ const ProductTable = () => {
       const imageUrl = URL.createObjectURL(file);
 
       // Загружаем изображение
-      const img = new Image();
+      const img = new window.Image();
       img.src = imageUrl;
 
       // Ждем загрузки изображения
@@ -571,7 +571,7 @@ const ProductTable = () => {
   const table = useMaterialReactTable({
     columns,
     data: products || [],
-    getRowId: (row) => row.id.toString(),
+    getRowId: (row) => row.id?.toString() ?? '',
     state: {
       isLoading,
       rowSelection: selectedIds.reduce((acc, id) => {
@@ -607,7 +607,7 @@ const ProductTable = () => {
           value={newStockQuantity}
           onChange={(e) => setNewStockQuantity(Number(e.target.value))}
           inputProps={{ min: 0 }}
-          sx={{ width: 100}}
+          sx={{ width: 100 }}
         />
 
         <Button
@@ -746,12 +746,12 @@ const ProductTable = () => {
           {imagePreviewUrl && (
             <Box sx={{ mt: 2 }}>
               <Typography variant="subtitle2">Изображение сохранится в размере 1:1</Typography>
-              <img
+              <Image
                 src={imagePreviewUrl}
                 alt="Превью"
+                width={200}
+                height={200}
                 style={{
-                  width: '200px',
-                  height: '200px',
                   objectFit: 'cover',
                   borderRadius: '4px',
                   border: '1px solid #ddd'
@@ -898,12 +898,12 @@ const ProductTable = () => {
 
           <Box>
             <Typography variant="subtitle2">Текущее изображение:</Typography>
-            <img
-              src={editPreviewUrl || selectedProduct?.image}
+            <Image
+              src={editPreviewUrl || selectedProduct?.image || '/placeholder-image.png'}
               alt="Превью"
+              width={200}
+              height={200}
               style={{
-                width: '200px',
-                height: '200px',
                 objectFit: 'cover',
                 borderRadius: '4px',
                 border: '1px solid #ddd',
@@ -944,10 +944,15 @@ const ProductTable = () => {
         <DialogTitle>Изображение товара</DialogTitle>
         <DialogContent>
           {selectedProduct && (
-            <img
+            <Image
               src={selectedProduct.image}
               alt={selectedProduct.name}
-              style={{ width: '100%', maxHeight: '70vh', objectFit: 'contain' }}
+              fill
+              style={{
+                objectFit: 'contain',
+                maxHeight: '70vh'
+              }}
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             />
           )}
         </DialogContent>

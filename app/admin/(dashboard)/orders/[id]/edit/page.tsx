@@ -113,7 +113,6 @@ export default function EditOrderPage() {
 
     // Загрузка данных заказа
     useEffect(() => {
-        let isCancelled = false;
         const fetchOrder = async () => {
             try {
                 const usersRes = await fetch('/api/admin/users');

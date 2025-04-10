@@ -2,9 +2,7 @@ import { prisma } from "@/prisma/prisma-client";
 import { authOptions } from "@/shared/constants/auth-options";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import { writeFile } from 'fs/promises';
 import path from 'path';
-import { randomUUID } from 'crypto';
 import fs from 'fs/promises';
 
 export async function GET() {
