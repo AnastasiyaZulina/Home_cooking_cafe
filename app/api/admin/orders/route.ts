@@ -7,6 +7,7 @@ import { OrderFormSchema } from '@/app/admin/schemas/order-form-schema';
 import { createPayment, sendEmail } from '@/shared/lib';
 import { OrderCreatedTemplate, PayOrderTemplate } from '@/shared/components';
 import { decrementProductStockAdmin } from '@/app/admin/lib/functions';
+import { chooseAndSendEmail } from '@/shared/lib/choose-and-send-email';
 
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -102,8 +103,10 @@ export async function POST(request: Request) {
       0
     );
 
+
     // Отправка писем
     if (createdOrder.paymentMethod === 'OFFLINE') {
+      chooseAndSendEmail(createdOrder, totalAmount);
       await sendEmail(
         createdOrder.email,
         `Скатерть-самобранка | Заказ #${createdOrder.id} принят`,
@@ -133,6 +136,8 @@ export async function POST(request: Request) {
 
       const paymentUrl = paymentData.confirmation.confirmation_url;
 
+      chooseAndSendEmail(createdOrder, totalAmount, paymentUrl);
+
       await sendEmail(
         createdOrder.email,
         `Скатерть-самобранка | Оплатите заказ #${createdOrder.id}`,
@@ -143,6 +148,9 @@ export async function POST(request: Request) {
         }))
       );
     }
+
+    
+
     await decrementProductStockAdmin(
       items.map(({ productId, quantity }) => ({ productId, quantity }))
     );

@@ -10,6 +10,7 @@ import { OrderCreatedTemplate, PayOrderTemplate, VerificationUserTemplate } from
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/shared/constants/auth-options';
 import * as bcrypt from 'bcrypt';
+import { chooseAndSendEmail } from '@/shared/lib/choose-and-send-email';
 
 async function clearCart(cartId: number) {
   await prisma.cartItem.deleteMany({
@@ -262,7 +263,18 @@ export async function createOrder(data: CheckoutFormValues) {
       });
     }
 
+    const orderWithItems = await prisma.order.findUnique({
+      where: { id: order.id },
+      include: { items: true },
+    });
+    
+    if (!orderWithItems) {
+      throw new Error('Order not found');
+    }
+
     if (data.paymentMethod === 'OFFLINE') {
+      chooseAndSendEmail(orderWithItems, totalAmount);
+
       await sendEmail(
         data.email,
         `Скатерть-самобранка | Заказ #${order.id} принят`,
@@ -293,7 +305,7 @@ export async function createOrder(data: CheckoutFormValues) {
     });
 
     const paymentUrl = paymentData.confirmation.confirmation_url;
-
+    chooseAndSendEmail(orderWithItems, totalAmount, paymentUrl);
     await sendEmail(
       data.email,
       'Скатерть-самобранка | Оплатите заказ #' + order.id,

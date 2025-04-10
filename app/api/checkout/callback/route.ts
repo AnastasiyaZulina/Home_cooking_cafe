@@ -2,6 +2,7 @@ import { PaymentCallbackData } from "@/@types/yookassa";
 import { prisma } from "@/prisma/prisma-client";
 import { OrderSuccessTemplate } from "@/shared/components/shared/email-templates/order-success";
 import { sendEmail } from "@/shared/lib";
+import { chooseAndSendEmail } from "@/shared/lib/choose-and-send-email";
 import { OrderStatus } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -44,7 +45,13 @@ export async function POST(req: NextRequest) {
             })),
         }));
 
+        const totalAmount = items.reduce(
+            (sum, item) => sum + (item.productPrice * item.productQuantity),
+            0
+          );
+
         if (isSucceeded) { 
+            chooseAndSendEmail(order, totalAmount);
             await sendEmail(order.email, 'Скатерть-самобранка / Ваш заказ оплачен!', html);
         }
         else {

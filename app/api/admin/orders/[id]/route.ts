@@ -115,6 +115,12 @@ export async function PUT(request: Request, { params }: { params: { id: string }
       },
     });
 
+    const totalAmount = items.reduce(
+      (sum: number, item: { productPrice: number; quantity: number }) => sum + (item.productPrice * item.quantity),
+      0
+    );
+    
+    
     if (updatedOrder.status === 'CANCELLED') {
       // Возврат товаров в наличие при отмене заказа
       for (const item of updatedOrder.items) {
