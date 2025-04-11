@@ -27,11 +27,11 @@ import updateLocale from 'dayjs/plugin/updateLocale';
 import dayjs from 'dayjs';
 
 dayjs.extend(updateLocale);
-dayjs.locale('ru'); // или другой язык
+dayjs.locale('ru');
 dayjs.updateLocale('ru', {
   formats: {
-    time: 'HH:mm', // 24-часовой формат
-    timePicker: 'HH:mm', // 24-часовой формат для пикера
+    time: 'HH:mm',
+    timePicker: 'HH:mm',
   },
 });
 

@@ -554,14 +554,20 @@ const ProductTable = () => {
         ),
       },
       {
+        accessorFn: (row) => dayjs(row.createdAt).toDate(),
         accessorKey: 'createdAt',
         header: 'Дата создания',
-        Cell: ({ cell }) => dayjs(cell.getValue<string>()).format('DD.MM.YYYY HH:mm'),
+        filterVariant: 'datetime-range',
+        Cell: ({ cell }) => dayjs(cell.getValue<Date>()).format('DD.MM.YYYY HH:mm'),
+        muiFilterDateTimePickerProps: { ampm: false, format: 'DD.MM.YYYY HH:mm' },
       },
       {
+        accessorFn: (row) => dayjs(row.updatedAt).toDate(),
         accessorKey: 'updatedAt',
         header: 'Дата обновления',
-        Cell: ({ cell }) => dayjs(cell.getValue<string>()).format('DD.MM.YYYY HH:mm'),
+        filterVariant: 'datetime-range',
+        Cell: ({ cell }) => dayjs(cell.getValue<Date>()).format('DD.MM.YYYY HH:mm'),
+        muiFilterDateTimePickerProps: { ampm: false, format: 'DD.MM.YYYY HH:mm' },
       },
     ],
     [products]

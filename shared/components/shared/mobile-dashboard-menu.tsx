@@ -19,7 +19,7 @@ export const MobileDashboardMenu: React.FC<MobileDashboardMenuProps> = ({ isOpen
 
     // Функция для проверки активного пути
     const isActive = (href: string) => pathname === href
-    if (!session?.user || session.user.role !== "ADMIN") {
+    if (!session?.user || session.user.role == "USER") {
         return null;
     }
 

@@ -13,7 +13,7 @@ export async function DELETE(
   const { id } = await params;
   const session = await getServerSession(authOptions);
   
-  if (!session?.user || session.user.role !== "ADMIN") {
+  if (!session?.user || session.user.role == "USER") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -71,7 +71,7 @@ export async function PATCH(
   const { id } = await params;
   const session = await getServerSession(authOptions);
   
-  if (!session?.user || session.user.role !== "ADMIN") {
+  if (!session?.user || session.user.role == "USER") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

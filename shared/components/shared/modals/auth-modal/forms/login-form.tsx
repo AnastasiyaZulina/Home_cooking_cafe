@@ -10,9 +10,10 @@ import { useCartStore } from "@/shared/store";
 
 interface Props {
   onClose?: VoidFunction;
+  onForgotPassword?: VoidFunction;
 }
 
-export const LoginForm: React.FC<Props> = ({ onClose }) => {
+export const LoginForm: React.FC<Props> = ({ onClose,  onForgotPassword}) => {
   const { fetchCartItems } = useCartStore();
 
   const form = useForm<TFormLoginValues>({
@@ -41,21 +42,21 @@ export const LoginForm: React.FC<Props> = ({ onClose }) => {
         .find(row => row.startsWith('cartToken='))
         ?.split('=')[1];
 
-        if (cartToken) {
-          try {
-            await Api.cart.mergeCarts({ cartToken });
-            
-            // Очищаем куки
-            document.cookie = 'cartToken=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-            console.log('Cart token cleared');
-          } catch (mergeError) {
-            console.error('Merge error:', mergeError);
-            toast.error('Ошибка объединения корзин');
-          }
+      if (cartToken) {
+        try {
+          await Api.cart.mergeCarts({ cartToken });
+
+          // Очищаем куки
+          document.cookie = 'cartToken=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+          console.log('Cart token cleared');
+        } catch (mergeError) {
+          console.error('Merge error:', mergeError);
+          toast.error('Ошибка объединения корзин');
         }
-    
-        await fetchCartItems();
-        onClose?.();
+      }
+
+      await fetchCartItems();
+      onClose?.();
     } catch (error) {
       console.log('Error [LOGIN]', error);
       toast.error('Не удалось войти', {
@@ -77,7 +78,15 @@ export const LoginForm: React.FC<Props> = ({ onClose }) => {
 
       <FormInput name="email" label="E-Mail" required />
       <FormInput type="password" name="password" label="Пароль" required />
-
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={() => onForgotPassword?.()}
+          className="text-sm text-blue-500 hover:underline"
+        >
+          Забыли пароль?
+        </button>
+      </div>
       <Button disabled={form.formState.isSubmitting} className="h-12 text-base" type="submit">
         Войти
       </Button>

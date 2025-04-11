@@ -23,7 +23,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, onSignI
     return (
         <div className="fixed inset-0 bg-white z-50 min-h-screen">
             <div className="flex flex-col h-full">
-                {(session?.user.role === "ADMIN") ? (
+                {(session?.user.role === "ADMIN" || session?.user.role === "SUPERADMIN") ? (
                     <div className="border-b p-4 relative">
                     <div className="relative flex items-center gap-4">
                         <Link href="/" title="На главную" className="flex flex-col items-center gap-y-1 sm:gap-y-2">

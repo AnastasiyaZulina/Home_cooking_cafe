@@ -11,7 +11,7 @@ export async function GET(
   const { id } = await params;
   const session = await getServerSession(authOptions);
 
-  if (!session?.user || session.user.role !== "ADMIN") {
+  if (!session?.user || session.user.role == "USER") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -48,7 +48,7 @@ export async function DELETE(
   const { id } = await params;
   const session = await getServerSession(authOptions);
 
-  if (!session?.user || session.user.role !== "ADMIN") {
+  if (!session?.user || session.user.role == "USER") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -76,7 +76,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   const { id } = await params;
   const session = await getServerSession(authOptions);
 
-  if (!session?.user || session.user.role !== "ADMIN") {
+  if (!session?.user || session.user.role == "USER") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

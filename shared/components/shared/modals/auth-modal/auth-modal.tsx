@@ -9,6 +9,7 @@ import React from "react";
 import { LoginForm } from "./forms/login-form";
 import { RegisterForm } from "./forms/register-form";
 import toast from "react-hot-toast";
+import { ForgotPasswordForm } from "./forms/forgot-password-form";
 
 interface Props {
     open: boolean;
@@ -16,7 +17,11 @@ interface Props {
 }
 
 export const AuthModal: React.FC<Props> = ({ open, onClose }) => {
-    const [type, setType] = React.useState<'login' | 'register'>('login');
+    const [type, setType] = React.useState<'login' | 'register' | 'forgot'>('login');
+
+    const onBackToLogin = () => {
+        setType('login');
+    };
 
     const handleGoogleLogin = () => {
         const cartToken = document.cookie
@@ -36,7 +41,6 @@ export const AuthModal: React.FC<Props> = ({ open, onClose }) => {
     
     const handleSuccess = async () => {
         try {
-          // Получаем текущий токен корзины
           const cartToken = document.cookie
             .split('; ')
             .find(row => row.startsWith('cartToken='))
@@ -51,7 +55,7 @@ export const AuthModal: React.FC<Props> = ({ open, onClose }) => {
         } finally {
           onClose();
         }
-      };
+    };
 
     const onSwitchType = () => {
         setType(type === 'login' ? 'register' : 'login');
@@ -65,33 +69,48 @@ export const AuthModal: React.FC<Props> = ({ open, onClose }) => {
         <Dialog open={open} onOpenChange={handleClose}>
             <DialogContent className="w-[450px] bg-white p-10">
                 {type === 'login' ? (
-                    <LoginForm onClose={handleSuccess} />
-                ) : (
+                    <LoginForm 
+                        onClose={handleSuccess} 
+                        onForgotPassword={() => setType('forgot')} 
+                    />
+                ) : type === 'register' ? (
                     <RegisterForm onClose={handleSuccess} />
+                ) : (
+                    <ForgotPasswordForm onClose={onClose} onBack={onBackToLogin} />
                 )}
                 <VisuallyHidden>
                     <DialogTitle>Авторизация</DialogTitle>
                 </VisuallyHidden>
-                <hr />
 
-                <div className="flex gap-2">
-                    <Button
-                        variant="secondary"
-                        onClick={handleGoogleLogin}
-        
-                        type="button"
-                        className="gap-2 h-12 p-2 flex-1">
-                        <img
-                            className="w-6 h-6"
-                            src="https://fonts.gstatic.com/s/i/productlogos/googleg/v6/24px.svg"
-                        />
-                        Google
-                    </Button>
-                </div>
+                {/* Показываем разделитель и кнопки только для login/register */}
+                {type !== 'forgot' && (
+                    <>
+                        <hr />
+                        <div className="flex gap-2">
+                            <Button
+                                variant="secondary"
+                                onClick={handleGoogleLogin}
+                                type="button"
+                                className="gap-2 h-12 p-2 flex-1"
+                            >
+                                <img
+                                    className="w-6 h-6"
+                                    src="https://fonts.gstatic.com/s/i/productlogos/googleg/v6/24px.svg"
+                                />
+                                Google
+                            </Button>
+                        </div>
 
-                <Button variant="outline" onClick={onSwitchType} type="button" className="h-12">
-                    {type !== 'login' ? 'Войти' : 'Регистрация'}
-                </Button>
+                        <Button 
+                            variant="outline" 
+                            onClick={onSwitchType} 
+                            type="button" 
+                            className="h-12"
+                        >
+                            {type !== 'login' ? 'Войти' : 'Регистрация'}
+                        </Button>
+                    </>
+                )}
             </DialogContent>
         </Dialog>
     );

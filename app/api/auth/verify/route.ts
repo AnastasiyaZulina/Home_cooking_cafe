@@ -6,7 +6,7 @@ export async function GET(req: NextRequest) {
         const code = req.nextUrl.searchParams.get('code');
 
         if (!code) {
-            return NextResponse.json({ error: 'Неверный код' }, { status: 400 });
+            return NextResponse.redirect(new URL('/?verified=error', req.url));
         }
 
         const verificationCode = await prisma.verificationCode.findFirst({
@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
         });
 
         if (!verificationCode) {
-            return NextResponse.json({ error: 'Неверный код' }, { status: 400 });
+            return NextResponse.redirect(new URL('/?verified=error', req.url));
         }
 
         await prisma.user.update({
@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
             },
         });
 
-        return NextResponse.redirect(new URL('/?verified', req.url));
+        return NextResponse.redirect(new URL('/?verified=success', req.url));
     }
     catch (error) {
         console.log('Error [VERIFY_GET]', error);

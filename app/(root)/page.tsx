@@ -1,5 +1,7 @@
 import { Container, Title, ProductsGroupList, TopBar } from "@/shared/components/shared"
 import { prisma } from "@/prisma/prisma-client";
+import { VerifyToastHandler } from "@/shared/components/shared/verify-toast-handler";
+import { Suspense } from "react";
 
 export default async function Home() {
   const categories = await prisma.category.findMany({
@@ -20,6 +22,7 @@ export default async function Home() {
 
   return (
     <>
+    <Suspense fallback={null}><VerifyToastHandler /></Suspense>
       <Container className="mt-1 sm:mt-5">
         <Title text="Все блюда" size="lg" className="font-extrabold" />
       </Container>

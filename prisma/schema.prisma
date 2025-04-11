@@ -19,10 +19,11 @@ model User {
   phone    String?
 
   role             UserRole          @default(USER)
-  orders           Order[]           @relation(onDelete: SetNull)
-  cart             Cart?             @relation(onDelete: Cascade)
+  orders           Order[]           
+  cart             Cart?             
   verificationCode VerificationCode?
-  feedbacks        Feedback[]        @relation(onDelete: Cascade)
+  PasswordResetToken PasswordResetToken?
+  feedbacks        Feedback[]        
   provider   String?
   providerId String?
 
@@ -137,6 +138,15 @@ model VerificationCode {
   @@unique([userId, code])
 }
 
+model PasswordResetToken {
+  id         Int      @id @default(autoincrement())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     Int      @unique
+  token      String   @unique
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+}
+
 model Feedback {
   id           Int      @id @default(autoincrement())
   userId       Int
@@ -166,6 +176,7 @@ enum OrderStatus {
 enum UserRole {
   USER
   ADMIN
+  SUPERADMIN
 }
 
 enum DeliveryType {

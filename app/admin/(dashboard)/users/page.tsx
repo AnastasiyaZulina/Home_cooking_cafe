@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   MaterialReactTable,
   type MRT_ColumnDef,
@@ -22,74 +22,108 @@ import {
   Checkbox,
   FormHelperText,
 } from '@mui/material';
-import { Edit, Delete, Add } from '@mui/icons-material';
+import { Edit, Delete, Add, LockReset } from '@mui/icons-material';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
+import updateLocale from 'dayjs/plugin/updateLocale';
+import { useSession } from 'next-auth/react';
+import { type MRT_ColumnFiltersState } from 'material-react-table';
+
+dayjs.extend(updateLocale);
+dayjs.locale('ru');
+dayjs.updateLocale('ru', {
+  formats: {
+    time: 'HH:mm',
+    timePicker: 'HH:mm',
+  },
+});
 
 type User = {
   id: number;
   name: string;
   email: string;
-  password?: string;
   bonusBalance: number;
   phone?: string;
-  role: 'USER' | 'ADMIN';
+  role: 'USER' | 'ADMIN' | 'SUPERADMIN';
   provider?: string;
   providerId?: string;
-  verificationCode?: {
-    code: string;
-  };
   verified?: Date;
   createdAt: Date;
   updatedAt: Date;
 };
 
 type UserFormValues = {
-    name: string;
-    email: string;
-    password?: string;
-    bonusBalance: number;
-    phone?: string;
-    role: 'USER' | 'ADMIN';
-    isVerified: boolean; // Флаг для управления в форме
-  };
+  name: string;
+  email: string;
+  bonusBalance: number;
+  phone?: string;
+  role: 'USER' | 'ADMIN' | 'SUPERADMIN';
+  isVerified: boolean;
+};
+
+type DateRange = {
+  from?: string;
+  to?: string;
+};
 
 const UserTable = () => {
   const queryClient = useQueryClient();
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>([]);
+  const { data: session } = useSession();
+
+  // Fetch users data with filters
+  const { data: users, isLoading } = useQuery<User[]>({
+    queryKey: ['users', columnFilters],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+
+      columnFilters.forEach(filter => {
+        if (filter.id === 'createdAt' || filter.id === 'updatedAt') {
+          const value = filter.value as DateRange;
+      
+          if (value?.from) params.append(`${filter.id}[gte]`, value.from);
+          if (value?.to) params.append(`${filter.id}[lte]`, value.to);
+        } else {
+          params.append(filter.id, String(filter.value)); // приведение к строке, если это не date-range
+        }
+      });
+
+      const response = await fetch(`/api/admin/users?${params.toString()}`);
+      if (!response.ok) throw new Error('Failed to fetch users');
+      return response.json();
+    },
+  });
+
+  const filteredUsers = useMemo(() => {
+    if (session?.user.role === 'SUPERADMIN') {
+      return users?.filter(u => u.id !== session.user.id);
+    }
+    return users;
+  }, [users, session]);
 
   // Form states
-  const [createFormValues, setCreateFormValues] = useState<Omit<UserFormValues, 'isVerified'>>({
+  const [createFormValues, setCreateFormValues] = useState<UserFormValues>({
     name: '',
     email: '',
-    password: '',
     bonusBalance: 0,
-    phone: '',
+    phone: '+7',
     role: 'USER',
+    isVerified: false,
   });
 
   const [editFormValues, setEditFormValues] = useState<UserFormValues>({
     name: '',
     email: '',
     bonusBalance: 0,
-    phone: '',
+    phone: '+7',
     role: 'USER',
     isVerified: false,
-  });
-
-  // Fetch users data
-  const { data: users, isLoading } = useQuery<User[]>({
-    queryKey: ['users'],
-    queryFn: async () => {
-      const response = await fetch('/api/admin/users');
-      if (!response.ok) throw new Error('Failed to fetch users');
-      return response.json();
-    },
   });
 
   // Mutations
@@ -108,13 +142,14 @@ const UserTable = () => {
   });
 
   const { mutateAsync: createUser } = useMutation({
-    mutationFn: async (data: Omit<UserFormValues, 'isVerified'>) => {
+    mutationFn: async (data: UserFormValues) => {
       const response = await fetch('/api/admin/users', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...data,
+          verified: data.isVerified ? new Date() : null
+        }),
       });
       if (!response.ok) throw new Error('Failed to create user');
       return response.json();
@@ -129,10 +164,11 @@ const UserTable = () => {
     mutationFn: async ({ id, data }: { id: number; data: Partial<UserFormValues> }) => {
       const response = await fetch(`/api/admin/users/${id}`, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...data,
+          verified: data.isVerified ? new Date() : null
+        }),
       });
       if (!response.ok) throw new Error('Failed to update user');
       return response.json();
@@ -143,6 +179,24 @@ const UserTable = () => {
     },
   });
 
+  const { mutateAsync: resetPassword } = useMutation({
+    mutationFn: async (email: string) => {
+      const response = await fetch('/api/auth/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      if (!response.ok) throw new Error('Ошибка при сбросе пароля');
+      return response.json();
+    },
+    onSuccess: () => {
+      toast.success('Ссылка для сброса пароля отправлена на почту пользователя');
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Ошибка при сбросе пароля');
+    },
+  });
+
   // Handlers
   const handleDeleteUser = async (row: MRT_Row<User>) => {
     if (window.confirm(`Вы уверены, что хотите удалить пользователя "${row.original.name}"?`)) {
@@ -150,6 +204,16 @@ const UserTable = () => {
         await deleteUser(row.original.id);
       } catch (error) {
         console.error('Delete error:', error);
+      }
+    }
+  };
+
+  const handleResetPassword = async (row: MRT_Row<User>) => {
+    if (window.confirm(`Сбросить пароль для пользователя "${row.original.name}"?`)) {
+      try {
+        await resetPassword(row.original.email);
+      } catch (error) {
+        console.error('Password reset error:', error);
       }
     }
   };
@@ -167,134 +231,95 @@ const UserTable = () => {
     setEditDialogOpen(true);
   };
 
-  const handleSaveEdit = async () => {
-    if (!selectedUser) return;
-  
-    try {
-      const updateData: Partial<{
-        name: string;
-        email: string;
-        bonusBalance: number;
-        phone?: string;
-        role: 'USER' | 'ADMIN';
-        password?: string;
-        verified?: Date | null;
-      }> = {
-        name: editFormValues.name,
-        email: editFormValues.email,
-        bonusBalance: editFormValues.bonusBalance,
-        phone: editFormValues.phone,
-        role: editFormValues.role,
-      };
-  
-      if (editFormValues.password) {
-        updateData.password = editFormValues.password;
-      }
-  
-      // Проверяем изменился ли статус верификации
-      const wasVerified = !!selectedUser.verified;
-      if (editFormValues.isVerified !== wasVerified) {
-        updateData.verified = editFormValues.isVerified ? new Date() : null;
-      }
-  
-      await updateUser({
-        id: selectedUser.id,
-        data: updateData,
-      });
-  
-      setEditDialogOpen(false);
-    } catch (error) {
-      console.error('Update error:', error);
-    }
-  };
-
-  const handleCreateUser = async () => {
-    try {
-      await createUser(createFormValues);
-      setCreateDialogOpen(false);
-      setCreateFormValues({
-        name: '',
-        email: '',
-        password: '',
-        bonusBalance: 0,
-        phone: '',
-        role: 'USER',
-      });
-    } catch (error) {
-      console.error('Create error:', error);
-    }
+  const validatePhone = (phone?: string) => {
+    if (!phone) return true;
+    return /^\+7\d{10}$/.test(phone);
   };
 
   const validateForm = (values: UserFormValues) => {
     const errors: Partial<Record<keyof UserFormValues, string>> = {};
-
     if (!values.name.trim()) errors.name = 'Обязательное поле';
     if (!values.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) errors.email = 'Некорректный email';
     if (values.bonusBalance < 0) errors.bonusBalance = 'Не может быть отрицательным';
+    if (values.phone && !validatePhone(values.phone)) {
+      errors.phone = 'Формат: +7XXXXXXXXXX';
+    }
+    // Добавляем проверку роли для ADMIN
+    if (session?.user.role === 'ADMIN' && values.role === 'ADMIN') {
+      errors.role = 'Недостаточно прав для назначения этой роли';
+    }
 
     return errors;
   };
+  const handlePhoneChange = (value: string, isCreate: boolean) => {
+    const formattedValue = value
+      .replace(/[^0-9+]/g, '')
+      .replace(/^\+?7?/, '+7')
+      .slice(0, 12);
 
-  const createErrors = validateForm({ ...createFormValues, isVerified: false });
-  const editErrors = validateForm(editFormValues);
-
+    if (isCreate) {
+      setCreateFormValues(prev => ({ ...prev, phone: formattedValue }));
+    } else {
+      setEditFormValues(prev => ({ ...prev, phone: formattedValue }));
+    }
+  };
   // Table columns
   const columns = useMemo<MRT_ColumnDef<User>[]>(
     () => [
-      { accessorKey: 'id', header: 'ID', size: 80 },
+      { accessorKey: 'id', header: 'ID', size: 80, filterVariant: 'range' },
       { accessorKey: 'name', header: 'Имя' },
       { accessorKey: 'email', header: 'Email' },
-      {
-        accessorKey: 'password',
-        header: 'Пароль',
-        Cell: ({ cell }) => cell.getValue() ? '••••••' : 'N/A',
-      },
       {
         accessorKey: 'bonusBalance',
         header: 'Бонусы',
         Cell: ({ cell }) => cell.getValue<number>().toLocaleString(),
+        filterVariant: 'range',
       },
       { accessorKey: 'phone', header: 'Телефон' },
       {
         accessorKey: 'role',
         header: 'Роль',
         filterVariant: 'select',
-        filterSelectOptions: ['USER', 'ADMIN'],
-      },
-      { accessorKey: 'provider', header: 'Провайдер' },
-      { accessorKey: 'providerId', header: 'ID провайдера' },
-      {
-        accessorKey: 'verificationCode.code',
-        header: 'Код верификации',
-        Cell: ({ row }) => row.original.verificationCode?.code || 'N/A',
+        filterSelectOptions: session?.user.role === 'ADMIN'
+          ? ['USER']
+          : ['USER', 'ADMIN'],
       },
       {
         accessorKey: 'verified',
         header: 'Дата верификации',
-        Cell: ({ cell }) => cell.getValue<Date>() 
+        Cell: ({ cell }) => cell.getValue<Date>()
           ? dayjs(cell.getValue<Date>()).format('DD.MM.YYYY HH:mm')
-          : 'N/A',
+          : 'Не подтвержден',
+          filterVariant: 'datetime-range',
+          muiFilterDateTimePickerProps: { ampm: false, format: 'DD.MM.YYYY HH:mm' },
       },
+      { accessorKey: 'provider', header: 'Провайдер' },
+      { accessorKey: 'providerId', header: 'ID провайдера' },
       {
+        accessorFn: (row) => dayjs(row.createdAt).toDate(),
         accessorKey: 'createdAt',
         header: 'Дата создания',
+        filterVariant: 'datetime-range',
         Cell: ({ cell }) => dayjs(cell.getValue<Date>()).format('DD.MM.YYYY HH:mm'),
+        muiFilterDateTimePickerProps: { ampm: false, format: 'DD.MM.YYYY HH:mm' },
       },
       {
+        accessorFn: (row) => dayjs(row.updatedAt).toDate(),
         accessorKey: 'updatedAt',
         header: 'Дата обновления',
+        filterVariant: 'datetime-range',
         Cell: ({ cell }) => dayjs(cell.getValue<Date>()).format('DD.MM.YYYY HH:mm'),
+        muiFilterDateTimePickerProps: { ampm: false, format: 'DD.MM.YYYY HH:mm' },
       },
     ],
-    []
+    [session?.user.role]
   );
 
-  // Table instance
   const table = useMaterialReactTable({
     columns,
-    data: users || [],
-    getRowId: (row) => row.id?.toString() ?? '',
-    state: { isLoading },
+    data: filteredUsers || [],
+    state: { isLoading, columnFilters },
+    onColumnFiltersChange: setColumnFilters,
     enableEditing: true,
     renderTopToolbarCustomActions: () => (
       <Button
@@ -312,6 +337,14 @@ const UserTable = () => {
             <Edit />
           </IconButton>
         </Tooltip>
+        <Tooltip title="Сбросить пароль">
+          <IconButton 
+            color="warning" 
+            onClick={() => handleResetPassword(row)}
+          >
+            <LockReset /> {/* Нужно импортировать иконку */}
+          </IconButton>
+        </Tooltip>
         <Tooltip title="Удалить">
           <IconButton color="error" onClick={() => handleDeleteUser(row)}>
             <Delete />
@@ -322,20 +355,20 @@ const UserTable = () => {
   });
 
   return (
-    <LocalizationProvider dateAdapter={AdapterDayjs}>
+    <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="ru">
       <MaterialReactTable table={table} />
 
       {/* Create Dialog */}
       <Dialog open={createDialogOpen} onClose={() => setCreateDialogOpen(false)}>
-        <DialogTitle>Создать нового пользователя</DialogTitle>
+        <DialogTitle>Создать пользователя</DialogTitle>
         <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
           <TextField
             label="Имя"
             required
             value={createFormValues.name}
             onChange={(e) => setCreateFormValues(prev => ({ ...prev, name: e.target.value }))}
-            error={!!createErrors.name}
-            helperText={createErrors.name}
+            error={!!validateForm(createFormValues).name}
+            helperText={validateForm(createFormValues).name}
           />
           <TextField
             label="Email"
@@ -343,19 +376,19 @@ const UserTable = () => {
             type="email"
             value={createFormValues.email}
             onChange={(e) => setCreateFormValues(prev => ({ ...prev, email: e.target.value }))}
-            error={!!createErrors.email}
-            helperText={createErrors.email}
-          />
-          <TextField
-            label="Пароль"
-            type="password"
-            value={createFormValues.password}
-            onChange={(e) => setCreateFormValues(prev => ({ ...prev, password: e.target.value }))}
+            error={!!validateForm(createFormValues).email}
+            helperText={validateForm(createFormValues).email}
           />
           <TextField
             label="Телефон"
             value={createFormValues.phone}
-            onChange={(e) => setCreateFormValues(prev => ({ ...prev, phone: e.target.value }))}
+            onChange={(e) => handlePhoneChange(e.target.value, true)}
+            inputProps={{
+              pattern: "^\\+7\\d{10}$",
+              maxLength: 12
+            }}
+            error={!!validateForm(createFormValues).phone}
+            helperText={validateForm(createFormValues).phone || 'Формат: +7XXXXXXXXXX'}
           />
           <TextField
             label="Бонусный баланс"
@@ -365,8 +398,8 @@ const UserTable = () => {
               ...prev,
               bonusBalance: Number(e.target.value),
             }))}
-            error={!!createErrors.bonusBalance}
-            helperText={createErrors.bonusBalance}
+            error={!!validateForm(createFormValues).bonusBalance}
+            helperText={validateForm(createFormValues).bonusBalance}
           />
           <TextField
             select
@@ -378,15 +411,34 @@ const UserTable = () => {
             }))}
           >
             <MenuItem value="USER">Пользователь</MenuItem>
-            <MenuItem value="ADMIN">Администратор</MenuItem>
+            {session?.user.role === 'SUPERADMIN' && (
+              <MenuItem value="ADMIN">Администратор</MenuItem>
+            )}
           </TextField>
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={createFormValues.isVerified}
+                onChange={(e) => setCreateFormValues(prev => ({
+                  ...prev,
+                  isVerified: e.target.checked,
+                }))}
+              />
+            }
+            label="Почта подтверждена"
+          />
+          <FormHelperText>
+            {createFormValues.isVerified
+              ? 'Аккаунт будет подтвержден сразу'
+              : 'Пользователь получит письмо для подтверждения'}
+          </FormHelperText>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setCreateDialogOpen(false)}>Отмена</Button>
           <Button
             variant="contained"
-            onClick={handleCreateUser}
-            disabled={Object.keys(createErrors).length > 0}
+            onClick={() => createUser(createFormValues).then(() => setCreateDialogOpen(false))}
+            disabled={Object.keys(validateForm(createFormValues)).length > 0}
           >
             Создать
           </Button>
@@ -402,8 +454,8 @@ const UserTable = () => {
             required
             value={editFormValues.name}
             onChange={(e) => setEditFormValues(prev => ({ ...prev, name: e.target.value }))}
-            error={!!editErrors.name}
-            helperText={editErrors.name}
+            error={!!validateForm(editFormValues).name}
+            helperText={validateForm(editFormValues).name}
           />
           <TextField
             label="Email"
@@ -411,19 +463,19 @@ const UserTable = () => {
             type="email"
             value={editFormValues.email}
             onChange={(e) => setEditFormValues(prev => ({ ...prev, email: e.target.value }))}
-            error={!!editErrors.email}
-            helperText={editErrors.email}
-          />
-          <TextField
-            label="Новый пароль"
-            type="password"
-            value={editFormValues.password || ''}
-            onChange={(e) => setEditFormValues(prev => ({ ...prev, password: e.target.value }))}
+            error={!!validateForm(editFormValues).email}
+            helperText={validateForm(editFormValues).email}
           />
           <TextField
             label="Телефон"
-            value={editFormValues.phone}
-            onChange={(e) => setEditFormValues(prev => ({ ...prev, phone: e.target.value }))}
+            value={createFormValues.phone}
+            onChange={(e) => handlePhoneChange(e.target.value, true)}
+            inputProps={{
+              pattern: "^\\+7\\d{10}$",
+              maxLength: 12
+            }}
+            error={!!validateForm(createFormValues).phone}
+            helperText={validateForm(createFormValues).phone || 'Формат: +7XXXXXXXXXX'}
           />
           <TextField
             label="Бонусный баланс"
@@ -433,8 +485,8 @@ const UserTable = () => {
               ...prev,
               bonusBalance: Number(e.target.value),
             }))}
-            error={!!editErrors.bonusBalance}
-            helperText={editErrors.bonusBalance}
+            error={!!validateForm(editFormValues).bonusBalance}
+            helperText={validateForm(editFormValues).bonusBalance}
           />
           <TextField
             select
@@ -446,7 +498,9 @@ const UserTable = () => {
             }))}
           >
             <MenuItem value="USER">Пользователь</MenuItem>
-            <MenuItem value="ADMIN">Администратор</MenuItem>
+            {session?.user.role === 'SUPERADMIN' && (
+              <MenuItem value="ADMIN">Администратор</MenuItem>
+            )}
           </TextField>
           <FormControlLabel
             control={
@@ -456,17 +510,24 @@ const UserTable = () => {
                   ...prev,
                   isVerified: e.target.checked,
                 }))}
+                disabled={!!selectedUser?.verified}
               />
             }
-            label="Подтвержденный аккаунт"
+            label="Почта подтверждена"
           />
+          <FormHelperText>
+            {selectedUser?.verified
+              ? 'Аккаунт уже подтвержден'
+              : 'Изменение этого статуса подтвердит аккаунт'}
+          </FormHelperText>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setEditDialogOpen(false)}>Отмена</Button>
           <Button
             variant="contained"
-            onClick={handleSaveEdit}
-            disabled={Object.keys(editErrors).length > 0}
+            onClick={() => updateUser({ id: selectedUser!.id, data: editFormValues })
+              .then(() => setEditDialogOpen(false))}
+            disabled={Object.keys(validateForm(editFormValues)).length > 0}
           >
             Сохранить
           </Button>

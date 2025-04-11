@@ -40,7 +40,7 @@ export const Header: React.FC<Props> = ({ hasCart = true, className }) => {
         <>
             <header className={cn('border-b', className)}>
                 <Container className="flex items-center justify-between py-4 px-4">
-                    {(session?.user.role === "ADMIN") ? (
+                    {(session?.user.role === "ADMIN" || session?.user.role === "SUPERADMIN") ? (
                         <div className="flex items-center gap-4">
                             <Link href="/" title="На главную" className="flex flex-col items-center gap-y-1 sm:gap-y-2">
                                 <Image

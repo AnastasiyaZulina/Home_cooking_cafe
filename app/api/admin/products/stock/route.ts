@@ -7,7 +7,7 @@ import { NextResponse } from "next/server";
 export async function PATCH(req: Request) {
   const session = await getServerSession(authOptions);
   
-  if (!session?.user || session.user.role !== "ADMIN") {
+  if (!session?.user || session.user.role == "USER") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
