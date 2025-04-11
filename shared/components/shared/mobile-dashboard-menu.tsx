@@ -92,22 +92,19 @@ export const MobileDashboardMenu: React.FC<MobileDashboardMenuProps> = ({ isOpen
                     </div>
 
                     {/* Основные ссылки */}
-                    {['/categories', '/products', '/orders', '/stock', '/users', '/corporate', '/feedback', '/content'].map((href) => (
+                    {['/admin/categories', '/admin/products', '/admin/orders', '/admin/users', '/admin/corporate', '/admin/feedback'].map((href) => (
                         <Link
                             key={href}
                             href={href}
                             className={`text-lg font-bold ${isActive(href) ? 'text-primary' : ''}`}
                             onClick={onClose}
                         >
-                            {href === '/new' && 'Новое'}
-                            {href === '/categories' && 'Категории'}
-                            {href === '/products' && 'Товары'}
-                            {href === '/orders' && 'Заказы'}
-                            {href === '/stock' && 'Ассортимент'}
-                            {href === '/users' && 'Пользователи'}
-                            {href === '/corporate' && 'Заявки на корп. питание'}
-                            {href === '/feedback' && 'Отзывы'}
-                            {href === '/content' && 'Контент'}
+                            {href === '/admin/categories' && 'Категории'}
+                            {href === '/admin/products' && 'Товары'}
+                            {href === '/admin/orders' && 'Заказы'}
+                            {href === '/admin/users' && 'Пользователи'}
+                            {href === '/admin/corporate' && 'Заявки на корп. питание'}
+                            {href === '/admin/feedback' && 'Отзывы'}
                         </Link>
                     ))}
                 </div>
