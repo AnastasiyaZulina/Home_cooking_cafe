@@ -10,7 +10,7 @@ export async function POST(req: Request) {
 
   try {
     const user = await prisma.user.findUnique({ where: { email } });
-    if (!user || !user.password) {
+    if (!user) {
       return NextResponse.json({ success: false });
     }
 
