@@ -86,7 +86,7 @@ const UserTable = () => {
       columnFilters.forEach(filter => {
         if (filter.id === 'createdAt' || filter.id === 'updatedAt') {
           const value = filter.value as DateRange;
-      
+
           if (value?.from) params.append(`${filter.id}[gte]`, value.from);
           if (value?.to) params.append(`${filter.id}[lte]`, value.to);
         } else {
@@ -148,6 +148,7 @@ const UserTable = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...data,
+          phone: data.phone ?? null,
           verified: data.isVerified ? new Date() : null
         }),
       });
@@ -167,6 +168,7 @@ const UserTable = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...data,
+          phone: data.phone ?? null,
           verified: data.isVerified ? new Date() : null
         }),
       });
@@ -231,9 +233,9 @@ const UserTable = () => {
     setEditDialogOpen(true);
   };
 
-  const validatePhone = (phone?: string) => {
+  const validatePhone = (phone?: string | null) => {
     if (!phone) return true;
-    return /^\+7\d{10}$/.test(phone);
+    return /^\+[0-9]{1,11}$/.test(phone);
   };
 
   const validateForm = (values: UserFormValues) => {
@@ -252,15 +254,25 @@ const UserTable = () => {
     return errors;
   };
   const handlePhoneChange = (value: string, isCreate: boolean) => {
+    if (value === '+7') value = '';
+
     const formattedValue = value
       .replace(/[^0-9+]/g, '')
-      .replace(/^\+?7?/, '+7')
+      .replace(/^\+?/, '+')
+      .replace(/(\+\d{0,11}).*/, '$1')
       .slice(0, 12);
 
+    // Используем undefined вместо null
     if (isCreate) {
-      setCreateFormValues(prev => ({ ...prev, phone: formattedValue }));
+      setCreateFormValues(prev => ({
+        ...prev,
+        phone: formattedValue || undefined
+      }));
     } else {
-      setEditFormValues(prev => ({ ...prev, phone: formattedValue }));
+      setEditFormValues(prev => ({
+        ...prev,
+        phone: formattedValue || undefined
+      }));
     }
   };
   // Table columns
@@ -290,8 +302,8 @@ const UserTable = () => {
         Cell: ({ cell }) => cell.getValue<Date>()
           ? dayjs(cell.getValue<Date>()).format('DD.MM.YYYY HH:mm')
           : 'Не подтвержден',
-          filterVariant: 'datetime-range',
-          muiFilterDateTimePickerProps: { ampm: false, format: 'DD.MM.YYYY HH:mm' },
+        filterVariant: 'datetime-range',
+        muiFilterDateTimePickerProps: { ampm: false, format: 'DD.MM.YYYY HH:mm' },
       },
       { accessorKey: 'provider', header: 'Провайдер' },
       { accessorKey: 'providerId', header: 'ID провайдера' },
@@ -338,8 +350,8 @@ const UserTable = () => {
           </IconButton>
         </Tooltip>
         <Tooltip title="Сбросить пароль">
-          <IconButton 
-            color="warning" 
+          <IconButton
+            color="warning"
             onClick={() => handleResetPassword(row)}
           >
             <LockReset /> {/* Нужно импортировать иконку */}
@@ -381,14 +393,13 @@ const UserTable = () => {
           />
           <TextField
             label="Телефон"
-            value={createFormValues.phone}
+            value={createFormValues.phone || ''}
             onChange={(e) => handlePhoneChange(e.target.value, true)}
             inputProps={{
-              pattern: "^\\+7\\d{10}$",
               maxLength: 12
             }}
             error={!!validateForm(createFormValues).phone}
-            helperText={validateForm(createFormValues).phone || 'Формат: +7XXXXXXXXXX'}
+            helperText={validateForm(createFormValues).phone || 'Необязательное поле. Формат: +XXXXXXXXXXX'}
           />
           <TextField
             label="Бонусный баланс"
@@ -468,14 +479,13 @@ const UserTable = () => {
           />
           <TextField
             label="Телефон"
-            value={createFormValues.phone}
-            onChange={(e) => handlePhoneChange(e.target.value, true)}
+            value={editFormValues.phone || ''}
+            onChange={(e) => handlePhoneChange(e.target.value, false)}
             inputProps={{
-              pattern: "^\\+7\\d{10}$",
               maxLength: 12
             }}
-            error={!!validateForm(createFormValues).phone}
-            helperText={validateForm(createFormValues).phone || 'Формат: +7XXXXXXXXXX'}
+            error={!!validateForm(editFormValues).phone}
+            helperText={validateForm(editFormValues).phone || 'Необязательное поле. Формат: +XXXXXXXXXXX'}
           />
           <TextField
             label="Бонусный баланс"

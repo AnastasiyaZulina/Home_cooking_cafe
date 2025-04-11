@@ -1,4 +1,5 @@
 import { prisma } from '@/prisma/prisma-client';
+import { VerificationUserTemplate } from '@/shared/components';
 import { ResetPasswordTemplate } from '@/shared/components/shared/email-templates/reset-password';
 import { authOptions } from '@/shared/constants/auth-options';
 import { sendEmail } from '@/shared/lib';
@@ -43,7 +44,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
-  
+
   if (!session?.user || session.user.role == "USER") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
@@ -66,22 +67,33 @@ export async function POST(request: Request) {
     const token = randomBytes(32).toString("hex");
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 минут
     await prisma.passwordResetToken.upsert({
-          where: { userId: newUser.id },
-          update: {
-            token,
-            expiresAt,
-            createdAt: new Date(),
-          },
-          create: {
-            token,
-            expiresAt,
-            userId: newUser.id,
-          },
-        });
-    
-        const resetLink = `https://skatert-samobranka.shop/api/auth/reset-password?token=${token}`;
-    
-        await sendEmail(newUser.email, 'Скатерть-самобранка | 📝 Сброс пароля', Promise.resolve(ResetPasswordTemplate({ resetLink })));
+      where: { userId: newUser.id },
+      update: {
+        token,
+        expiresAt,
+        createdAt: new Date(),
+      },
+      create: {
+        token,
+        expiresAt,
+        userId: newUser.id,
+      },
+    });
+    if (isVerified) {
+      const resetLink = `https://skatert-samobranka.shop/api/auth/reset-password?token=${token}`;
+      await sendEmail(newUser.email, 'Скатерть-самобранка | 📝 Сброс пароля', Promise.resolve(ResetPasswordTemplate({ resetLink })));
+    }
+    else {
+      const code = Math.floor(100000 + Math.random() * 900000).toString();
+
+      await prisma.verificationCode.create({
+        data: {
+          code,
+          userId: newUser.id,
+        },
+      });
+      await sendEmail(newUser.email, 'Скатерть-самобранка / 📝 Подтверждение регистрации', Promise.resolve(VerificationUserTemplate({ code })));
+    }
 
     return NextResponse.json(newUser);
   } catch (error) {
