@@ -40,7 +40,37 @@ export async function GET(
     );
   }
 }
-//СДЕЛАТЬ
+
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  const session = await getServerSession(authOptions);
+
+  if (!session?.user || session.user.role !== "ADMIN") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  try {
+    await prisma.orderItem.deleteMany({
+      where: { orderId: Number(id) },
+    });
+
+    await prisma.order.delete({
+      where: { id: Number(id) },
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('error:', error);
+    return NextResponse.json(
+      { error: "Order not found or could not be deleted" },
+      { status: 404 }
+    );
+  }
+}
+
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
 
   const { id } = await params;
@@ -232,36 +262,5 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   } catch (err) {
     console.error('Error updating order:', err);
     return NextResponse.json({ error: 'Failed to update order' }, { status: 500 });
-  }
-}
-
-
-export async function DELETE(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const { id } = await params;
-  const session = await getServerSession(authOptions);
-
-  if (!session?.user || session.user.role !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-
-  try {
-    await prisma.orderItem.deleteMany({
-      where: { orderId: Number(id) },
-    });
-
-    await prisma.order.delete({
-      where: { id: Number(id) },
-    });
-
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error('error:', error);
-    return NextResponse.json(
-      { error: "Order not found or could not be deleted" },
-      { status: 404 }
-    );
   }
 }

@@ -383,7 +383,6 @@ export async function registerUser(body: Prisma.UserCreateInput) {
       },
     });
 
-    console.log(createdUser);
     await sendEmail(createdUser.email, 'Скатерть-самобранка / 📝 Подтверждение регистрации', Promise.resolve(VerificationUserTemplate({ code })));
   } catch (error) {
     console.log('Error [CREATE_USER]', error);

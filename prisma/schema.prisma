@@ -19,10 +19,10 @@ model User {
   phone    String?
 
   role             UserRole          @default(USER)
-  orders           Order[]
-  cart             Cart?
+  orders           Order[]           @relation(onDelete: SetNull)
+  cart             Cart?             @relation(onDelete: Cascade)
   verificationCode VerificationCode?
-  feedbacks        Feedback[]
+  feedbacks        Feedback[]        @relation(onDelete: Cascade)
   provider   String?
   providerId String?
 

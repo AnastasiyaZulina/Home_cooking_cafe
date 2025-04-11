@@ -60,11 +60,6 @@ export async function GET() {
 
   const categories = await prisma.category.findMany({
     orderBy: { id: 'asc' },
-    select: {
-      id: true,
-      name: true,
-      isAvailable: true,
-    },
   });
 
   return NextResponse.json(categories);

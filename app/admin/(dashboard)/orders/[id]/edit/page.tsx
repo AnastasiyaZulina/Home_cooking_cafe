@@ -115,7 +115,7 @@ export default function EditOrderPage() {
     useEffect(() => {
         const fetchOrder = async () => {
             try {
-                const usersRes = await fetch('/api/admin/users');
+                const usersRes = await fetch('/api/admin/orders/users');
                 const usersData = await usersRes.json();
                 setUsers(usersData);
 
