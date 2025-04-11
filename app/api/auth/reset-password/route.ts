@@ -11,7 +11,7 @@ export async function POST(req: Request) {
   try {
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user || !user.password) {
-      return NextResponse.json({ success: true });
+      return NextResponse.json({ success: false });
     }
 
     const token = randomBytes(32).toString("hex");
@@ -32,7 +32,7 @@ export async function POST(req: Request) {
       },
     });
 
-    const resetLink = `https://skatert-samobranka.shop/api/auth/reset-password?token=${token}`;
+    const resetLink = `https://skatert-samobranka.shop/reset-password?token=${token}`;
 
     await sendEmail(user.email, 'Скатерть-самобранка | 📝 Сброс пароля', Promise.resolve(ResetPasswordTemplate({ resetLink })));
 

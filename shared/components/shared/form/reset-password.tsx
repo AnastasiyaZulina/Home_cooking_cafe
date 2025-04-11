@@ -8,12 +8,17 @@ import { Button, FormInput } from "@/shared/components";
 import { z } from "zod";
 
 const resetPasswordSchema = z.object({
-  password: z.string().min(6, "Пароль должен быть не менее 6 символов"),
-  confirmPassword: z.string(),
-}).refine(data => data.password === data.confirmPassword, {
-  message: "Пароли не совпадают",
-  path: ["confirmPassword"],
-});
+    password: z.string()
+      .min(6, 'Пароль должен содержать не менее 6 символов')
+      .regex(/[A-Z]/, 'Пароль должен содержать хотя бы одну заглавную букву')
+      .regex(/[a-z]/, 'Пароль должен содержать хотя бы одну строчную букву')
+      .regex(/[0-9]/, 'Пароль должен содержать хотя бы одну цифру')
+      .regex(/^[a-zA-Z0-9]+$/, 'Пароль должен содержать только латинские буквы и цифры'),
+    confirmPassword: z.string(),
+  }).refine(data => data.password === data.confirmPassword, {
+    message: "Пароли не совпадают",
+    path: ["confirmPassword"],
+  });
 
 type TResetPasswordValues = z.infer<typeof resetPasswordSchema>;
 
@@ -42,7 +47,6 @@ export default function ResetPasswordForm() {
       toast.success("Пароль успешно изменен!");
       setTimeout(() => router.push("/"), 2000);
     } catch (error) {
-      console.error("Error resetting password:", error);
       toast.error("Ошибка при смене пароля. Проверьте срок действия ссылки.");
     }
   };
@@ -53,6 +57,16 @@ export default function ResetPasswordForm() {
         onSubmit={form.handleSubmit(onSubmit)}
         className="space-y-4"
       >
+        <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+          Пароль должен содержать:
+          <span className="block ml-2 mt-1">
+            • 6+ символов
+            <span className="mx-2">•</span>
+            Заглавные и строчные буквы
+            <span className="mx-2">•</span>
+            Цифры
+          </span>
+        </p>
         <FormInput
           name="password"
           label="Новый пароль"

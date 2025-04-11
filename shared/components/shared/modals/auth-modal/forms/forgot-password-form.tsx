@@ -31,13 +31,18 @@ export const ForgotPasswordForm: React.FC<Props> = ({ onClose, onBack }) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: data.email }),
       });
-
-      if (!res.ok) throw new Error();
-
+  
+      const responseData = await res.json();
+  
+      if (!res.ok || !responseData.success) {
+        throw new Error(responseData.error || 'Ошибка запроса');
+      }
+  
       toast.success("Письмо с инструкциями отправлено на вашу почту");
       onClose?.();
     } catch (error) {
       toast.error("Произошла ошибка при отправке письма");
+      console.error("Ошибка при отправке письма:", error);
     }
   };
 

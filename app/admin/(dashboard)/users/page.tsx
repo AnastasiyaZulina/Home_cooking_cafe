@@ -148,7 +148,7 @@ const UserTable = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...data,
-          phone: data.phone ?? null,
+          phone: data.phone && data.phone !== '+7' ? data.phone.trim() : null,
           verified: data.isVerified ? new Date() : null
         }),
       });
@@ -168,7 +168,7 @@ const UserTable = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...data,
-          phone: data.phone ?? null,
+          phone: data.phone && data.phone !== '+7' ? data.phone.trim() : null,
           verified: data.isVerified ? new Date() : null
         }),
       });
@@ -222,11 +222,8 @@ const UserTable = () => {
 
   const handleEditRow = (user: User) => {
     setEditFormValues({
-      name: user.name,
-      email: user.email,
-      bonusBalance: user.bonusBalance,
-      phone: user.phone || '',
-      role: user.role,
+      ...user,
+      phone: user.phone || '+7', // Показываем +7 если номер отсутствует
       isVerified: !!user.verified,
     });
     setSelectedUser(user);
@@ -234,35 +231,43 @@ const UserTable = () => {
   };
 
   const validatePhone = (phone?: string | null) => {
-    if (!phone) return true;
-    return /^\+[0-9]{1,11}$/.test(phone);
+    if (!phone || phone === '+7') return true; // Разрешаем пустое значение и +7
+    return /^\+7\d{10}$/.test(phone);
   };
 
   const validateForm = (values: UserFormValues) => {
     const errors: Partial<Record<keyof UserFormValues, string>> = {};
     if (!values.name.trim()) errors.name = 'Обязательное поле';
-    if (!values.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) errors.email = 'Некорректный email';
+    
+    // Новое регулярное выражение для email
+    if (!values.email.match(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/)) {
+      errors.email = 'Некорректный email';
+    }
+    
     if (values.bonusBalance < 0) errors.bonusBalance = 'Не может быть отрицательным';
     if (values.phone && !validatePhone(values.phone)) {
       errors.phone = 'Формат: +7XXXXXXXXXX';
     }
-    // Добавляем проверку роли для ADMIN
+    
     if (session?.user.role === 'ADMIN' && values.role === 'ADMIN') {
       errors.role = 'Недостаточно прав для назначения этой роли';
     }
-
+  
     return errors;
   };
+
   const handlePhoneChange = (value: string, isCreate: boolean) => {
-    if (value === '+7') value = '';
+    let formattedValue = value.replace(/[^0-9+]/g, '');
 
-    const formattedValue = value
-      .replace(/[^0-9+]/g, '')
-      .replace(/^\+?/, '+')
-      .replace(/(\+\d{0,11}).*/, '$1')
-      .slice(0, 12);
+    // Если ввод начинается не с +7, добавляем автоматически
+    if (!formattedValue.startsWith('+7') && formattedValue.length > 0) {
+      formattedValue = '+7' + formattedValue.replace(/^\+/, '');
+    }
 
-    // Используем undefined вместо null
+    // Ограничиваем длину
+    formattedValue = formattedValue.slice(0, 12);
+
+    // Сохраняем значение
     if (isCreate) {
       setCreateFormValues(prev => ({
         ...prev,
@@ -275,6 +280,7 @@ const UserTable = () => {
       }));
     }
   };
+
   // Table columns
   const columns = useMemo<MRT_ColumnDef<User>[]>(
     () => [
@@ -396,10 +402,11 @@ const UserTable = () => {
             value={createFormValues.phone || ''}
             onChange={(e) => handlePhoneChange(e.target.value, true)}
             inputProps={{
-              maxLength: 12
+              maxLength: 12,
+              placeholder: '+7' // Добавляем плейсхолдер
             }}
             error={!!validateForm(createFormValues).phone}
-            helperText={validateForm(createFormValues).phone || 'Необязательное поле. Формат: +XXXXXXXXXXX'}
+            helperText={validateForm(createFormValues).phone || 'Необязательное поле. Формат: +7XXXXXXXXXX'}
           />
           <TextField
             label="Бонусный баланс"
@@ -480,12 +487,13 @@ const UserTable = () => {
           <TextField
             label="Телефон"
             value={editFormValues.phone || ''}
-            onChange={(e) => handlePhoneChange(e.target.value, false)}
+            onChange={(e) => handlePhoneChange(e.target.value, true)}
             inputProps={{
-              maxLength: 12
+              maxLength: 12,
+              placeholder: '+7' // Добавляем плейсхолдер
             }}
             error={!!validateForm(editFormValues).phone}
-            helperText={validateForm(editFormValues).phone || 'Необязательное поле. Формат: +XXXXXXXXXXX'}
+            helperText={validateForm(editFormValues).phone || 'Необязательное поле. Формат: +7XXXXXXXXXX'}
           />
           <TextField
             label="Бонусный баланс"

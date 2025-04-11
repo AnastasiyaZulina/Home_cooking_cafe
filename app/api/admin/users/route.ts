@@ -92,7 +92,7 @@ export async function POST(request: Request) {
           userId: newUser.id,
         },
       });
-      await sendEmail(newUser.email, 'Скатерть-самобранка / 📝 Подтверждение регистрации', Promise.resolve(VerificationUserTemplate({ code })));
+      await sendEmail(newUser.email, 'Скатерть-самобранка | 📝 Подтверждение регистрации', Promise.resolve(VerificationUserTemplate({ code })));
     }
 
     return NextResponse.json(newUser);
