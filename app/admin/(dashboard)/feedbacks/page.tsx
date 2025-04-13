@@ -137,12 +137,6 @@ const FeedbackTable = () => {
     setEditDialogOpen(true);
   };
 
-  const validateForm = (values: FeedbackFormValues) => {
-    const errors: Partial<Record<keyof FeedbackFormValues, string>> = {};
-    if (!values.feedbackText.trim()) errors.feedbackText = 'Обязательное поле';
-    return errors;
-  };
-
   // Table columns
   const columns = useMemo<MRT_ColumnDef<Feedback>[]>(
     () => [
