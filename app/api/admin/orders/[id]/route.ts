@@ -1,11 +1,11 @@
 import { prisma } from '@/prisma/prisma-client';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from "next-auth";
 import { authOptions } from '@/shared/constants/auth-options';
 import { chooseAndSendEmail } from '@/shared/components/shared/email-templates/choose-and-send-email';
 
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
@@ -42,7 +42,7 @@ export async function GET(
 }
 
 export async function DELETE(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
@@ -71,7 +71,7 @@ export async function DELETE(
   }
 }
 
-export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
 
   const { id } = await params;
   const session = await getServerSession(authOptions);

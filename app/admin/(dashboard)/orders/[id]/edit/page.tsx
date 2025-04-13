@@ -13,7 +13,7 @@ import { FormProvider } from 'react-hook-form';
 import { PhoneInput } from '@/shared/components/shared/phone-input';
 import moment from 'moment';
 import dynamic from 'next/dynamic';
-import { CHECKOUT_CONSTANTS } from '@/shared/constants';
+import { GLOBAL_CONSTANTS } from '@/shared/constants';
 import { UserSelect } from '@/app/admin/components/user-select';
 import { OrderSummary } from '@/app/admin/components/order-summary';
 import { OrderUpdateFormSchema, OrderUpdateFormValues } from '@/app/admin/schemas/order-form-schema';
@@ -288,7 +288,7 @@ export default function EditOrderPage() {
                 deliveryTime: new Date(data.deliveryTime),
                 id: Number(id),
                 bonusDelta: bonusOption === 'earn'
-                    ? Math.round(totalAmount * CHECKOUT_CONSTANTS.BONUS_MULTIPLIER)
+                    ? Math.round(totalAmount * GLOBAL_CONSTANTS.BONUS_MULTIPLIER)
                     : -spentBonuses,
                 items: data.items.map(item => ({
                     productId: item.productId,

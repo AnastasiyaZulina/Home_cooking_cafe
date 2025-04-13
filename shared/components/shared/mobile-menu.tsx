@@ -4,6 +4,8 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useSession } from 'next-auth/react'
 import { usePathname } from 'next/navigation'
+import { getOrderAcceptanceTime, getWorkingTime } from '@/shared/lib/calc-time'
+import { GLOBAL_CONSTANTS } from '@/shared/constants'
 
 interface MobileMenuProps {
     isOpen: boolean
@@ -25,40 +27,40 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, onSignI
             <div className="flex flex-col h-full">
                 {(session?.user.role === "ADMIN" || session?.user.role === "SUPERADMIN") ? (
                     <div className="border-b p-4 relative">
-                    <div className="relative flex items-center gap-4">
-                        <Link href="/" title="На главную" className="flex flex-col items-center gap-y-1 sm:gap-y-2">
-                            <Image
-                                src="/logobig.png"
-                                alt="Logo"
-                                width={55}
-                                height={55}
-                                className="w-10 h-10 sm:w-12 sm:h-12"
-                            />
-                            <h1 className="text-[14px] uppercase font-black text-center">
-                                Скатерть-<br />самобранка
-                            </h1>
-                        </Link>
+                        <div className="relative flex items-center gap-4">
+                            <Link href="/" title="На главную" className="flex flex-col items-center gap-y-1 sm:gap-y-2">
+                                <Image
+                                    src="/logobig.png"
+                                    alt="Logo"
+                                    width={55}
+                                    height={55}
+                                    className="w-10 h-10 sm:w-12 sm:h-12"
+                                />
+                                <h1 className="text-[14px] uppercase font-black text-center">
+                                    Скатерть-<br />самобранка
+                                </h1>
+                            </Link>
 
-                        <Link
-                            href="/admin/categories"
-                            className="flex flex-col items-center gap-y-1 sm:gap-y-2 ml-25 sm:ml-0"
-                            title="Панель управления"
-                        >
-                            <Image
-                                src="/dashboard.png"
-                                alt="Dashboard"
-                                width={60}
-                                height={60}
-                                className="w-10 h-10 sm:w-12 sm:h-12"
-                            />
-                            <h1 className="text-[14px] uppercase font-black text-center">
-                                Админ-панель
-                            </h1>
-                        </Link>
+                            <Link
+                                href="/admin/categories"
+                                className="flex flex-col items-center gap-y-1 sm:gap-y-2 ml-25 sm:ml-0"
+                                title="Панель управления"
+                            >
+                                <Image
+                                    src="/dashboard.png"
+                                    alt="Dashboard"
+                                    width={60}
+                                    height={60}
+                                    className="w-10 h-10 sm:w-12 sm:h-12"
+                                />
+                                <h1 className="text-[14px] uppercase font-black text-center">
+                                    Админ-панель
+                                </h1>
+                            </Link>
                         </div>
                         <button
                             onClick={onClose}
-                            className="absolute top-2 right-2 p-2"
+                            className="absolute top-10 right-2 p-2"
                         >
                             <X className="w-8 h-8" />
                         </button>
@@ -82,7 +84,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, onSignI
                         </div>
                         <button
                             onClick={onClose}
-                            className="absolute top-10 right-2 p-2"
+                            className="absolute top-5 right-2 p-2"
                         >
                             <X className="w-8 h-8" />
                         </button>
@@ -133,7 +135,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, onSignI
                     </div>
 
                     {/* Основные ссылки */}
-                    {['/about', '/delivery', '/reviews', '/corporate'].map((href) => (
+                    {['/about', '/delivery', '/reviews'].map((href) => (
                         <Link
                             key={href}
                             href={href}
@@ -143,9 +145,27 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, onSignI
                             {href === '/about' && 'О нас'}
                             {href === '/delivery' && 'Доставка'}
                             {href === '/reviews' && 'Отзывы'}
-                            {href === '/corporate' && 'Корпоративным клиентам'}
                         </Link>
                     ))}
+
+                    {/* Блок с информацией */}
+                    <div className="p-4 text-sm text-gray-600 border-t mt-auto">
+                        <div className="mb-4">
+                            <h4 className="font-semibold mb-2">Время работы</h4>
+                            <p>Режим работы: {getWorkingTime()}</p>
+                            <p>Приём заказов: {getOrderAcceptanceTime()}</p>
+                        </div>
+
+                        <div className="mb-4">
+                            <h4 className="font-semibold mb-2">Контакты</h4>
+                            <p>{GLOBAL_CONSTANTS.CONTACTS.PHONE}</p>
+                            <p>{GLOBAL_CONSTANTS.CONTACTS.ADRESS}</p>
+                        </div>
+
+                        <p className="text-center mt-4">
+                            © {new Date().getFullYear()} Скатерть-самобранка. Все права защищены.
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>

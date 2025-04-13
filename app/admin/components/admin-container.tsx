@@ -60,6 +60,17 @@ export default function AdminContainer({
           >
             Пользователи
           </Link>
+          <Link
+            href="/admin/feedbacks"
+            className={cn(
+              'px-4 py-3 rounded-lg font-medium flex',
+              pathname === '/admin/feedbacks'
+                ? 'bg-primary text-white'
+                : 'text-gray-600 hover:bg-gray-100'
+            )}
+          >
+            Отзывы
+          </Link>
         </nav>
       </div>
 

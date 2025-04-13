@@ -17,7 +17,7 @@ import { DeliveryType, PaymentMethod } from "@prisma/client";
 import { useRouter } from "next/navigation";
 import { PaymentMethodOptions } from "@/shared/components/shared/payment-method-options";
 import { BonusOptions } from "@/shared/components/shared/bonus-options";
-import { CHECKOUT_CONSTANTS } from '@/shared/constants';
+import { GLOBAL_CONSTANTS } from '@/shared/constants';
 import { DeliveryTimePicker, generateTimeSlots } from "@/shared/components/shared/delivery-time-picker";
 
 export default function CheckoutPage() {
@@ -129,7 +129,7 @@ function CheckoutContent() {
     const [deliveryType, setDeliveryType] = React.useState<'DELIVERY' | 'PICKUP'>('DELIVERY');
     const [paymentMethod, setPaymentMethod] = React.useState<PaymentMethod>('ONLINE'); // Новое состояние для способа оплаты
 
-    const DELIVERY_PRICE = deliveryType === 'DELIVERY' ? CHECKOUT_CONSTANTS.DELIVERY_COST : 0;
+    const DELIVERY_PRICE = deliveryType === 'DELIVERY' ? GLOBAL_CONSTANTS.DELIVERY_COST : 0;
 
     const onDeliveryTypeChange = (type: DeliveryType) => {
         setDeliveryType(type);
@@ -178,13 +178,13 @@ function CheckoutContent() {
 
     // Расчет итоговой суммы
     const calculateTotal = () => {
-        const deliveryPrice = deliveryType === 'DELIVERY' ? CHECKOUT_CONSTANTS.DELIVERY_COST : 0;
+        const deliveryPrice = deliveryType === 'DELIVERY' ? GLOBAL_CONSTANTS.DELIVERY_COST : 0;
         const isAuthenticated = !!session;
         console.log('totalAmount', totalAmount);
         if (!isAuthenticated || bonusOption === 'earn') {
             return {
                 totalPrice: totalAmount + deliveryPrice,
-                bonusDelta: isAuthenticated ? Math.round(totalAmount * CHECKOUT_CONSTANTS.BONUS_MULTIPLIER) : 0,
+                bonusDelta: isAuthenticated ? Math.round(totalAmount * GLOBAL_CONSTANTS.BONUS_MULTIPLIER) : 0,
             };
         } else {
             return {
@@ -220,7 +220,7 @@ function CheckoutContent() {
             const formData = {
                 ...data,
                 address: data.deliveryType === 'PICKUP' ? undefined : data.address,
-                deliveryPrice: deliveryType === 'DELIVERY' ? CHECKOUT_CONSTANTS.DELIVERY_COST : 0,
+                deliveryPrice: deliveryType === 'DELIVERY' ? GLOBAL_CONSTANTS.DELIVERY_COST : 0,
                 paymentMethod,
                 bonusDelta,
                 deliveryTime,
@@ -355,7 +355,7 @@ function CheckoutContent() {
                                     </Button>
                                 ) : (
                                     <div className="p-3 bg-red-50 rounded-md text-sm text-red-800 mt-4 md:mt-6">
-                                        {CHECKOUT_CONSTANTS.MESSAGES.OUT_OF_HOURS}
+                                        {GLOBAL_CONSTANTS.MESSAGES.OUT_OF_HOURS}
                                     </div>
                                 )}
                             </WhiteBlock>

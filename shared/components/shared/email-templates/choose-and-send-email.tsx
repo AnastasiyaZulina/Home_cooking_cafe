@@ -5,7 +5,7 @@ import { sendEmail } from "@/shared/lib";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
-import { CHECKOUT_CONSTANTS } from "@/shared/constants";
+import { GLOBAL_CONSTANTS } from "@/shared/constants";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -14,7 +14,7 @@ dayjs.extend(timezone);
 const formatDeliveryTime = (date: Date | string) => {
   const dateString = typeof date === 'string' ? date : date.toISOString();
   const start = dayjs(dateString).tz('Asia/Novosibirsk');
-  const end = start.add(CHECKOUT_CONSTANTS.WORKING_HOURS.TIME_SLOT_DURATION, 'minute');
+  const end = start.add(GLOBAL_CONSTANTS.WORKING_HOURS.TIME_SLOT_DURATION, 'minute');
   
   return {
     timeRange: `${start.format('HH:mm')}-${end.format('HH:mm')}`,

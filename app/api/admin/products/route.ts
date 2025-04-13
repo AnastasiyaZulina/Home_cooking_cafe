@@ -1,7 +1,7 @@
 import { prisma } from "@/prisma/prisma-client";
 import { authOptions } from "@/shared/constants/auth-options";
 import { getServerSession } from "next-auth";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import path from 'path';
 import fs from 'fs/promises';
 
@@ -22,7 +22,7 @@ export async function GET() {
     return NextResponse.json(products);
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
 
   if (!session?.user || session.user.role == "USER") {

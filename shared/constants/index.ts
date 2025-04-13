@@ -1,2 +1,2 @@
 export * from './checkout-form-schema'
-export * from './checkout-constants'
+export * from './global-constants'

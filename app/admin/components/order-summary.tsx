@@ -4,7 +4,7 @@ import React from 'react';
 import { WhiteBlock } from '@/shared/components';
 import { useFormContext } from 'react-hook-form';
 
-import { CHECKOUT_CONSTANTS } from '@/shared/constants';
+import { GLOBAL_CONSTANTS } from '@/shared/constants';
 import { BonusOptions } from './bonus-options';
 
 type OrderSummaryProps = {
@@ -30,7 +30,7 @@ export const OrderSummary = ({
   const { totalPrice, bonusDelta } = bonusOption === 'earn'
     ? {
       totalPrice: totalAmount + deliveryPrice,
-      bonusDelta: userId ? Math.round(totalAmount * CHECKOUT_CONSTANTS.BONUS_MULTIPLIER) : 0
+      bonusDelta: userId ? Math.round(totalAmount * GLOBAL_CONSTANTS.BONUS_MULTIPLIER) : 0
     }
     : {
       totalPrice: totalAmount + deliveryPrice - spentBonuses,

@@ -1,6 +1,6 @@
 // app/api/admin/categories/[id]/route.ts
 import { prisma } from '@/prisma/prisma-client';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from "next-auth";
 import { authOptions } from '@/shared/constants/auth-options';
 
@@ -34,7 +34,7 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;

@@ -12,7 +12,7 @@ import { FormProvider } from 'react-hook-form';
 import { PhoneInput } from '@/shared/components/shared/phone-input';
 import moment from 'moment';
 import dynamic from 'next/dynamic';
-import { CHECKOUT_CONSTANTS } from '@/shared/constants';
+import { GLOBAL_CONSTANTS } from '@/shared/constants';
 import { UserSelect } from '@/app/admin/components/user-select';
 import { ProductSelector } from '@/app/admin/components/product-selector';
 import { OrderSummary } from '@/app/admin/components/order-summary';
@@ -140,7 +140,7 @@ const CreateOrderPage = () => {
       bonusDelta: data.userId === undefined || data.userId === null
         ? 0
         : bonusOption === 'earn'
-          ? Math.round(totalAmount * CHECKOUT_CONSTANTS.BONUS_MULTIPLIER)
+          ? Math.round(totalAmount * GLOBAL_CONSTANTS.BONUS_MULTIPLIER)
           : -spentBonuses,
       items: data.items.map(item => ({
         productId: item.productId,

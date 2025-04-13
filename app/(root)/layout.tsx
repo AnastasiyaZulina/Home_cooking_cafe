@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import { Header } from "@/shared/components/shared";
 import { Suspense } from "react";
+import { Footer } from "@/shared/components/shared/footer";
 
 export const metadata: Metadata = {
   title: "Скатерть-самобранка | Главная",
@@ -22,6 +23,7 @@ export default function HomeLayout({
       </Suspense>
       {children}
       {modal}
+      <Footer />
     </main>
   );
 }

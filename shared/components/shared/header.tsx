@@ -17,6 +17,7 @@ import { FloatingCheckout } from './floating-checkout';
 import { usePathname } from 'next/navigation';
 import { useBreakpoint } from '@/hooks';
 import { MobileDashboardMenu } from './mobile-dashboard-menu';
+import { getOrderAcceptanceTime, getWorkingTime } from '@/shared/lib/calc-time';
 
 interface Props {
     hasCart?: boolean;
@@ -24,6 +25,8 @@ interface Props {
 }
 
 export const Header: React.FC<Props> = ({ hasCart = true, className }) => {
+    const workingTime = getWorkingTime();
+    const orderAcceptanceTime = getOrderAcceptanceTime();
     const [openAuthModal, setOpenAuthModal] = React.useState(false);
     const { data: session } = useSession();
     const router = useRouter();
@@ -33,9 +36,11 @@ export const Header: React.FC<Props> = ({ hasCart = true, className }) => {
     const showFloatingCheckout = hasCart &&
         !isLargeScreen &&
         (pathname === '/' || pathname.startsWith('/product/'));
+
     React.useEffect(() => {
         setIsMobileMenuOpen(false);
     }, [pathname]);
+
     return (
         <>
             <header className={cn('border-b', className)}>
@@ -71,6 +76,10 @@ export const Header: React.FC<Props> = ({ hasCart = true, className }) => {
                                     Админ-панель
                                 </h1>
                             </Link>
+                            <div className="hidden lg:flex flex-col text-sm text-gray-400">
+                                <span>Работаем: {workingTime}</span>
+                                <span>Прием заказов: {orderAcceptanceTime}</span>
+                            </div>
                         </div>
                     ) : (
                         <div className="flex items-center gap-4">
@@ -91,6 +100,10 @@ export const Header: React.FC<Props> = ({ hasCart = true, className }) => {
                                     </p>
                                 </div>
                             </Link>
+                            <div className="hidden lg:flex flex-col text-sm text-gray-400">
+                                <span>Работаем: {workingTime}</span>
+                                <span>Прием заказов: {orderAcceptanceTime}</span>
+                            </div>
                         </div>
                     )}
                     {/* Центральная часть - навигация */}
@@ -104,9 +117,10 @@ export const Header: React.FC<Props> = ({ hasCart = true, className }) => {
                         <Link href="/feedback" className="text-gray-400 hover:text-primary transition-colors">
                             Отзывы
                         </Link>
+                        {/*
                         <Link href="/corporate" className="text-gray-400 hover:text-primary transition-colors">
                             Корпоративным клиентам
-                        </Link>
+                        </Link>*/}
                     </nav>
 
                     {/* Правая часть */}

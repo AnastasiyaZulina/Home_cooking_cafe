@@ -1,4 +1,4 @@
-import { CHECKOUT_CONSTANTS } from "@/shared/constants";
+import { GLOBAL_CONSTANTS } from "@/shared/constants";
 import { ChevronDown } from "lucide-react";
 import React, { useState } from "react";
 
@@ -14,7 +14,7 @@ export const generateTimeSlots = () => {
     const utcTime = now.getTime() + now.getTimezoneOffset() * 60 * 1000;
 
     // Добавляем смещение для Новосибирска (UTC+7)
-    const novosibirskTime = new Date(utcTime + CHECKOUT_CONSTANTS.TIMEZONE_OFFSET);
+    const novosibirskTime = new Date(utcTime + GLOBAL_CONSTANTS.TIMEZONE_OFFSET);
 
     const currentHour = novosibirskTime.getHours();
     const currentMinutes = novosibirskTime.getMinutes();
@@ -22,8 +22,8 @@ export const generateTimeSlots = () => {
     console.log(`Текущее время в Новосибирске: ${currentHour}:${currentMinutes}`);
 
     // Проверяем, находимся ли мы в рабочем времени
-    if (currentHour >= CHECKOUT_CONSTANTS.WORKING_HOURS.END ||
-        currentHour < CHECKOUT_CONSTANTS.WORKING_HOURS.START) {
+    if (currentHour >= GLOBAL_CONSTANTS.WORKING_HOURS.END ||
+        currentHour < GLOBAL_CONSTANTS.WORKING_HOURS.START) {
         return [];
     }
 
@@ -39,12 +39,12 @@ export const generateTimeSlots = () => {
     const roundedTime = new Date(novosibirskTime.getTime() + roundedMinutes * 60 * 1000);
 
     // Добавляем минимальное время доставки (1 час)
-    const startTime = new Date(roundedTime.getTime() + CHECKOUT_CONSTANTS.WORKING_HOURS.MIN_DELIVERY_TIME_HOURS * 60 * 60 * 1000);
+    const startTime = new Date(roundedTime.getTime() + GLOBAL_CONSTANTS.WORKING_HOURS.MIN_DELIVERY_TIME_HOURS * 60 * 60 * 1000);
 
     console.log(`Время первого слота: ${startTime.getHours()}:${startTime.getMinutes()}`);
 
     // Если после добавления часа мы вышли за рабочие часы, возвращаем пустой массив
-    if (startTime.getHours() >= CHECKOUT_CONSTANTS.WORKING_HOURS.END) {
+    if (startTime.getHours() >= GLOBAL_CONSTANTS.WORKING_HOURS.END) {
         return [];
     }
 
@@ -52,14 +52,14 @@ export const generateTimeSlots = () => {
     let currentSlot = new Date(startTime);
 
     // Генерируем слоты до конца рабочего дня
-    while (currentSlot.getHours() < CHECKOUT_CONSTANTS.WORKING_HOURS.END) {
+    while (currentSlot.getHours() < GLOBAL_CONSTANTS.WORKING_HOURS.END) {
         const slotEnd = new Date(
-            currentSlot.getTime() + CHECKOUT_CONSTANTS.WORKING_HOURS.TIME_SLOT_DURATION * 60 * 1000
+            currentSlot.getTime() + GLOBAL_CONSTANTS.WORKING_HOURS.TIME_SLOT_DURATION * 60 * 1000
         );
 
         // Разрешаем последний слот, даже если он заканчивается в точное время закрытия
-        if (slotEnd.getHours() > CHECKOUT_CONSTANTS.WORKING_HOURS.END ||
-            (slotEnd.getHours() === CHECKOUT_CONSTANTS.WORKING_HOURS.END && slotEnd.getMinutes() > 0)) {
+        if (slotEnd.getHours() > GLOBAL_CONSTANTS.WORKING_HOURS.END ||
+            (slotEnd.getHours() === GLOBAL_CONSTANTS.WORKING_HOURS.END && slotEnd.getMinutes() > 0)) {
             break;
         }
 
@@ -105,7 +105,7 @@ export const DeliveryTimePicker = React.memo(function DeliveryTimePicker({
 
     return (
         <div className="mb-4">
-            <h4 className="text-sm font-medium mb-3">{CHECKOUT_CONSTANTS.MESSAGES.SELECT_DELIVERY_TIME}</h4>
+            <h4 className="text-sm font-medium mb-3">{GLOBAL_CONSTANTS.MESSAGES.SELECT_DELIVERY_TIME}</h4>
             
             {/* Первый слот (всегда видимый) */}
             {firstSlot && (

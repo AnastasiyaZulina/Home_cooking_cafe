@@ -360,7 +360,7 @@ const UserTable = () => {
             color="warning"
             onClick={() => handleResetPassword(row)}
           >
-            <LockReset /> {/* Нужно импортировать иконку */}
+            <LockReset />
           </IconButton>
         </Tooltip>
         <Tooltip title="Удалить">

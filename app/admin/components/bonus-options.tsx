@@ -3,7 +3,7 @@
 import React from 'react';
 import * as RadioGroup from '@radix-ui/react-radio-group';
 import { Slider } from '@/shared/components/ui/slider';
-import { CHECKOUT_CONSTANTS } from '@/shared/constants';
+import { GLOBAL_CONSTANTS } from '@/shared/constants';
 
 type BonusOptionsProps = {
     totalAmount: number;
@@ -40,7 +40,7 @@ type BonusOptionsProps = {
                         <RadioGroup.Indicator className="w-4 h-4 rounded-full bg-primary" />
                     </RadioGroup.Item>
                     <label htmlFor="earnBonuses">
-                        Начислить бонусы (+{Math.round(totalAmount * CHECKOUT_CONSTANTS.BONUS_MULTIPLIER)} ₽)
+                        Начислить бонусы (+{Math.round(totalAmount * GLOBAL_CONSTANTS.BONUS_MULTIPLIER)} ₽)
                     </label>
                 </div>
 
