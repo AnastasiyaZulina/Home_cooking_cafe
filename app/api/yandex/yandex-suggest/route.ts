@@ -4,8 +4,8 @@ export async function GET(request: Request) {
     const text = searchParams.get('text');
     const types = searchParams.get('types') || 'geo';
     const ll = searchParams.get('ll');
-    const API_KEY = process.env.GEOSUGGEST_API_KEY;
-  
+    //const API_KEY = process.env.GEOSUGGEST_API_KEY;
+  const API_KEY=123;
     if (!API_KEY) return new Response('Нет API ключа', { status: 500 });
     if (!text) return new Response('Нет текста', { status: 400 });
   
