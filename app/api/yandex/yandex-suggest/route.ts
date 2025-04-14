@@ -23,12 +23,7 @@ export async function GET(request: Request) {
   });
 
   const url = `https://suggest-maps.yandex.ru/v1/suggest?${params.toString()}`;
-
-  try {
-    const res = await fetch(url);
-    const data = await res.json();
-    return Response.json(data);
-  } catch (error) {
-    return new Response('Ошибка запроса', { status: 500 });
-  }
+  const res = await fetch(url);
+  const data = await res.json();
+  return Response.json(data);
 }
