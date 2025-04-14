@@ -28,7 +28,6 @@ export default function DeliveryPage() {
         <WhiteBlock className="mb-8 p-6" title="Доставка">
           <AddressForm 
             onAddressSelect={handleAddressSelect}
-            deliveryBounds={deliveryBounds}
           />
           
           <YMapsWithNoSSR query={{ apikey: process.env.NEXT_PUBLIC_YANDEX_MAPS_API_KEY }}>

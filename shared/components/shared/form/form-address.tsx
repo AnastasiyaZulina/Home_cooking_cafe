@@ -1,13 +1,12 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 
 interface AddressFormProps {
   onAddressSelect: (coords: number[], address: string) => void;
-  deliveryBounds?: number[][];
 }
 
-export default function AddressForm({ onAddressSelect, deliveryBounds }: AddressFormProps) {
+export default function AddressForm({ onAddressSelect }: AddressFormProps) {
   const [address, setAddress] = useState('');
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [error, setError] = useState('');
@@ -17,61 +16,90 @@ export default function AddressForm({ onAddressSelect, deliveryBounds }: Address
     const value = e.target.value;
     setAddress(value);
     setError('');
-
+  
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
-
+  
     if (!value.trim()) {
       setSuggestions([]);
       return;
     }
-
+  
     timeoutRef.current = setTimeout(async () => {
       try {
-        let url = `/api/yandex/yandex-suggest?text=${encodeURIComponent(value)}&types=house`;
-        
-        if (deliveryBounds) {
-          const [ll, spn] = calculateBoundsParams(deliveryBounds);
-          url += `&ll=${ll}&spn=${spn}&strict_bounds=1`;
-        }
-
+        const ll = '82.938612,55.052716'; // центр поиска (например, Новосибирск)
+        const spn = '0.28,0.02';         // радиус охвата
+        const url = `/api/yandex/yandex-suggest?text=${encodeURIComponent(value)}&types=house&ll=${ll}&spn=${spn}&attrs=uri`; // добавляем attrs=uri
+  
         const res = await fetch(url);
         const data = await res.json();
         setSuggestions(data.results || []);
+        console.log(data);
       } catch (error) {
         console.error('Ошибка получения подсказок:', error);
       }
     }, 300);
   };
+  
 
   const handleAddressSelect = async (suggestion: any) => {
     try {
-      const addressText = suggestion.title.text;
-      const coords = suggestion.geometry?.coordinates;
-      
-      if (!coords) {
-        throw new Error('Координаты не найдены');
-      }
-
+      // Берем полный адрес и uri
+      const full = suggestion.address?.formatted_address || suggestion.title.text || '';
+      const addressText = full.replace(/^Россия,\s*/, '');
+      const uri = suggestion.uri;
+  
+      if (!uri) throw new Error('URI не найден');
+  
+      // Геокодер: получаем дополнительные сведения по URI
+      const geocodeRes = await fetch(`https://geocode-maps.yandex.ru/1.x/?apikey=${process.env.NEXT_PUBLIC_YANDEX_MAPS_API_KEY}&uri=${uri}&format=json`);
+      const geoData = await geocodeRes.json();
+  
+      // Получаем координаты из ответа геокодера
+      const pos = geoData.response.GeoObjectCollection.featureMember?.[0]?.GeoObject?.Point?.pos;
+  
+      if (!pos) throw new Error('Координаты не найдены');
+  
+      const [lon, lat] = pos.split(' ').map(Number); // важно: сначала lon, потом lat
+      const coords = [lon, lat];
+  
       setAddress(addressText);
       setSuggestions([]);
-      onAddressSelect(coords, addressText);
+      console.log('Координаты:', coords);
+      onAddressSelect(coords, addressText); // передаем координаты и текст адреса
     } catch (error) {
+      console.error(error);
       setError('Не удалось определить координаты адреса');
     }
   };
+  
+  
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!address.match(/\d/)) {
       setError('Пожалуйста, укажите номер дома');
       return;
     }
 
-    // Если адрес не выбран из подсказок
-    if (!suggestions.some(s => s.title.text === address)) {
+    const matched = suggestions.find(s => {
+      const full = s.address?.formatted_address || s.title.text;
+      return full.replace(/^Россия,\s*/, '') === address;
+    });
+
+    if (!matched) {
       setError('Пожалуйста, выберите адрес из списка предложений');
+      return;
     }
+
+    const coords = matched.geometry?.coordinates;
+    if (!coords) {
+      setError('Не удалось определить координаты адреса');
+      return;
+    }
+
+    console.log('Координаты выбранного адреса:', coords);
+    onAddressSelect(coords, address);
   };
 
   return (
@@ -93,7 +121,7 @@ export default function AddressForm({ onAddressSelect, deliveryBounds }: Address
                 className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
                 onClick={() => handleAddressSelect(s)}
               >
-                {s.title.text}
+                {(s.address?.formatted_address || s.title.text).replace(/^Россия,\s*/, '')}
               </li>
             ))}
           </ul>
@@ -110,17 +138,3 @@ export default function AddressForm({ onAddressSelect, deliveryBounds }: Address
     </form>
   );
 }
-
-// Вспомогательная функция для расчета границ
-const calculateBoundsParams = (bounds: number[][]) => {
-  const lats = bounds.map(p => p[0]);
-  const lngs = bounds.map(p => p[1]);
-  
-  const centerLat = (Math.max(...lats) + Math.min(...lats)) / 2;
-  const centerLng = (Math.max(...lngs) + Math.min(...lngs)) / 2;
-  
-  const spanLat = Math.max(...lats) - Math.min(...lats);
-  const spanLng = Math.max(...lngs) - Math.min(...lngs);
-
-  return [`${centerLng},${centerLat}`, `${spanLng},${spanLat}`];
-};
