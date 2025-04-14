@@ -6,6 +6,7 @@ import { WhiteBlock } from '../white-block';
 import { FormInput, FormTextarea } from '../form';
 import { AdressInput } from '../adress-input';
 import { Controller, useFormContext } from 'react-hook-form';
+import AddressCheckout from '../address-checkout';
 
 interface Props {
     className?: string;
@@ -20,6 +21,13 @@ export const CheckoutAddressForm: React.FC<Props> = ({
 }) => {
     const { control, watch, setValue } = useFormContext();
     const address = watch('address'); // Следим за значением адреса
+    const [selectedCoords, setSelectedCoords] = React.useState<number[] | null>(null);
+
+    const handleAddressSelect = (coords: number[], address: string) => {
+        setSelectedCoords(coords);
+        setValue('address', address, { shouldValidate: true });
+    };
+
     return (
         <WhiteBlock
             title="3. Адрес доставки"
@@ -62,17 +70,19 @@ export const CheckoutAddressForm: React.FC<Props> = ({
                     <Controller
                         control={control}
                         name="address"
-                        render={({ field, fieldState }) => (
-                            <>
-                                <AdressInput
-                                    onChange={field.onChange}
-                                    className="text-base"
-                                    placeholder="Введите адрес"
+                        render={({ fieldState }) => (
+                            <div className="space-y-2">
+                                <AddressCheckout
+                                    selectedCoords={selectedCoords}
+                                    onAddressSelect={handleAddressSelect}
+                                    showDeliveryInfo={false} // Отключаем блок с информацией
                                 />
                                 {fieldState.error && (
-                                    <p className="text-red-500 text-sm">{fieldState.error.message}</p>
+                                    <p className="text-red-500 text-sm pl-2">
+                                        {fieldState.error.message}
+                                    </p>
                                 )}
-                            </>
+                            </div>
                         )}
                     />
                 </div>

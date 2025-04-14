@@ -32,11 +32,6 @@ interface GeoJsonFeature {
     };
 }
 
-interface DeliveryMapProps {
-    onBoundsChange?: (bounds: number[][]) => void;
-    selectedCoords?: number[] | null;
-}
-
 const MapWithNoSSR = dynamic(
     () => import('@pbe/react-yandex-maps').then(mod => mod.Map),
     { ssr: false }
@@ -45,7 +40,17 @@ const MapWithNoSSR = dynamic(
 const CENTER = [55.03851354815321, 82.92514445214833];
 const ZOOM = 11;
 
-export function DeliveryMap({ onBoundsChange, selectedCoords }: DeliveryMapProps) {
+interface DeliveryMapProps {
+    onBoundsChange?: (bounds: number[][]) => void;
+    selectedCoords?: number[] | null;
+    showDeliveryInfo?: boolean;
+  }
+  
+  export function DeliveryMap({ 
+    onBoundsChange, 
+    selectedCoords, 
+    showDeliveryInfo = true
+  }: DeliveryMapProps) {
     const ymaps = useYMaps(["geocode", "geoQuery"]);
     const mapRef = useRef<any>(null);
     const geoObjectsRef = useRef<any[]>([]);
@@ -188,7 +193,7 @@ export function DeliveryMap({ onBoundsChange, selectedCoords }: DeliveryMapProps
             </MapWithNoSSR>
 
             {/* Информация по доставке */}
-            {selectedCoords && (
+            {showDeliveryInfo && selectedCoords && (
                 <div className="mt-4 space-y-4 p-4 border rounded-lg bg-slate-50">
                     <p className="flex gap-2">
                         <span className="font-semibold">Стоимость доставки:</span>
