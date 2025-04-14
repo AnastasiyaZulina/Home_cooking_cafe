@@ -7,6 +7,7 @@ import { Container, WhiteBlock } from "@/shared/components";
 import AddressForm from "@/shared/components/shared/form/form-address";
 import YandexSuggestLoader from "@/shared/components/shared/yandex-suggest-loader";
 import { DeliveryMap } from '@/shared/components/shared/delivery-map';
+import { useState } from 'react';
 
 const YMapsWithNoSSR = dynamic(
     () => import('@pbe/react-yandex-maps').then(mod => mod.YMaps),
@@ -14,16 +15,30 @@ const YMapsWithNoSSR = dynamic(
 );
 
 export default function DeliveryPage() {
+    const [selectedCoords, setSelectedCoords] = useState<number[] | null>(null);
+    const [deliveryBounds, setDeliveryBounds] = useState<number[][]>([]);
+  
+    const handleAddressSelect = (coords: number[], address: string) => {
+      setSelectedCoords(coords);
+    };
+  
     return (
-        <Container>
-            <YandexSuggestLoader />
-            <WhiteBlock className="mb-8 p-6" title="Доставка">
-                <AddressForm />
-                <YMapsWithNoSSR query={{ apikey: process.env.NEXT_PUBLIC_YANDEX_MAPS_API_KEY }}>
-                    <div className="mt-6">
-                        <DeliveryMap />
-                    </div>
-                </YMapsWithNoSSR>
+      <Container>
+        <YandexSuggestLoader />
+        <WhiteBlock className="mb-8 p-6" title="Доставка">
+          <AddressForm 
+            onAddressSelect={handleAddressSelect}
+            deliveryBounds={deliveryBounds}
+          />
+          
+          <YMapsWithNoSSR query={{ apikey: process.env.NEXT_PUBLIC_YANDEX_MAPS_API_KEY }}>
+            <div className="mt-6">
+              <DeliveryMap 
+                onBoundsChange={setDeliveryBounds}
+                selectedCoords={selectedCoords}
+              />
+            </div>
+          </YMapsWithNoSSR>
             </WhiteBlock>
         </Container>
     );

@@ -31,7 +31,11 @@ interface GeoJsonFeature {
         "stroke-opacity": number;
     };
 }
-
+interface DeliveryMapProps {
+    onBoundsChange?: (bounds: number[][]) => void;
+    selectedCoords?: number[] | null;
+  }
+  
 const MapWithNoSSR = dynamic(
     () => import('@pbe/react-yandex-maps').then(mod => mod.Map),
     { ssr: false }
@@ -40,7 +44,7 @@ const MapWithNoSSR = dynamic(
 const CENTER = [55.03851354815321, 82.92514445214833];
 const ZOOM = 11;
 
-export function DeliveryMap() {
+export function DeliveryMap({ onBoundsChange, selectedCoords }: DeliveryMapProps) {
     const [address, setAddress] = useState<IAddress | null>(null);
     const ymaps = useYMaps(["geocode", "geoQuery"]);
     const [coordinates, setCoordinates] = useState<CoordinatesType | null>(null);
@@ -64,7 +68,13 @@ export function DeliveryMap() {
                 }
             })
             .catch(error => console.error('Error loading GeoJSON:', error));
-    }, []);
+            if (geoJsonData.length > 0 && onBoundsChange) {
+                const allCoords = geoJsonData.flatMap(f => 
+                  f.geometry.coordinates.flat()
+                );
+                onBoundsChange(allCoords);
+              }
+    }, [geoJsonData, onBoundsChange]);
 
     const checkLocationInPolygons = async (coords: number[]) => {
         if (!ymaps) return;

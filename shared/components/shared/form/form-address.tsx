@@ -1,157 +1,126 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
-export default function AddressForm() {
-  const [street, setStreet] = useState('');
-  const [streetSelected, setStreetSelected] = useState(false);
-  const [house, setHouse] = useState('');
-  const [apartment, setApartment] = useState('');
-  const [streetSuggestions, setStreetSuggestions] = useState<any[]>([]);
-  const [houseSuggestions, setHouseSuggestions] = useState<any[]>([]);
+interface AddressFormProps {
+  onAddressSelect: (coords: number[], address: string) => void;
+  deliveryBounds?: number[][];
+}
 
-  const streetTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const houseTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+export default function AddressForm({ onAddressSelect, deliveryBounds }: AddressFormProps) {
+  const [address, setAddress] = useState('');
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [error, setError] = useState('');
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const handleStreetChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    setStreet(value);
-    setStreetSelected(false);
+    setAddress(value);
+    setError('');
 
-    if (streetTimeoutRef.current) clearTimeout(streetTimeoutRef.current);
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
 
     if (!value.trim()) {
-      setStreetSuggestions([]);
+      setSuggestions([]);
       return;
     }
 
-    streetTimeoutRef.current = setTimeout(async () => {
+    timeoutRef.current = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/yandex/yandex-suggest?text=${encodeURIComponent(value)}&types=street`);
+        let url = `/api/yandex/yandex-suggest?text=${encodeURIComponent(value)}&types=house`;
+        
+        if (deliveryBounds) {
+          const [ll, spn] = calculateBoundsParams(deliveryBounds);
+          url += `&ll=${ll}&spn=${spn}&strict_bounds=1`;
+        }
+
+        const res = await fetch(url);
         const data = await res.json();
-        setStreetSuggestions(data.results || []);
+        setSuggestions(data.results || []);
       } catch (error) {
-        console.error('Ошибка получения улиц:', error);
+        console.error('Ошибка получения подсказок:', error);
       }
     }, 300);
   };
 
-  const [streetUri, setStreetUri] = useState('');
-  const [streetLL, setStreetLL] = useState('');
-  
-  const handleStreetSelect = (suggestion: any) => {
-    setStreet(suggestion.title.text);
-    setStreetSelected(true);
-    setStreetSuggestions([]);
-  
-    // сохраняем URI улицы или координаты
-    setStreetUri(suggestion.uri || '');
-    setStreetLL(suggestion.address?.component?.find((c: any) => c.kind?.includes('STREET'))?.ll || '');
+  const handleAddressSelect = async (suggestion: any) => {
+    try {
+      const addressText = suggestion.title.text;
+      const coords = suggestion.geometry?.coordinates;
+      
+      if (!coords) {
+        throw new Error('Координаты не найдены');
+      }
+
+      setAddress(addressText);
+      setSuggestions([]);
+      onAddressSelect(coords, addressText);
+    } catch (error) {
+      setError('Не удалось определить координаты адреса');
+    }
   };
 
-  const handleHouseChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setHouse(value);
-
-    if (houseTimeoutRef.current) clearTimeout(houseTimeoutRef.current);
-
-    if (!value.trim() || !streetSelected) {
-      setHouseSuggestions([]);
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!address.match(/\d/)) {
+      setError('Пожалуйста, укажите номер дома');
       return;
     }
 
-    houseTimeoutRef.current = setTimeout(async () => {
-        try {
-          const fullAddress = `${street} ${value}`;
-          const res = await fetch(
-            `/api/yandex/yandex-suggest?text=${encodeURIComponent(fullAddress)}&types=house&ll=${encodeURIComponent(streetLL)}&spn=0.002,0.002&strict_bounds=1`
-          );
-          const data = await res.json();
-          setHouseSuggestions(data.results || []);
-        } catch (error) {
-          console.error('Ошибка получения домов:', error);
-        }
-      }, 300);
+    // Если адрес не выбран из подсказок
+    if (!suggestions.some(s => s.title.text === address)) {
+      setError('Пожалуйста, выберите адрес из списка предложений');
     }
-    const handleHouseSelect = (suggestion: any) => {
-        const houseComponent = suggestion.address?.component?.find((c: any) =>
-          c.kind?.includes('HOUSE')
-        );
-        setHouse(houseComponent?.name || suggestion.title.text); // fallback
-        setHouseSuggestions([]);
-      };
+  };
 
   return (
-    <form className="max-w-md space-y-4">
-      {/* Улица */}
+    <form className="max-w-md space-y-4" onSubmit={handleSubmit}>
       <div>
-        <label className="block text-sm font-medium">Улица</label>
+        <label className="block text-sm font-medium">Адрес доставки</label>
         <input
           type="text"
-          value={street}
-          onChange={handleStreetChange}
-          placeholder="Введите улицу"
+          value={address}
+          onChange={handleAddressChange}
+          placeholder="Введите улицу и номер дома"
           className="w-full border rounded px-3 py-2"
         />
-        {streetSuggestions.length > 0 && (
+        {suggestions.length > 0 && (
           <ul className="border rounded bg-white mt-1 max-h-48 overflow-auto shadow">
-            {streetSuggestions.map((s, i) => (
+            {suggestions.map((s, i) => (
               <li
                 key={i}
                 className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                onClick={() => handleStreetSelect(s)}
+                onClick={() => handleAddressSelect(s)}
               >
                 {s.title.text}
               </li>
             ))}
           </ul>
         )}
-      </div>
-
-      {/* Дом */}
-      <div>
-        <label className="block text-sm font-medium">Дом</label>
-        <input
-          type="text"
-          value={house}
-          onChange={handleHouseChange}
-          placeholder="Введите номер дома"
-          className="w-full border rounded px-3 py-2"
-          disabled={!streetSelected}
-        />
-        {houseSuggestions.length > 0 && (
-          <ul className="border rounded bg-white mt-1 max-h-48 overflow-auto shadow">
-            {houseSuggestions.map((s, i) => (
-              <li
-                key={i}
-                className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                onClick={() => handleHouseSelect(s)}
-              >
-                {s.title.text}
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-
-      {/* Квартира */}
-      <div>
-        <label className="block text-sm font-medium">Квартира (необязательно)</label>
-        <input
-          type="text"
-          value={apartment}
-          onChange={(e) => setApartment(e.target.value)}
-          placeholder="Введите квартиру"
-          className="w-full border rounded px-3 py-2"
-        />
+        {error && <p className="text-red-600 text-sm mt-1">{error}</p>}
       </div>
 
       <button
         type="submit"
         className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
       >
-        Отправить
+        Найти
       </button>
     </form>
   );
 }
+
+// Вспомогательная функция для расчета границ
+const calculateBoundsParams = (bounds: number[][]) => {
+  const lats = bounds.map(p => p[0]);
+  const lngs = bounds.map(p => p[1]);
+  
+  const centerLat = (Math.max(...lats) + Math.min(...lats)) / 2;
+  const centerLng = (Math.max(...lngs) + Math.min(...lngs)) / 2;
+  
+  const spanLat = Math.max(...lats) - Math.min(...lats);
+  const spanLng = Math.max(...lngs) - Math.min(...lngs);
+
+  return [`${centerLng},${centerLat}`, `${spanLng},${spanLat}`];
+};
