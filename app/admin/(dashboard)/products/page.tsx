@@ -30,6 +30,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
 import Image from 'next/image';
+import { Api } from '@/shared/services/api-clients';
 
 type Category = {
   id: number;
@@ -100,20 +101,12 @@ const ProductTable = () => {
 
   const { data: products, isLoading } = useQuery<Product[]>({
     queryKey: ['products'],
-    queryFn: async () => {
-      const response = await fetch('/api/admin/products');
-      if (!response.ok) throw new Error('Failed to fetch products');
-      return response.json();
-    },
+    queryFn: Api.products.getProducts,
   });
 
   const { data: categories } = useQuery<Category[]>({
     queryKey: ['categories'],
-    queryFn: async () => {
-      const response = await fetch('/api/admin/categories');
-      if (!response.ok) throw new Error('Failed to fetch categories');
-      return response.json();
-    },
+    queryFn: Api.products.getCategories,
   });
 
   useEffect(() => {
@@ -137,13 +130,7 @@ const ProductTable = () => {
 
   // Mutations
   const { mutateAsync: deleteProduct } = useMutation({
-    mutationFn: async (id: number) => {
-      const response = await fetch(`/api/admin/products/${id}`, {
-        method: 'DELETE',
-      });
-      if (!response.ok) throw new Error('Failed to delete product');
-      return response.json();
-    },
+    mutationFn: Api.products.deleteProduct,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
       toast.success('Товар успешно удален');
@@ -154,20 +141,7 @@ const ProductTable = () => {
   });
 
   const { mutateAsync: bulkUpdateStock } = useMutation({
-    mutationFn: async (data: { ids: number[]; quantity: number }) => {
-      const response = await fetch('/api/admin/products/stock', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      });
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Ошибка обновления');
-      }
-      return response.json();
-    },
+    mutationFn: Api.products.bulkUpdateStock,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
       toast.success('Наличие успешно обновлено');
@@ -178,17 +152,7 @@ const ProductTable = () => {
   });
 
   const { mutateAsync: createProduct } = useMutation({
-    mutationFn: async (formData: FormData) => {
-      const response = await fetch('/api/admin/products', {
-        method: 'POST',
-        body: formData,
-      });
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to create product');
-      }
-      return response.json();
-    },
+    mutationFn: Api.products.createProduct,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
       toast.success('Товар успешно создан');
@@ -199,17 +163,8 @@ const ProductTable = () => {
   });
 
   const { mutateAsync: updateProduct } = useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: FormData }) => {
-      const response = await fetch(`/api/admin/products/${id}`, {
-        method: 'PATCH',
-        body: data,
-      });
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to update product');
-      }
-      return response.json();
-    },
+    mutationFn: ({ id, data }: { id: number; data: FormData }) => 
+      Api.products.updateProduct(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
       toast.success('Товар успешно обновлен');

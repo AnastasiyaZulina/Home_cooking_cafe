@@ -16,8 +16,6 @@ export type Feedback = {
 
 
 export const getFeedbacks = async () => {
-  const params = new URLSearchParams();
-
   const { data } = await axiosInstance.get<Feedback[]>('/admin/feedbacks');
   return data;
 };

@@ -487,7 +487,7 @@ const UserTable = () => {
           <TextField
             label="Телефон"
             value={editFormValues.phone || ''}
-            onChange={(e) => handlePhoneChange(e.target.value, true)}
+            onChange={(e) => handlePhoneChange(e.target.value, false)}
             inputProps={{
               maxLength: 12,
               placeholder: '+7' // Добавляем плейсхолдер
