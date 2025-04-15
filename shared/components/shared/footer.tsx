@@ -54,6 +54,9 @@ export const Footer: React.FC<FooterProps> = ({ className }) => {
               <Link href="/feedback" className="hover:text-primary transition-colors">Отзывы</Link>
             </li>
             <li>
+              <Link href="/bonus" className="hover:text-primary transition-colors">Бонусы</Link>
+            </li>
+            <li>
               <Link href="/privacy" className="hover:text-primary transition-colors">Политика конфиденциальности</Link>
             </li>
           </ul>

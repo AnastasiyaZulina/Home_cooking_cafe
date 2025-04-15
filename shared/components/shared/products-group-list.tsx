@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Title } from './title';
 import { ProductCard } from './product-card';
 import { useCategoryStore } from '@/shared/store/category';
@@ -31,6 +31,7 @@ export const ProductsGroupList: React.FC<Props> = ({
 }) => {
     const setActiveCategoryId = useCategoryStore((state) => state.setActiveId);
     const intersectionRef = React.useRef<HTMLDivElement>(null);
+    const isIntersectingRef = useRef(false);
 
     const checkCenterIntersection = React.useCallback(() => {
         if (!intersectionRef.current) return false;
@@ -42,10 +43,24 @@ export const ProductsGroupList: React.FC<Props> = ({
     }, []);
 
     const handleIntersection = React.useCallback((entry: IntersectionObserverEntry) => {
-        if (checkCenterIntersection()) {
-            window.history.replaceState(null, '', `/#${title}`);
+        // Устанавливаем ID только если элемент входит в область видимости
+        if (entry.isIntersecting && !isIntersectingRef.current) {
+            isIntersectingRef.current = true;
+            setActiveCategoryId(categoryId);
+            if (checkCenterIntersection()) {
+                window.history.replaceState(null, '', `/#${title}`);
+            }
+        } else if (!entry.isIntersecting) {
+            isIntersectingRef.current = false;
         }
     }, [categoryId, title, checkCenterIntersection, setActiveCategoryId]);
+
+    // Сбрасываем состояние при размонтировании
+    useEffect(() => {
+        return () => {
+            isIntersectingRef.current = false;
+        };
+    }, []);
 
     React.useEffect(() => {
         const observer = new IntersectionObserver(

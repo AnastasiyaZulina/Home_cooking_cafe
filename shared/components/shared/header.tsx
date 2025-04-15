@@ -117,10 +117,10 @@ export const Header: React.FC<Props> = ({ hasCart = true, className }) => {
                         <Link href="/feedback" className="text-gray-400 hover:text-primary transition-colors">
                             Отзывы
                         </Link>
-                        {/*
-                        <Link href="/corporate" className="text-gray-400 hover:text-primary transition-colors">
-                            Корпоративным клиентам
-                        </Link>*/}
+                        
+                        <Link href="/bonus" className="text-gray-400 hover:text-primary transition-colors">
+                            Бонусы
+                        </Link>
                     </nav>
 
                     {/* Правая часть */}

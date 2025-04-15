@@ -135,7 +135,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, onSignI
                     </div>
 
                     {/* Основные ссылки */}
-                    {['/about', '/delivery', '/reviews'].map((href) => (
+                    {['/about', '/delivery', '/reviews', '/bonus'].map((href) => (
                         <Link
                             key={href}
                             href={href}
@@ -145,6 +145,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, onSignI
                             {href === '/about' && 'О нас'}
                             {href === '/delivery' && 'Доставка'}
                             {href === '/reviews' && 'Отзывы'}
+                            {href === '/bonus' && 'Бонусы'}
                         </Link>
                     ))}
 
