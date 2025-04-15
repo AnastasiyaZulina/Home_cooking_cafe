@@ -31,514 +31,508 @@ async function up() {
 
     await prisma.category.createMany({
         data: [
-            { name: 'Супы' },
-            { name: 'Второе' },
-            { name: 'Гарниры' },
+            { name: 'Завтрак' },
             { name: 'Салаты' },
-            { name: 'Завтраки' },
-            { name: 'Закуски' },
-            { name: 'Выпечка' },
-            { name: 'Десерты' },
-            { name: 'Напитки' },
+            { name: 'Супы' },
+            { name: 'Обед' },
+            { name: 'Гарниры' },
+            { name: 'Хлеб' },
+            { name: 'Соусы' },
         ]
     });
 
     await prisma.product.createMany({
         data: [
             {
-                name: 'Борщ',
-                description: 'Суп',
-                image: '/images/items/Борщ.png',
-                price: 100,
+                name: 'Шаурма',
+                description: 'Состав: окорочок замаринованный в соусе и обжаренный, капуста белокочанная, корейская морковь, огурец свежий, помидор свежий, сыр, лаваш',
+                image: '/images/items/1/product-1.jpg',
+                price: 280,
                 categoryId: 1,
                 weight: 300,
-                eValue: 250,
-                stockQuantity: 0,
-                isAvailable: false
-            },
-            {
-                name: 'Щи',
-                description: 'Суп',
-                image: '/images/items/Борщ.png',
-                price: 90,
-                categoryId: 1,
-                weight: 300,
-                eValue: 230,
-                stockQuantity: 1,
+                eValue: 750,
+                stockQuantity: 5,
                 isAvailable: true
             },
             {
-                name: 'Солянка',
-                description: 'Суп',
-                image: '/images/items/Борщ.png',
-                price: 110,
-                categoryId: 1,
-                weight: 300,
-                eValue: 280,
-                stockQuantity: 2,
-                isAvailable: true
-            },
-            {
-                name: 'Уха',
-                description: 'Суп',
-                image: '/images/items/Борщ.png',
-                price: 120,
-                categoryId: 1,
-                weight: 300,
-                eValue: 220,
-                stockQuantity: 0,
-                isAvailable: false
-            },
-            {
-                name: 'Грибной суп',
-                description: 'Суп',
-                image: '/images/items/Борщ.png',
-                price: 95,
-                categoryId: 1,
-                weight: 300,
-                eValue: 200,
-                stockQuantity: 0,
-                isAvailable: false
-            },
-            {
-                name: 'Котлеты',
-                description: 'Второе',
-                image: '/images/items/Борщ.png',
-                price: 130,
-                categoryId: 2,
-                weight: 200,
-                eValue: 350,
-                stockQuantity: 2,
-                isAvailable: true
-            },
-            {
-                name: 'Жаркое',
-                description: 'Второе',
-                image: '/images/items/Борщ.png',
-                price: 150,
-                categoryId: 2,
-                weight: 250,
-                eValue: 400,
-                stockQuantity: 3,
-                isAvailable: true
-            },
-            {
-                name: 'Тефтели',
-                description: 'Второе',
-                image: '/images/items/Борщ.png',
-                price: 140,
-                categoryId: 2,
-                weight: 200,
-                eValue: 320,
-                stockQuantity: 1,
-                isAvailable: false
-            },
-            {
-                name: 'Рыба жареная',
-                description: 'Второе',
-                image: '/images/items/Борщ.png',
-                price: 160,
-                categoryId: 2,
-                weight: 180,
-                eValue: 280,
-                stockQuantity: 0,
-                isAvailable: false
-            },
-            {
-                name: 'Голубцы',
-                description: 'Второе',
-                image: '/images/items/Борщ.png',
-                price: 145,
-                categoryId: 2,
-                weight: 250,
-                eValue: 300,
-                stockQuantity: 2,
-                isAvailable: true
-            },
-            {
-                name: 'Картофельное пюре',
-                description: 'Гарнир',
-                image: '/images/items/Борщ.png',
-                price: 60,
-                categoryId: 3,
-                weight: 150,
-                eValue: 180,
-                stockQuantity: 1,
-                isAvailable: true
-            },
-            {
-                name: 'Рис',
-                description: 'Гарнир',
-                image: '/images/items/Борщ.png',
-                price: 50,
-                categoryId: 3,
-                weight: 150,
-                eValue: 200,
-                stockQuantity: 3,
-                isAvailable: true
-            },
-            {
-                name: 'Гречка',
-                description: 'Гарнир',
-                image: '/images/items/Борщ.png',
-                price: 55,
-                categoryId: 3,
-                weight: 150,
-                eValue: 190,
-                stockQuantity: 2,
-                isAvailable: true
-            },
-            {
-                name: 'Макароны',
-                description: 'Гарнир',
-                image: '/images/items/Борщ.png',
-                price: 45,
-                categoryId: 3,
-                weight: 150,
-                eValue: 210,
-                stockQuantity: 1,
-                isAvailable: true
-            },
-            {
-                name: 'Овощи на пару',
-                description: 'Гарнир',
-                image: '/images/items/Борщ.png',
-                price: 70,
-                categoryId: 3,
-                weight: 150,
-                eValue: 100,
-                stockQuantity: 0,
-                isAvailable: false
-            },
-            {
-                name: 'Оливье',
-                description: 'Салат',
-                image: '/images/items/Борщ.png',
-                price: 80,
-                categoryId: 4,
-                weight: 150,
-                eValue: 230,
-                stockQuantity: 3,
-                isAvailable: true
-            },
-            {
-                name: 'Цезарь',
-                description: 'Салат',
-                image: '/images/items/Борщ.png',
-                price: 120,
-                categoryId: 4,
-                weight: 150,
-                eValue: 250,
-                stockQuantity: 2,
-                isAvailable: true
-            },
-            {
-                name: 'Греческий',
-                description: 'Салат',
-                image: '/images/items/Борщ.png',
-                price: 110,
-                categoryId: 4,
-                weight: 150,
-                eValue: 180,
-                stockQuantity: 1,
-                isAvailable: true
-            },
-            {
-                name: 'Крабовый',
-                description: 'Салат',
-                image: '/images/items/Борщ.png',
-                price: 90,
-                categoryId: 4,
-                weight: 150,
-                eValue: 200,
-                stockQuantity: 0,
-                isAvailable: false
-            },
-            {
-                name: 'Винегрет',
-                description: 'Салат',
-                image: '/images/items/Борщ.png',
-                price: 70,
-                categoryId: 4,
-                weight: 150,
-                eValue: 160,
-                stockQuantity: 3,
-                isAvailable: true
-            },
-            {
-                name: 'Яичница',
-                description: 'Завтрак',
-                image: '/images/items/Борщ.png',
-                price: 60,
-                categoryId: 5,
-                weight: 150,
-                eValue: 220,
-                stockQuantity: 2,
-                isAvailable: true
-            },
-            {
-                name: 'Омлет',
-                description: 'Завтрак',
-                image: '/images/items/Борщ.png',
-                price: 70,
-                categoryId: 5,
-                weight: 200,
-                eValue: 250,
-                stockQuantity: 1,
-                isAvailable: true
-            },
-            {
-                name: 'Каша овсяная',
-                description: 'Завтрак',
-                image: '/images/items/Борщ.png',
+                name: 'Каша рисовая с маслом',
+                description: 'Состав: крупа рисовая, молоко, соль сахар, масло сливочное',
+                image: '/images/items/2/product-2.jpg',
                 price: 65,
-                categoryId: 5,
-                weight: 250,
-                eValue: 210,
-                stockQuantity: 0,
-                isAvailable: false
-            },
-            {
-                name: 'Сырники',
-                description: 'Завтрак',
-                image: '/images/items/Борщ.png',
-                price: 85,
-                categoryId: 5,
-                weight: 200,
-                eValue: 280,
-                stockQuantity: 3,
-                isAvailable: true
-            },
-            {
-                name: 'Блины',
-                description: 'Завтрак',
-                image: '/images/items/Борщ.png',
-                price: 75,
-                categoryId: 5,
-                weight: 200,
-                eValue: 260,
-                stockQuantity: 2,
-                isAvailable: true
-            },
-            {
-                name: 'Бутерброды',
-                description: 'Закуска',
-                image: '/images/items/Борщ.png',
-                price: 50,
-                categoryId: 6,
-                weight: 100,
-                eValue: 250,
-                stockQuantity: 1,
-                isAvailable: true
-            },
-            {
-                name: 'Нарезка мясная',
-                description: 'Закуска',
-                image: '/images/items/Борщ.png',
-                price: 160,
-                categoryId: 6,
-                weight: 150,
-                eValue: 350,
-                stockQuantity: 0,
-                isAvailable: false
-            },
-            {
-                name: 'Нарезка сырная',
-                description: 'Закуска',
-                image: '/images/items/Борщ.png',
-                price: 150,
-                categoryId: 6,
-                weight: 150,
-                eValue: 400,
-                stockQuantity: 3,
-                isAvailable: true
-            },
-            {
-                name: 'Оливки',
-                description: 'Закуска',
-                image: '/images/items/Борщ.png',
-                price: 80,
-                categoryId: 6,
-                weight: 100,
-                eValue: 150,
-                stockQuantity: 2,
-                isAvailable: true
-            },
-            {
-                name: 'Маринованные грибы',
-                description: 'Закуска',
-                image: '/images/items/Борщ.png',
-                price: 90,
-                categoryId: 6,
-                weight: 100,
-                eValue: 120,
-                stockQuantity: 1,
-                isAvailable: true
-            },
-            {
-                name: 'Пирожки с капустой',
-                description: 'Выпечка',
-                image: '/images/items/Борщ.png',
-                price: 40,
-                categoryId: 7,
-                weight: 75,
-                eValue: 200,
-                stockQuantity: 0,
-                isAvailable: false
-            },
-            {
-                name: 'Пирожки с мясом',
-                description: 'Выпечка',
-                image: '/images/items/Борщ.png',
-                price: 50,
-                categoryId: 7,
-                weight: 75,
-                eValue: 250,
-                stockQuantity: 3,
-                isAvailable: true
-            },
-            {
-                name: 'Ватрушка',
-                description: 'Выпечка',
-                image: '/images/items/Борщ.png',
-                price: 45,
-                categoryId: 7,
-                weight: 100,
-                eValue: 220,
-                stockQuantity: 0,
-                isAvailable: false
-            },
-            {
-                name: 'Булочка с маком',
-                description: 'Выпечка',
-                image: '/images/items/Борщ.png',
-                price: 35,
-                categoryId: 7,
-                weight: 75,
+                categoryId: 1,
+                weight: 180,
                 eValue: 230,
-                stockQuantity: 0,
-                isAvailable: false
+                stockQuantity: 5,
+                isAvailable: true
             },
             {
-                name: 'Круассан',
-                description: 'Выпечка',
-                image: '/images/items/Борщ.png',
-                price: 55,
-                categoryId: 7,
-                weight: 85,
-                eValue: 280,
-                stockQuantity: 0,
-                isAvailable: false
+                name: 'Сэндвич с ветчиной и сыром',
+                description: 'Состав: тост, соус (майонез, аджика), пекинская капуста, ветчина, сыр',
+                image: '/images/items/3/product-3.jpg',
+                price: 180,
+                categoryId: 1,
+                weight: 140,
+                eValue: 320,
+                stockQuantity: 5,
+                isAvailable: true
             },
             {
-                name: 'Торт Наполеон',
-                description: 'Десерт',
-                image: '/images/items/Борщ.png',
-                price: 120,
-                categoryId: 8,
+                name: 'Гамбургер с котлетой',
+                description: 'Состав: булочка, соус Гамбургер, лист салата, котлета куриная, помидор свежий, огурчик консервированный, сыр',
+                image: '/images/items/4/product-4.jpg',
+                price: 230,
+                categoryId: 1,
+                weight: 160,
+                eValue: 450,
+                stockQuantity: 5,
+                isAvailable: true
+            },
+            {
+                name: 'Гамбургер с курицей',
+                description: 'Состав: булочка, соус Гамбургер, лист салата, помидор свежий, филе куриное, огурчик консервированный, сыр',
+                image: '/images/items/5/product-5.jpg',
+                price: 195,
+                categoryId: 1,
                 weight: 150,
                 eValue: 380,
-                stockQuantity: 0,
-                isAvailable: false
+                stockQuantity: 5,
+                isAvailable: true
             },
             {
-                name: 'Чизкейк',
-                description: 'Десерт',
-                image: '/images/items/Борщ.png',
-                price: 130,
-                categoryId: 8,
-                weight: 150,
-                eValue: 350,
-                stockQuantity: 0,
-                isAvailable: false
+                name: 'Сэндвич с котлетой',
+                description: 'Состав: тост, соус Гамбургер, пекинская капуста, котлета куриная, сыр ломтик',
+                image: '/images/items/6/product-6.jpg',
+                price: 230,
+                categoryId: 1,
+                weight: 180,
+                eValue: 420,
+                stockQuantity: 5,
+                isAvailable: true
             },
             {
-                name: 'Тирамису',
-                description: 'Десерт',
-                image: '/images/items/Борщ.png',
-                price: 140,
-                categoryId: 8,
-                weight: 150,
-                eValue: 320,
-                stockQuantity: 0,
-                isAvailable: false
-            },
-            {
-                name: 'Мороженое',
-                description: 'Десерт',
-                image: '/images/items/Борщ.png',
-                price: 80,
-                categoryId: 8,
+                name: 'Блинчик с яблоком',
+                description: 'Состав: блинчик (мука, молоко, яйцо, сахар, соль, масло растительное), фарш: яблоко, сахар',
+                image: '/images/items/7/product-7.jpg',
+                price: 65,
+                categoryId: 1,
                 weight: 100,
-                eValue: 200,
-                stockQuantity: 0,
-                isAvailable: false
+                eValue: 180,
+                stockQuantity: 5,
+                isAvailable: true
             },
             {
-                name: 'Пудинг',
-                description: 'Десерт',
-                image: '/images/items/Борщ.png',
-                price: 90,
-                categoryId: 8,
-                weight: 150,
+                name: 'Блинчик с творогом',
+                description: 'Состав: блинчик (мука, молоко, яйцо, сахар, соль, масло растительное), фарш: творог, яйцо, мука, ванилин, сахар',
+                image: '/images/items/8/product-8.jpg',
+                price: 65,
+                categoryId: 1,
+                weight: 100,
+                eValue: 220,
+                stockQuantity: 5,
+                isAvailable: true
+            },
+            {
+                name: 'Блинчик с мясом и рисом',
+                description: 'Состав: блинчик (мука, молоко, яйцо, сахар, соль, масло растительное), фарш: свинина, говядина, лук, рис, соль, специи, яйцо куриное',
+                image: '/images/items/9/product-9.jpg',
+                price: 75,
+                categoryId: 1,
+                weight: 100,
+                eValue: 250,
+                stockQuantity: 5,
+                isAvailable: true
+            },
+            {
+                name: 'Блинчик с ветчиной и сыром',
+                description: 'Состав: блинчик (мука, молоко, яйцо, сахар, соль, масло растительное), фарш: ветчина, сыр, яйцо, специи',
+                image: '/images/items/10/product-10.jpg',
+                price: 75,
+                categoryId: 1,
+                weight: 100,
                 eValue: 280,
-                stockQuantity: 0,
-                isAvailable: false
-            },
-            {
-                name: 'Чай',
-                description: 'Напиток',
-                image: '/images/items/Борщ.png',
-                price: 30,
-                categoryId: 9,
-                weight: 200,
-                eValue: 0,
-                stockQuantity: 3,
+                stockQuantity: 5,
                 isAvailable: true
             },
             {
-                name: 'Кофе',
-                description: 'Напиток',
-                image: '/images/items/Борщ.png',
-                price: 40,
-                categoryId: 9,
-                weight: 200,
-                eValue: 0,
-                stockQuantity: 2,
+                name: 'Сэндвич с курицей и сыром',
+                description: 'Состав: тост, соус Гамбургер, пекинская капуста, обжаренное куриное филе, сыр ломтик',
+                image: '/images/items/11/product-11.jpg',
+                price: 190,
+                categoryId: 1,
+                weight: 140,
+                eValue: 350,
+                stockQuantity: 5,
                 isAvailable: true
             },
             {
-                name: 'Сок',
-                description: 'Напиток',
-                image: '/images/items/Борщ.png',
-                price: 45,
-                categoryId: 9,
-                weight: 200,
-                eValue: 90,
-                stockQuantity: 1,
+                name: 'Кесадия с мясом',
+                description: 'Состав: свинина, говядина, лук репчатый, специи (орегано, базилик, аджика, перец черный молотый), томатная паста, помидор, масло растительное, сыр, лепешка тортилья (мука, вода, масло растительное, сахар, соль, разрыхлитель, эмульгаторы)',
+                image: '/images/items/12/product-12.jpg',
+                price: 185,
+                categoryId: 1,
+                weight: 180,
+                eValue: 400,
+                stockQuantity: 5,
                 isAvailable: true
             },
             {
-                name: 'Компот',
-                description: 'Напиток',
-                image: '/images/items/Борщ.png',
-                price: 35,
-                categoryId: 9,
-                weight: 200,
+                name: 'Горячий бутерброд с колбасой и помидором',
+                description: 'Состав: сервелат, помидор, майонез, сыр, хлеб (батон)',
+                image: '/images/items/13/product-13.jpg',
+                price: 78,
+                categoryId: 1,
+                weight: 70,
+                eValue: 220,
+                stockQuantity: 5,
+                isAvailable: true
+            },
+            {
+                name: 'Бутерброд с горбушей',
+                description: 'Состав: батон, горбуша слабосоленая, масло сливочное, зелень',
+                image: '/images/items/14/product-14.jpg',
+                price: 78,
+                categoryId: 1,
+                weight: 50,
+                eValue: 180,
+                stockQuantity: 5,
+                isAvailable: true
+            },
+            {
+                name: 'Блинчики 2 шт',
+                description: 'Состав: яйцо, молоко, мука, сахар, соль, масло растительное',
+                image: '/images/items/15/product-15.jpg',
+                price: 65,
+                categoryId: 1,
+                weight: 100,
+                eValue: 240,
+                stockQuantity: 5,
+                isAvailable: true
+            },
+            {
+                name: 'Сосиска отварная или обжаренная',
+                description: '',
+                image: '/images/items/16/product-16.jpg',
+                price: 60,
+                categoryId: 1,
+                weight: 60,
+                eValue: 150,
+                stockQuantity: 5,
+                isAvailable: true
+            },
+            {
+                name: 'Биг Салат овощной с моцареллой, кунжутом',
+                description: 'Состав: лист салата, пекинская капуста, помидор, огурец, сыр Моцарелла (шарики), заправка (растительное масло, бальзамический уксус, горчица, мед, соль, орегано), кунжут, микрозелень',
+                image: '/images/items/17/product-17.jpg',
+                price: 165,
+                categoryId: 2,
+                weight: 135,
+                eValue: 180,
+                stockQuantity: 5,
+                isAvailable: true
+            },
+            {
+                name: 'Биг Салат "Овощной Бум"',
+                description: 'Состав: лист салата, помидор черри, огурец свежий, сельдерей стебель, сыр "Фета", заправка на основе растительного масла со специями, бальзамический соус.',
+                image: '/images/items/18/product-18.jpg',
+                price: 175,
+                categoryId: 2,
+                weight: 160,
+                eValue: 200,
+                stockQuantity: 5,
+                isAvailable: true
+            },
+            {
+                name: 'Борщ с говядиной и чесночными гренками',
+                description: 'Состав: бульон говяжий, говядина, картофель, лук, морковь, капуста б/х, свекла, томатная паста, уксус, соль, сахар, перец черный молотый, лавровый лист, чеснок. Подаётся со сметаной, зеленью, чесночными гренками.',
+                image: '/images/items/19/product-19.jpg',
+                price: 249,
+                categoryId: 3,
+                weight: 350,
+                eValue: 280,
+                stockQuantity: 5,
+                isAvailable: true
+            },
+            {
+                name: 'Борщ с говядиной и салом',
+                description: 'Состав: бульон говяжий, говядина, картофель, лук, морковь, капуста б/х, свекла, томатная паста, уксус, соль, сахар, перец черный молотый, лавровый лист, чеснок. Подаётся со сметаной, зеленью, салом. 40 гр - Сало солёное / Сало Бабушкины рецепты.',
+                image: '/images/items/20/product-20.jpg',
+                price: 249,
+                categoryId: 3,
+                weight: 350,
+                eValue: 350,
+                stockQuantity: 5,
+                isAvailable: true
+            },
+            {
+                name: 'Борщ с говядиной',
+                description: 'Состав: бульон говяжий, говядина, картофель, лук, морковь, капуста б/х, свекла, томатная паста, уксус, соль, сахар, перец черный молотый, лавровый лист, чеснок. Подаётся со сметаной и зеленью.',
+                image: '/images/items/21/product-21.jpg',
+                price: 135,
+                categoryId: 3,
+                weight: 350,
+                eValue: 250,
+                stockQuantity: 5,
+                isAvailable: true
+            },
+            {
+                name: 'Солянка домашняя',
+                description: 'Состав: бульон из копченостей, сервелат, свинина, курица копченая, сосиски, картофель, огурец консервированный, томатная паста, лук, лимон, маслины, соль, перец черный молотый, лавровый лист. Подаётся со сметаной и зеленью.',
+                image: '/images/items/22/product-22.jpg',
+                price: 135,
+                categoryId: 3,
+                weight: 250,
+                eValue: 320,
+                stockQuantity: 5,
+                isAvailable: true
+            },
+            {
+                name: 'Филе куриное, запеченное с помидором',
+                description: 'Состав: филе куриное, соль, перец черный молотый, приправа для курицы, помидор, сыр, масло растительное, зелень',
+                image: '/images/items/23/product-23.jpg',
+                price: 190,
+                categoryId: 4,
+                weight: 100,
+                eValue: 220,
+                stockQuantity: 5,
+                isAvailable: true
+            },
+            {
+                name: 'Стейк из свинины',
+                description: 'Состав: свинина шея, соль, перец черный молотый, приправа для мяса, соевый соус, масло растительное, лук маринованный (соль, сахар, уксус, масло растительное), зелень',
+                image: '/images/items/24/product-24.jpg',
+                price: 249,
+                categoryId: 4,
+                weight: 120,
+                eValue: 350,
+                stockQuantity: 5,
+                isAvailable: true
+            },
+            {
+                name: 'Буженина',
+                description: 'Состав: свинина, соль, перец черный молотый, чеснок, масло растительное, лавровый лист, аджика, зелень.',
+                image: '/images/items/25/product-25.jpg',
+                price: 249,
+                categoryId: 4,
+                weight: 120,
+                eValue: 380,
+                stockQuantity: 5,
+                isAvailable: true
+            },
+            {
+                name: 'Минтай с сыром и морковью под майонезом',
+                description: 'Состав: минтай, соль, специи, лук, морковь, майонез, сыр, масло растительное',
+                image: '/images/items/26/product-26.jpg',
+                price: 195,
+                categoryId: 4,
+                weight: 140,
+                eValue: 280,
+                stockQuantity: 5,
+                isAvailable: true
+            },
+            {
+                name: 'Горбуша с помидором под майонезом',
+                description: 'Состав: филе горбуши, приправа для рыбы, соль, перец, помидор, майонез, сыр, масло растительное, зелень',
+                image: '/images/items/27/product-27.jpg',
+                price: 225,
+                categoryId: 4,
+                weight: 130,
+                eValue: 320,
+                stockQuantity: 5,
+                isAvailable: true
+            },
+            {
+                name: 'Каша гречневая',
+                description: 'Состав: крупа гречневая, соль, масло растительное, масло сливочное',
+                image: '/images/items/28/product-28.jpg',
+                price: 70,
+                categoryId: 5,
+                weight: 180,
+                eValue: 200,
+                stockQuantity: 5,
+                isAvailable: true
+            },
+            {
+                name: 'Картофельные дольки',
+                description: 'Состав: картофель, соль, перец черный молотый, масло растительное, зелень',
+                image: '/images/items/29/product-29.jpg',
+                price: 95,
+                categoryId: 5,
+                weight: 180,
+                eValue: 250,
+                stockQuantity: 5,
+                isAvailable: true
+            },
+            {
+                name: 'Тост',
+                description: 'Состав: хлеб пшеничный тостовый',
+                image: '/images/items/30/product-30.jpg',
+                price: 95,
+                categoryId: 6,
+                weight: 35,
                 eValue: 80,
-                stockQuantity: 0,
-                isAvailable: false
+                stockQuantity: 5,
+                isAvailable: true
             },
             {
-                name: 'Морс',
-                description: 'Напиток',
-                image: '/images/items/Борщ.png',
-                price: 40,
-                categoryId: 9,
-                weight: 200,
-                eValue: 70,
-                stockQuantity: 3,
+                name: 'Хлеб Черный',
+                description: '',
+                image: '/images/items/31/product-31.jpg',
+                price: 25,
+                categoryId: 6,
+                weight: 25,
+                eValue: 60,
+                stockQuantity: 5,
                 isAvailable: true
+            },
+            {
+                name: 'Майонез',
+                description: '',
+                image: '/images/items/32/product-32.jpg',
+                price: 15,
+                categoryId: 7,
+                weight: 20,
+                eValue: 140,
+                stockQuantity: 5,
+                isAvailable: true
+            },
+            {
+                name: 'Соус Сырный',
+                description: 'Состав: сыр, соус майонез, чеснок, зелень',
+                image: '/images/items/33/product-33.jpg',
+                price: 25,
+                categoryId: 7,
+                weight: 30,
+                eValue: 180,
+                stockQuantity: 5,
+                isAvailable: true
+            },
+            {
+                name: 'Горчица',
+                description: 'Состав: горчица порошок, соль, сахар, уксус, растительное масло',
+                image: '/images/items/34/product-34.jpg',
+                price: 10,
+                categoryId: 7,
+                weight: 10,
+                eValue: 50,
+                stockQuantity: 5,
+                isAvailable: true
+            },
+            {
+                name: 'Сметана',
+                description: '',
+                image: '/images/items/35/product-35.jpg',
+                price: 10,
+                categoryId: 7,
+                weight: 20,
+                eValue: 60,
+                stockQuantity: 5,
+                isAvailable: true
+            },
+        ]
+    });
+    await prisma.feedback.createMany({
+        data: [
+            {
+                userId: 3,
+                feedbackText: 'Отличная шаурма, всем рекомендую! Быстро, вкусно, недорого.',
+                feedbackStatus: 'APPROVED',
+                isVisible: true
+            },
+            {
+                userId: 3,
+                feedbackText: 'Борщ мог бы быть повкуснее, мало мяса.',
+                feedbackStatus: 'APPROVED',
+                isVisible: true
+            },
+            {
+                userId: 3,
+                feedbackText: 'Салаты свежие, но порции небольшие.',
+                feedbackStatus: 'PENDING'
+            }
+        ]
+    });
+    const orders = await prisma.order.createMany({
+        data: [
+            {
+                userId: 3,
+                status: 'COMPLETED',
+                paymentMethod: 'ONLINE',
+                bonusDelta: 50,
+                deliveryType: 'DELIVERY',
+                deliveryTime: new Date(Date.now() - 86400000), // Вчера
+                deliveryCost: 150,
+                name: 'Владимир',
+                address: 'ул. Ленина, 10, кв. 5',
+                email: 'viktor.bahamut@bk.ru',
+                phone: '+79123456789',
+                comment: 'Позвонить за 10 минут до доставки'
+            },
+            {
+                userId: 3,
+                status: 'DELIVERY',
+                paymentMethod: 'OFFLINE',
+                bonusDelta: 0,
+                deliveryType: 'PICKUP',
+                deliveryTime: new Date(Date.now() + 3600000), // Через час
+                name: 'Владимир',
+                email: 'viktor.bahamut@bk.ru',
+                phone: '+79123456789'
+            }
+        ]
+    });
+
+    // Получаем ID созданных заказов
+    const createdOrders = await prisma.order.findMany({
+        where: {
+            userId: 3
+        },
+        orderBy: {
+            createdAt: 'desc'
+        },
+        take: 2
+    });
+
+    // Получаем некоторые продукты для заказов
+    const products = await prisma.product.findMany({
+        where: {
+            id: {
+                in: [1, 2, 16, 22]
+            }
+        }
+    });
+
+    // Создаем элементы заказов
+    await prisma.orderItem.createMany({
+        data: [
+            // Первый заказ
+            {
+                orderId: createdOrders[0].id,
+                productId: products[0].id, // Шаурма
+                productName: products[0].name,
+                productQuantity: 2,
+                productPrice: products[0].price
+            },
+            {
+                orderId: createdOrders[0].id,
+                productId: products[1].id, // Каша рисовая
+                productName: products[1].name,
+                productQuantity: 1,
+                productPrice: products[1].price
+            },
+            // Второй заказ
+            {
+                orderId: createdOrders[1].id,
+                productId: products[2].id, // Биг Салат
+                productName: products[2].name,
+                productQuantity: 1,
+                productPrice: products[2].price
+            },
+            {
+                orderId: createdOrders[1].id,
+                productId: products[3].id, // Филе куриное
+                productName: products[3].name,
+                productQuantity: 1,
+                productPrice: products[3].price
             }
         ]
     });
