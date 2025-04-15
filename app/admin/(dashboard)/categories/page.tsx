@@ -11,88 +11,50 @@ import { Box, Button, IconButton, Tooltip } from '@mui/material';
 import { Edit, Delete, Add } from '@mui/icons-material';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
+import { Api } from '@/shared/services/api-clients';
 
 type Category = {
   id: number;
   name: string;
+  isAvailable: boolean;
 };
 
 const CategoryTable = () => {
   const queryClient = useQueryClient();
   const [validationErrors, setValidationErrors] = useState<Record<string, string | undefined>>({});
 
-  // Получение данных
-  const { data, isLoading } = useQuery<Category[]>({
+   // Получение данных через сервис
+   const { data, isLoading } = useQuery({
     queryKey: ['categories'],
-    queryFn: async () => {
-      const response = await fetch('/api/admin/categories');
-      return response.json();
-    },
+    queryFn: Api.categories.getCategories,
   });
+  
 
   // Мутация для обновления
   const { mutateAsync: updateCategory } = useMutation({
-    mutationFn: async ({ id, name }: { id: number; name: string }) => {
-      const response = await fetch(`/api/admin/categories/${id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ name }),
-      });
-      
-      if (!response.ok) {
-        throw new Error('Ошибка при обновлении категории');
-      }
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['categories'] });
-    },
+    mutationFn: ({ id, name }: { id: number; name: string }) =>
+      Api.categories.updateCategory(id, { name }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['categories'] }),
   });
 
+  // Мутация для создания
   const { mutateAsync: createCategory } = useMutation({
-    mutationFn: async (name: string) => {
-      const response = await fetch('/api/admin/categories', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ name }),
-      });
-      
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Ошибка при создании категории');
-      }
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['categories'] });
-    },
+    mutationFn: Api.categories.createCategory,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['categories'] }),
     onError: (error: Error) => {
       toast.error(error.message);
     },
   });
 
+  // Мутация для удаления
   const { mutateAsync: deleteCategory } = useMutation({
-    mutationFn: async (id: number) => {
-      const response = await fetch(`/api/admin/categories/${id}`, {
-        method: 'DELETE',
-      });
-      
-      if (!response.ok) {
-        throw new Error('Ошибка при удалении категории');
-      }
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['categories'] });
-    },
+    mutationFn: Api.categories.deleteCategory,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['categories'] }),
     onError: (error) => {
       toast.error(error.message || 'Произошла ошибка при удалении');
     },
   });
+
 
   const handleDeleteCategory = async (row: MRT_Row<Category>) => {
     if (window.confirm(`Вы уверены, что хотите удалить категорию "${row.original.name}"? Будут удалены все товары в этой категории!`)) {

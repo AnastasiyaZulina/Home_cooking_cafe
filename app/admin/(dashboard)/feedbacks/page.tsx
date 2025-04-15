@@ -29,6 +29,7 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
 import updateLocale from 'dayjs/plugin/updateLocale';
 import { type MRT_ColumnFiltersState } from 'material-react-table';
+import { Api } from '@/shared/services/api-clients';
 
 dayjs.extend(updateLocale);
 dayjs.locale('ru');
@@ -58,46 +59,24 @@ type FeedbackFormValues = {
   feedbackStatus: 'PENDING' | 'APPROVED' | 'REJECTED';
   isVisible: boolean;
 };
-type DateRange = {
-    from?: string;
-    to?: string;
-  };
+
 const FeedbackTable = () => {
   const queryClient = useQueryClient();
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedFeedback, setSelectedFeedback] = useState<Feedback | null>(null);
   const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>([]);
 
-  const { data: feedbacks, isLoading } = useQuery<Feedback[]>({
-    queryKey: ['feedbacks', columnFilters],
-    queryFn: async () => {
-      const params = new URLSearchParams();
-
-      columnFilters.forEach(filter => {
-        if (filter.id === 'createdAt' || filter.id === 'updatedAt') {
-          const value = filter.value as DateRange;
-          if (value?.from) params.append(`${filter.id}[gte]`, value.from);
-          if (value?.to) params.append(`${filter.id}[lte]`, value.to);
-        } else {
-          params.append(filter.id, String(filter.value));
-        }
-      });
-
-      const response = await fetch(`/api/admin/feedbacks?${params.toString()}`);
-      if (!response.ok) throw new Error('Failed to fetch feedbacks');
-      return response.json();
+  // Получение данных через сервис
+  const { data: feedbacks, isLoading } = useQuery({
+    queryKey: ['feedbacks'],
+    queryFn: () => {
+      return Api.feedbacks.getFeedbacks();
     },
   });
 
-  // Mutations
+  // Мутации
   const { mutateAsync: deleteFeedback } = useMutation({
-    mutationFn: async (id: number) => {
-      const response = await fetch(`/api/admin/feedbacks/${id}`, {
-        method: 'DELETE',
-      });
-      if (!response.ok) throw new Error('Failed to delete feedback');
-      return response.json();
-    },
+    mutationFn: (id: number) => Api.feedbacks.deleteFeedback(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['feedbacks'] });
       toast.success('Отзыв успешно удален');
@@ -105,15 +84,8 @@ const FeedbackTable = () => {
   });
 
   const { mutateAsync: updateFeedback } = useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: Partial<FeedbackFormValues> }) => {
-      const response = await fetch(`/api/admin/feedbacks/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-      if (!response.ok) throw new Error('Failed to update feedback');
-      return response.json();
-    },
+    mutationFn: ({ id, data }: { id: number; data: Partial<FeedbackFormValues> }) =>
+      Api.feedbacks.updateFeedback(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['feedbacks'] });
       toast.success('Отзыв успешно обновлен');
