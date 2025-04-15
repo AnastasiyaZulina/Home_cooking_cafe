@@ -22,7 +22,6 @@ type ReturnProps = {
 
 export const getCartDetails = (data: CartDTO): ReturnProps => {
   if (!data || !Array.isArray(data.items)) {
-    console.log('пусто');
     return { items: [], totalAmount: 0 }; // Возвращаем пустой массив, если данных нет
   }
   const items = data.items.map((item) => ({

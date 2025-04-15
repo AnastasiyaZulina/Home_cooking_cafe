@@ -10,7 +10,7 @@ import { CheckoutFormSchema, CheckoutFormValues } from "@/shared/constants";
 import { cn } from "@/shared/lib/utils";
 import { createOrder, validateCart } from "@/app/actions";
 import toast from "react-hot-toast";
-import React from "react";
+import React, { useState } from "react";
 import { useSession } from "next-auth/react";
 import { Api } from "@/shared/services/api-clients";
 import { DeliveryType, PaymentMethod } from "@prisma/client";
@@ -28,48 +28,48 @@ export default function CheckoutPage() {
     React.useEffect(() => {
         const validateAndNotify = async () => {
             try {
-              const { adjustments } = await validateCart();
-          
-              if (adjustments.length > 0) {
-                // Группируем изменения по типу
-                const removedItems = adjustments.filter(a => a.type === 'removed');
-                const reducedItems = adjustments.filter(a => a.type === 'reduced');
-          
-                // Уведомление об удаленных товарах
-                if (removedItems.length > 0) {
-                  const productNames = removedItems.map(i => i.productName).join(', ');
-                  toast(
-                    <div className="flex items-start">
-                      <span>
-                        ⚠️Некоторые товары закончились и были удалены из корзины: <strong>{productNames}</strong>
-                      </span>
-                    </div>,
-                    { duration: 5000 }
-                  );
+                const { adjustments } = await validateCart();
+
+                if (adjustments.length > 0) {
+                    // Группируем изменения по типу
+                    const removedItems = adjustments.filter(a => a.type === 'removed');
+                    const reducedItems = adjustments.filter(a => a.type === 'reduced');
+
+                    // Уведомление об удаленных товарах
+                    if (removedItems.length > 0) {
+                        const productNames = removedItems.map(i => i.productName).join(', ');
+                        toast(
+                            <div className="flex items-start">
+                                <span>
+                                    ⚠️Некоторые товары закончились и были удалены из корзины: <strong>{productNames}</strong>
+                                </span>
+                            </div>,
+                            { duration: 5000 }
+                        );
+                    }
+
+                    // Уведомления об уменьшенных количествах
+                    reducedItems.forEach(item => {
+                        toast(
+                            <div className="flex items-start">
+                                <span>
+                                    ⚠️Количество <strong>{item.productName}</strong> уменьшено до {item.newQuantity} (максимально доступное)
+                                </span>
+                            </div>,
+                            { duration: 5000 }
+                        );
+                    });
+
+                    await fetchCartItems();
                 }
-          
-                // Уведомления об уменьшенных количествах
-                reducedItems.forEach(item => {
-                  toast(
-                    <div className="flex items-start">
-                      <span>
-                        ⚠️Количество <strong>{item.productName}</strong> уменьшено до {item.newQuantity} (максимально доступное)
-                      </span>
-                    </div>,
-                    { duration: 5000 }
-                  );
-                });
-          
-                await fetchCartItems();
-              }
             } catch (error) {
-              console.error('Cart validation failed:', error);
+                console.error('Cart validation failed:', error);
             } finally {
-              if (!items || items.length === 0) {
-                router.push('/checkout-empty');
-              } else {
-                setIsInitialLoad(false);
-              }
+                if (!items || items.length === 0) {
+                    router.push('/checkout-empty');
+                } else {
+                    setIsInitialLoad(false);
+                }
             }
         };
 
@@ -96,6 +96,9 @@ function CheckoutContent() {
     const [spentBonuses, setSpentBonuses] = React.useState(0);
     const timeSlots = React.useMemo(() => generateTimeSlots(), []);
     const isWorkingHours = timeSlots.length > 0;
+    const [deliveryPrice, setDeliveryPrice] = useState(0);
+    const [lastDeliveryPrice, setLastDeliveryPrice] = useState(0);
+    const minTotalAmount = GLOBAL_CONSTANTS.MIN_DELIVERY_TOTAL_AMOUNT;
 
     const form = useForm<CheckoutFormValues>({
         resolver: zodResolver(CheckoutFormSchema),
@@ -108,6 +111,7 @@ function CheckoutContent() {
             deliveryType: 'DELIVERY' as DeliveryType,
             paymentMethod: 'ONLINE',
             deliveryTime: undefined,
+            deliveryPrice: 0,
         }
     });
 
@@ -128,13 +132,41 @@ function CheckoutContent() {
 
     const [deliveryType, setDeliveryType] = React.useState<'DELIVERY' | 'PICKUP'>('DELIVERY');
     const [paymentMethod, setPaymentMethod] = React.useState<PaymentMethod>('ONLINE'); // Новое состояние для способа оплаты
+    const [isDeliveryAllowed, setIsDeliveryAllowed] = useState(true);
 
-    const DELIVERY_PRICE = deliveryType === 'DELIVERY' ? GLOBAL_CONSTANTS.DELIVERY_COST : 0;
+    React.useEffect(() => {
+        if (!isDeliveryAllowed && deliveryType === 'DELIVERY') {
+            toast.error('Сюда мы не доставляем');
+            setDeliveryPrice(0);
+            form.setValue('deliveryPrice', 0);
+        }
+    }, [isDeliveryAllowed, deliveryType]);
+
+    React.useEffect(() => {
+        if (deliveryType === 'PICKUP') {
+            setLastDeliveryPrice(deliveryPrice); // Сохраняем текущую цену перед сбросом
+            setDeliveryPrice(0);
+            form.setValue('deliveryPrice', 0);
+        } else {
+            setDeliveryPrice(lastDeliveryPrice); // Восстанавливаем последнюю цену
+            form.setValue('deliveryPrice', lastDeliveryPrice);
+        }
+    }, [deliveryType, form]);
+
+    const handleDeliveryPriceChange = (price: number) => {
+        setDeliveryPrice(price);
+        if (deliveryType === 'DELIVERY') {
+            setLastDeliveryPrice(price);
+        }
+        form.setValue('deliveryPrice', price);
+    };
+
+    const currentDeliveryPrice = deliveryType === 'DELIVERY' ? deliveryPrice : 0;
 
     const onDeliveryTypeChange = (type: DeliveryType) => {
         setDeliveryType(type);
         form.setValue('deliveryType', type);
-        // Сбрасываем способ оплаты на ONLINE при выборе доставки
+
         if (type === 'DELIVERY') {
             setPaymentMethod('ONLINE');
         }
@@ -142,7 +174,7 @@ function CheckoutContent() {
 
     const onPaymentMethodChange = (method: PaymentMethod) => {
         setPaymentMethod(method);
-        form.setValue('paymentMethod', method); // Добавьте эту строку
+        form.setValue('paymentMethod', method);
     };
 
     const onClickCountButton = (id: number, quantity: number, type: 'plus' | 'minus') => {
@@ -151,9 +183,8 @@ function CheckoutContent() {
     }
 
     const [bonusOption, setBonusOption] = React.useState<'earn' | 'spend'>('earn');
-    const [userBonuses, setUserBonuses] = React.useState(0); // Начинаем с 0
+    const [userBonuses, setUserBonuses] = React.useState(0);
 
-    // Загружаем бонусы пользователя при авторизации
     React.useEffect(() => {
         async function loadUserBonuses() {
             if (session) {
@@ -178,17 +209,15 @@ function CheckoutContent() {
 
     // Расчет итоговой суммы
     const calculateTotal = () => {
-        const deliveryPrice = deliveryType === 'DELIVERY' ? GLOBAL_CONSTANTS.DELIVERY_COST : 0;
         const isAuthenticated = !!session;
-        console.log('totalAmount', totalAmount);
         if (!isAuthenticated || bonusOption === 'earn') {
             return {
-                totalPrice: totalAmount + deliveryPrice,
+                totalPrice: totalAmount + currentDeliveryPrice,
                 bonusDelta: isAuthenticated ? Math.round(totalAmount * GLOBAL_CONSTANTS.BONUS_MULTIPLIER) : 0,
             };
         } else {
             return {
-                totalPrice: totalAmount + deliveryPrice - spentBonuses,
+                totalPrice: totalAmount + currentDeliveryPrice - spentBonuses,
                 bonusDelta: -spentBonuses,
             };
         }
@@ -206,7 +235,6 @@ function CheckoutContent() {
 
     const [deliveryTime, setDeliveryTime] = React.useState<Date | null>(null);
     React.useEffect(() => {
-        console.log('DeliveryTime changed:', deliveryTime);
     }, [deliveryTime]);
 
     const onSubmit = async (data: CheckoutFormValues) => {
@@ -215,12 +243,20 @@ function CheckoutContent() {
                 toast.error('Пожалуйста, выберите время доставки/самовывоза');
                 return;
             }
+            if (deliveryType === 'DELIVERY' && totalAmount < minTotalAmount) {
+                toast.error(`Минимальная сумма заказа для доставки: ${minTotalAmount} ₽`);
+                return;
+            }
+            if (deliveryType === 'DELIVERY' && !isDeliveryAllowed) {
+                toast.error('Выберите доступный адрес доставки');
+                return;
+            }
             setSubmitting(true);
 
             const formData = {
                 ...data,
                 address: data.deliveryType === 'PICKUP' ? undefined : data.address,
-                deliveryPrice: deliveryType === 'DELIVERY' ? GLOBAL_CONSTANTS.DELIVERY_COST : 0,
+                deliveryPrice: data.deliveryPrice,
                 paymentMethod,
                 bonusDelta,
                 deliveryTime,
@@ -238,6 +274,7 @@ function CheckoutContent() {
                     location.href = url;
                 }
             }
+
         } catch (err) {
             setSubmitting(false);
 
@@ -246,7 +283,6 @@ function CheckoutContent() {
                     err.message.includes('уменьшено до') ||
                     err.message.includes('недостаточно')) {
 
-                    console.log('Обновление данных корзины:', err.message);
                     toast.error(err.message, {
                         duration: 2000,
                         icon: '⚠️'
@@ -286,6 +322,8 @@ function CheckoutContent() {
                                 className={cn({ 'opacity-40 pointer-events-none': loading })}
                                 deliveryType={deliveryType}
                                 onDeliveryTypeChange={onDeliveryTypeChange}
+                                onDeliveryPriceChange={handleDeliveryPriceChange}
+                                onDeliveryAvailabilityChange={(isAllowed) => setIsDeliveryAllowed(isAllowed)}
                             />
                         </div>
 
@@ -320,7 +358,7 @@ function CheckoutContent() {
                                     </>
                                 }
                                     value={
-                                        loading ? <Skeleton className="h-5 md:h-6 w-12 md:w-16 rounded-[6px]" /> : `${DELIVERY_PRICE} ₽`
+                                        loading ? <Skeleton className="h-5 md:h-6 w-12 md:w-16 rounded-[6px]" /> : `${form.watch('deliveryPrice')} ₽`
                                     } />
 
                                 <BonusOptions
@@ -342,17 +380,29 @@ function CheckoutContent() {
                                     deliveryTime={deliveryTime}
                                     setDeliveryTime={(time: Date) => {
                                         setDeliveryTime(time);
-                                        form.setValue('deliveryTime', time); // Обновляем значение в форме
+                                        form.setValue('deliveryTime', time);
                                     }}
                                 />
                                 {isWorkingHours ? (
-                                    <Button
-                                        loading={loading || submitting}
-                                        type="submit"
-                                        className="w-full h-12 md:h-14 rounded-xl md:rounded-2xl mt-4 md:mt-6 text-sm md:text-base font-bold">
-                                        Оформить заказ
-                                        <ArrowRight className="w-4 md:w-5 ml-2" />
-                                    </Button>
+                                    <>
+                                        {deliveryType === 'DELIVERY' && totalAmount < minTotalAmount && (
+                                            <div className="p-3 bg-red-50 rounded-md text-sm text-red-800 mt-4 md:mt-6">
+                                                {`Минимальная сумма заказа для доставки: ${minTotalAmount} ₽`}
+                                            </div>
+                                        )}
+                                        <Button
+                                            loading={loading || submitting}
+                                            type="submit"
+                                            disabled={
+                                                (deliveryType === 'DELIVERY' &&
+                                                    (!isDeliveryAllowed || totalAmount < minTotalAmount)) ||
+                                                (deliveryType === 'PICKUP' && totalAmount <= 0)
+                                            }
+                                            className="w-full h-12 md:h-14 rounded-xl md:rounded-2xl mt-4 md:mt-6 text-sm md:text-base font-bold">
+                                            Оформить заказ
+                                            <ArrowRight className="w-4 md:w-5 ml-2" />
+                                        </Button>
+                                    </>
                                 ) : (
                                     <div className="p-3 bg-red-50 rounded-md text-sm text-red-800 mt-4 md:mt-6">
                                         {GLOBAL_CONSTANTS.MESSAGES.OUT_OF_HOURS}

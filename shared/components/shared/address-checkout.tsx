@@ -16,15 +16,19 @@ const YMapsWithNoSSR = dynamic(
 
 interface AddressCheckoutProps {
     selectedCoords: number[] | null;
-    onAddressSelect: (coords: number[]) => void;
-    showDeliveryInfo?: boolean; // Добавляем новый пропс
+    onAddressSelect: (coords: number[], address: string) => void;
+    showDeliveryInfo?: boolean;
+    onDeliveryPriceChange?: (price: number) => void;
+    onDeliveryAvailabilityChange?: (isAllowed: boolean) => void;
   }
 
   export default function AddressCheckout({ 
     selectedCoords,
     onAddressSelect,
-    showDeliveryInfo = true
-  }: AddressCheckoutProps) {
+    showDeliveryInfo = true,
+    onDeliveryPriceChange,
+    onDeliveryAvailabilityChange
+}: AddressCheckoutProps) {
   return (
     <>
       <AddressForm onAddressSelect={onAddressSelect} />
@@ -35,7 +39,12 @@ interface AddressCheckoutProps {
         }}
       >
         <div className="mt-6">
-          <DeliveryMap selectedCoords={selectedCoords} showDeliveryInfo={showDeliveryInfo}/>
+          <DeliveryMap 
+          selectedCoords={selectedCoords} 
+          showDeliveryInfo={showDeliveryInfo} 
+          onDeliveryPriceChange={onDeliveryPriceChange}
+          onDeliveryAvailabilityChange={onDeliveryAvailabilityChange}
+          />
         </div>
       </YMapsWithNoSSR>
     </>

@@ -19,8 +19,6 @@ export const generateTimeSlots = () => {
     const currentHour = novosibirskTime.getHours();
     const currentMinutes = novosibirskTime.getMinutes();
 
-    console.log(`Текущее время в Новосибирске: ${currentHour}:${currentMinutes}`);
-
     // Проверяем, находимся ли мы в рабочем времени
     if (currentHour >= GLOBAL_CONSTANTS.WORKING_HOURS.END ||
         currentHour < GLOBAL_CONSTANTS.WORKING_HOURS.START) {
@@ -40,8 +38,6 @@ export const generateTimeSlots = () => {
 
     // Добавляем минимальное время доставки (1 час)
     const startTime = new Date(roundedTime.getTime() + GLOBAL_CONSTANTS.WORKING_HOURS.MIN_DELIVERY_TIME_HOURS * 60 * 60 * 1000);
-
-    console.log(`Время первого слота: ${startTime.getHours()}:${startTime.getMinutes()}`);
 
     // Если после добавления часа мы вышли за рабочие часы, возвращаем пустой массив
     if (startTime.getHours() >= GLOBAL_CONSTANTS.WORKING_HOURS.END) {
@@ -70,10 +66,6 @@ export const generateTimeSlots = () => {
 
         currentSlot = slotEnd;
     }
-
-    console.log("Доступные слоты:", slots.map(s =>
-        `${s.start.getHours()}:${s.start.getMinutes()}-${s.end.getHours()}:${s.end.getMinutes()}`
-    ));
 
     return slots;
 };

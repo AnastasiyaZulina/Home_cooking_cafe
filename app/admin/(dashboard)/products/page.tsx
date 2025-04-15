@@ -474,7 +474,6 @@ const ProductTable = () => {
 
     try {
       const response = await createProduct(formData);
-      console.log('Product created successfully:', response);
       setCreateFormValues({
         name: '',
         description: '',

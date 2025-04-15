@@ -67,8 +67,6 @@ export const authOptions: AuthOptions = {
                   return true;
                 }
         
-                console.log(user, account);
-        
                 if (!user.email) {
                   return false;
                 }

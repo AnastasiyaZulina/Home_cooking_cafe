@@ -48,7 +48,6 @@ export const LoginForm: React.FC<Props> = ({ onClose,  onForgotPassword}) => {
 
           // Очищаем куки
           document.cookie = 'cartToken=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-          console.log('Cart token cleared');
         } catch (mergeError) {
           console.error('Merge error:', mergeError);
           toast.error('Ошибка объединения корзин');

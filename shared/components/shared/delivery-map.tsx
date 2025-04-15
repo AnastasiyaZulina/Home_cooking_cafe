@@ -44,13 +44,18 @@ interface DeliveryMapProps {
     onBoundsChange?: (bounds: number[][]) => void;
     selectedCoords?: number[] | null;
     showDeliveryInfo?: boolean;
+    onAddressChange?: (address: string) => void;
+    onDeliveryPriceChange?: (price: number) => void;
+    onDeliveryAvailabilityChange?: (isAllowed: boolean) => void;
   }
   
   export function DeliveryMap({ 
     onBoundsChange, 
     selectedCoords, 
-    showDeliveryInfo = true
-  }: DeliveryMapProps) {
+    showDeliveryInfo = true,
+    onDeliveryPriceChange,
+    onDeliveryAvailabilityChange
+}: DeliveryMapProps) {
     const ymaps = useYMaps(["geocode", "geoQuery"]);
     const mapRef = useRef<any>(null);
     const geoObjectsRef = useRef<any[]>([]);
@@ -92,8 +97,10 @@ interface DeliveryMapProps {
 
         if (objects.getLength() === 0) {
             setDeliveryInfo({ price: 0, isAllowed: false });
+            onDeliveryPriceChange?.(0);
+            onDeliveryAvailabilityChange?.(false);
             return;
-        }
+          }
 
         const prices: number[] = [];
 
@@ -111,7 +118,9 @@ interface DeliveryMapProps {
         setDeliveryInfo({
             price: maxPrice,
             isAllowed: maxPrice > 0
-        });
+          });
+          onDeliveryPriceChange?.(maxPrice);
+          onDeliveryAvailabilityChange?.(maxPrice > 0);
     };
 
     return (

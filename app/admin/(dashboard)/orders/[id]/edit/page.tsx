@@ -298,7 +298,6 @@ export default function EditOrderPage() {
                     stockQuantity: item.stockQuantity
                 }))
             };
-            console.log('Order data:', payload);
 
             const res = await fetch(`/api/admin/orders/${id}`, {
                 method: 'PUT',

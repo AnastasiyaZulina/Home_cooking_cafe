@@ -3,7 +3,7 @@
 import { useState, useRef } from 'react';
 
 interface AddressFormProps {
-  onAddressSelect: (coords: number[]) => void;
+  onAddressSelect: (coords: number[], address: string) => void;
 }
 
 export default function AddressForm({ onAddressSelect }: AddressFormProps) {
@@ -60,7 +60,7 @@ export default function AddressForm({ onAddressSelect }: AddressFormProps) {
 
       setAddress(addressText);
       setSuggestions([]);
-      onAddressSelect(coords);
+      onAddressSelect(coords, addressText);
     } catch (error) {
       console.error(error);
       setError('Не удалось определить координаты адреса');
@@ -68,9 +68,8 @@ export default function AddressForm({ onAddressSelect }: AddressFormProps) {
   };
 
   return (
-    <form className="max-w-md space-y-4" onSubmit={e => e.preventDefault()}>
       <div>
-        <label className="block text-sm font-medium">Адрес доставки</label>
+        <label className="block text-sm font-medium mt-2">Улица и дом</label>
         <input
           type="text"
           value={address}
@@ -93,6 +92,5 @@ export default function AddressForm({ onAddressSelect }: AddressFormProps) {
         )}
         {error && <p className="text-red-600 text-sm mt-1">{error}</p>}
       </div>
-    </form>
   );
 }
