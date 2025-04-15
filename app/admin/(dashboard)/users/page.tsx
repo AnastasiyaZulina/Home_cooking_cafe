@@ -90,7 +90,7 @@ const UserTable = () => {
           if (value?.from) params.append(`${filter.id}[gte]`, value.from);
           if (value?.to) params.append(`${filter.id}[lte]`, value.to);
         } else {
-          params.append(filter.id, String(filter.value)); // приведение к строке, если это не date-range
+          params.append(filter.id, String(filter.value));
         }
       });
 

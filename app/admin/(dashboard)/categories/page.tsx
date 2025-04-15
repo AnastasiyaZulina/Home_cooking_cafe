@@ -130,7 +130,7 @@ const CategoryTable = () => {
           error: (err) => err.message || 'Ошибка при создании',
         }
       );
-      table.setCreatingRow(null); // Закрываем режим создания
+      table.setCreatingRow(null);
     } catch (error) {
       console.error('[ERROR]:', error);
       throw error;

@@ -1,4 +1,3 @@
-// global.d.ts
 declare namespace ymaps {
     namespace geoJson {
       function load(url: string): Promise<any>;

@@ -1,7 +1,7 @@
 'use client';
 
 import React from "react";
-import { useForm, FormProvider } from "react-hook-form"; // Добавили FormProvider
+import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button, FormInput, Title } from "@/shared/components";
 import toast from "react-hot-toast";

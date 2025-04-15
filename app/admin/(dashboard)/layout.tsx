@@ -1,4 +1,3 @@
-// app/admin/(dashboard)/layout.tsx
 import { Header } from '@/shared/components/shared';
 import { getUserSession } from '@/shared/lib/get-user-session';
 import { Metadata } from 'next';

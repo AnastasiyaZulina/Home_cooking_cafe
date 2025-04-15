@@ -68,7 +68,6 @@ const FeedbackTable = () => {
   const [selectedFeedback, setSelectedFeedback] = useState<Feedback | null>(null);
   const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>([]);
 
-  // Fetch feedback data
   const { data: feedbacks, isLoading } = useQuery<Feedback[]>({
     queryKey: ['feedbacks', columnFilters],
     queryFn: async () => {

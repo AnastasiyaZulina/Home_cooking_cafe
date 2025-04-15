@@ -1,4 +1,3 @@
-// app/reset-password/page.tsx
 import ResetPasswordForm from '@/shared/components/shared/form/reset-password';
 import { Suspense } from 'react';
 

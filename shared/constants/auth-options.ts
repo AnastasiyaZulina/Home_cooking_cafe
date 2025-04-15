@@ -36,7 +36,6 @@ export const authOptions: AuthOptions = {
                     },
                   });
                 
-                  // Добавляем проверку на наличие пользователя и пароля
                   if (!findUser || !findUser.password) return null;
                 
                   const isPasswordValid = await compare(

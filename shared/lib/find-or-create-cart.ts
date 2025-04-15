@@ -1,4 +1,3 @@
-// shared/lib/find-or-create-cart.ts
 import { prisma } from "@/prisma/prisma-client";
 import { User } from "next-auth";
 import crypto from "crypto";
@@ -42,5 +41,5 @@ export const findOrCreateCart = async (user?: User, token?: string) => {
   return {
     ...cart,
     token: newToken // Гарантируем что token всегда string для гостей
-  } as Cart & { token: string }; // Явное указание типа
+  } as Cart & { token: string };
 };

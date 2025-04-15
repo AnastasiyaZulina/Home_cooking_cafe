@@ -2,8 +2,8 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const text = searchParams.get('text');
   const types = searchParams.get('types') || 'geo';
-  const ll = searchParams.get('ll') || '82.938612,55.052716'; // ЖЁСТКО заданные координаты
-  const spn = searchParams.get('spn') || '0.28,0.02';         // ЖЁСТКО заданный охват
+  const ll = searchParams.get('ll') || '82.938612,55.052716';
+  const spn = searchParams.get('spn') || '0.28,0.02';
 
   const API_KEY = process.env.GEOSUGGEST_API_KEY;
   if (!API_KEY) return new Response('Нет API ключа', { status: 500 });

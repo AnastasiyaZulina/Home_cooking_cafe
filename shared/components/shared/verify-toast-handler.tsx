@@ -16,5 +16,5 @@ export const VerifyToastHandler = () => {
     }
   }, [verified]);
 
-  return null; // Ничего не рендерим
+  return null;
 };

@@ -3,7 +3,7 @@ import { SeeProductModal } from "@/shared/components/shared";
 import { notFound} from "next/navigation";
 
 export default async function ProductModalPage({ params }: { params: Promise<{ id: string }> }) {
-    const { id } = await params; // Ждём params перед использованием
+    const { id } = await params;
     
     const product = await prisma.product.findFirst({
       where: {

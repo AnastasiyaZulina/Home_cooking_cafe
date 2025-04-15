@@ -1,4 +1,3 @@
-// Удаляем импорт CartItemDTO и изменяем интерфейс Props
 interface Props {
   orderId: number;
   items: Array<{

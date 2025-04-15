@@ -131,7 +131,7 @@ function CheckoutContent() {
     }, [session, form])
 
     const [deliveryType, setDeliveryType] = React.useState<'DELIVERY' | 'PICKUP'>('DELIVERY');
-    const [paymentMethod, setPaymentMethod] = React.useState<PaymentMethod>('ONLINE'); // Новое состояние для способа оплаты
+    const [paymentMethod, setPaymentMethod] = React.useState<PaymentMethod>('ONLINE');
     const [isDeliveryAllowed, setIsDeliveryAllowed] = useState(true);
 
     React.useEffect(() => {

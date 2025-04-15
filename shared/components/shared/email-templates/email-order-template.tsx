@@ -1,6 +1,5 @@
 import React from "react";
 
-// Добавляем компонент для email-шаблонов
 export const EmailOrderTemplate = ({
   content,
   paymentUrl,

@@ -76,7 +76,6 @@ const ProductTable = () => {
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [newStockQuantity, setNewStockQuantity] = useState<number>(0);
 
-  // Form states
   const [createFormValues, setCreateFormValues] = useState<Omit<ProductFormValues, 'image'>>({
     name: '',
     description: '',
@@ -99,7 +98,6 @@ const ProductTable = () => {
     categoryId: 0,
   });
 
-  // Fetch products data
   const { data: products, isLoading } = useQuery<Product[]>({
     queryKey: ['products'],
     queryFn: async () => {
@@ -109,7 +107,6 @@ const ProductTable = () => {
     },
   });
 
-  // Fetch categories data
   const { data: categories } = useQuery<Category[]>({
     queryKey: ['categories'],
     queryFn: async () => {
@@ -205,7 +202,7 @@ const ProductTable = () => {
     mutationFn: async ({ id, data }: { id: number; data: FormData }) => {
       const response = await fetch(`/api/admin/products/${id}`, {
         method: 'PATCH',
-        body: data, // Отправляем FormData напрямую
+        body: data,
       });
       if (!response.ok) {
         const errorData = await response.json();
@@ -383,7 +380,7 @@ const ProductTable = () => {
 
         // Обновляем состояние
         setEditImage(croppedFile);
-        setEditPreviewUrl(URL.createObjectURL(croppedFile)); // Исправлено здесь
+        setEditPreviewUrl(URL.createObjectURL(croppedFile));
 
         // Очищаем URL
         URL.revokeObjectURL(imageUrl);

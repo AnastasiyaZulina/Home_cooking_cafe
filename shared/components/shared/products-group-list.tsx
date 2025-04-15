@@ -43,8 +43,6 @@ export const ProductsGroupList: React.FC<Props> = ({
 
     const handleIntersection = React.useCallback((entry: IntersectionObserverEntry) => {
         if (checkCenterIntersection()) {
-            setActiveCategoryId(categoryId);
-            // Опционально: обновляем URL
             window.history.replaceState(null, '', `/#${title}`);
         }
     }, [categoryId, title, checkCenterIntersection, setActiveCategoryId]);

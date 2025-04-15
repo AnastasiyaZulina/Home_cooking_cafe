@@ -26,7 +26,6 @@ export interface CartState {
     totalAmount: number;
     fetchCartItems: () => Promise<void>;
     updateItemQuantity: (id: number, quantity: number) => Promise<void>;
-    //!!!!!!! Типизироваать
     addCartItem: (values: any) => Promise<void>;
     removeCartItem: (id: number) => Promise<void>;
   }
@@ -99,14 +98,14 @@ export interface CartState {
     updateItemQuantity: async (id: number, quantity: number) => {
       try {
         set(state => ({
-          updatingItems: { ...state.updatingItems, [id]: true } // Блокируем элемент
+          updatingItems: { ...state.updatingItems, [id]: true }
         }));
         
         const data = await Api.cart.updateItemQuantity(id, quantity);
         set(getCartDetails(data));
       } finally {
         set(state => ({
-          updatingItems: { ...state.updatingItems, [id]: false } // Разблокируем
+          updatingItems: { ...state.updatingItems, [id]: false }
         }));
       }
     },

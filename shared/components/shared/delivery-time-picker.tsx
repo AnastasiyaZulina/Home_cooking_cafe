@@ -105,7 +105,6 @@ export const DeliveryTimePicker = React.memo(function DeliveryTimePicker({
                     type="button"
                     onClick={() => {
                         setDeliveryTime(new Date(firstSlot.start));
-                        // Убрали setShowAllSlots(false) - не сворачиваем список
                     }}
                     className={`p-2 border rounded-md text-sm w-full mb-2 ${
                         deliveryTime?.getTime() === firstSlot.start.getTime()

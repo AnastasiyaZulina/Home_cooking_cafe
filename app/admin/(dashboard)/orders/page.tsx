@@ -137,7 +137,6 @@ const OrderTable = () => {
         accessorKey: 'id',
         header: 'ID',
         filterVariant: 'range',
-        // size: 80,
       },
       {
         accessorKey: 'status',
@@ -164,7 +163,6 @@ const OrderTable = () => {
             row.original.deliveryType,
             row.original.paymentMethod
           ),
-        // size: 100,
       },
       {
         accessorKey: 'paymentMethod',
@@ -176,7 +174,6 @@ const OrderTable = () => {
         })),
         Cell: ({ cell }) =>
           cell.getValue<string>() === 'ONLINE' ? 'Онлайн' : 'При получении',
-        //size: 150,
       },
       {
         accessorKey: 'deliveryType',
@@ -188,13 +185,11 @@ const OrderTable = () => {
         })),
         Cell: ({ cell }) =>
           cell.getValue<string>() === 'PICKUP' ? 'Самовывоз' : 'Доставка',
-        //size: 150,
       },
       {
         accessorKey: 'deliveryCost',
         header: 'Стоимость доставки',
         filterVariant: 'range',
-        // size: 150,
       },
       {
         accessorFn: (originalRow) => new Date(originalRow.deliveryTime),
@@ -212,49 +207,41 @@ const OrderTable = () => {
         accessorKey: 'name',
         header: 'Имя клиента',
         filterVariant: 'text',
-        // size: 200,
       },
       {
         accessorKey: 'address',
         header: 'Адрес',
         filterVariant: 'text',
-        //size: 200,
       },
       {
         accessorKey: 'email',
         header: 'Email',
         filterVariant: 'text',
-        //size: 200,
       },
       {
         accessorKey: 'phone',
         header: 'Телефон',
         filterVariant: 'text',
-        // size: 150,
       },
       {
         accessorKey: 'comment',
         header: 'Комментарий',
         filterVariant: 'text',
-        // size: 200,
       },
       {
         accessorKey: 'userId',
         header: 'ID клиента',
         filterVariant: 'range',
-        // size: 150,
       },
       {
         accessorKey: 'bonusDelta',
         header: 'Бонусы',
         filterVariant: 'range',
-        // size: 150,
       },
       {
         accessorKey: 'paymentId',
         header: 'ID платежа',
         filterVariant: 'text',
-        // size: 150,
       },
       {
         accessorFn: (originalRow) => new Date(originalRow.createdAt),

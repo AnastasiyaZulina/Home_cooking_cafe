@@ -135,7 +135,7 @@ export const ProductCard: React.FC<Props> = ({
                         }}
                         onReachZero={handleReachZero}
                         isLoading={isUpdating}
-                        max={cartItem.stockQuantity} // Теперь TypeScript знает о stockQuantity
+                        max={cartItem.stockQuantity}
                     />
                 ) : (
                     <Button

@@ -33,7 +33,6 @@ export const SeeProductForm: React.FC<Props> = ({
     const [localLoading, setLocalLoading] = useState(false);
 
     const cartItem = items.find(item => item.productId === productId);
-    // const isUpdating = cartItem ? updatingItems[cartItem.id] : false;
 
     const handleReachZero = async () => {
         if (!cartItem) return;
@@ -109,7 +108,7 @@ export const SeeProductForm: React.FC<Props> = ({
                                 onClick={handleQuantityChange}
                                 onReachZero={handleReachZero}
                                 isLoading={isUpdating}
-                                max={cartItem.stockQuantity} // Передаем stockQuantity
+                                max={cartItem.stockQuantity}
                             />
                             <span className="text-lg font-bold">
                                 {price * cartItem.quantity} ₽

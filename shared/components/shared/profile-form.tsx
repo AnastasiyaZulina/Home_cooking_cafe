@@ -43,7 +43,7 @@ export const ProfileForm: React.FC<Props> = ({ data }) => {
   const form = useForm<
     TFormUpdateUserWithPasswordValues | TFormUpdateGoogleValues
   >({
-    resolver: resolver as any, // Используем явное приведение типа
+    resolver: resolver as any,
     defaultValues: {
       name: data.name,
       phone: data.phone || '',

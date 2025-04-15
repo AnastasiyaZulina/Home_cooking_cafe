@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
 
         const order = await prisma.order.findFirst({
             where: { id: Number(body.object.metadata.order_id) },
-            include: { items: true }, // Включаем связанные OrderItem
+            include: { items: true },
           });
 
         if (!order) {

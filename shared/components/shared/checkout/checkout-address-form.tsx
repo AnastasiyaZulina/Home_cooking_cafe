@@ -26,7 +26,7 @@ export const CheckoutAddressForm: React.FC<Props> = ({
     const [selectedCoords, setSelectedCoords] = useState<number[] | null>(null);
     const [deliveryPrice, setDeliveryPrice] = useState(0);
 
-    const apartment = watch('apartment') ?? ''; // default to ''
+    const apartment = watch('apartment') ?? '';
 
     const handleAddressSelect = (coords: number[], address: string) => {
         setSelectedCoords(coords);
