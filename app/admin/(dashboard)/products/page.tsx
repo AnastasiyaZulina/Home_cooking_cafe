@@ -473,7 +473,7 @@ const ProductTable = () => {
     formData.append('image', selectedImage);
 
     try {
-      const response = await createProduct(formData);
+      await createProduct(formData);
       setCreateFormValues({
         name: '',
         description: '',

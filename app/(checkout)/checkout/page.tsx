@@ -140,7 +140,7 @@ function CheckoutContent() {
             setDeliveryPrice(0);
             form.setValue('deliveryPrice', 0);
         }
-    }, [isDeliveryAllowed, deliveryType]);
+    }, [form, isDeliveryAllowed, deliveryType]);
 
     React.useEffect(() => {
         if (deliveryType === 'PICKUP') {
@@ -151,7 +151,7 @@ function CheckoutContent() {
             setDeliveryPrice(lastDeliveryPrice); // Восстанавливаем последнюю цену
             form.setValue('deliveryPrice', lastDeliveryPrice);
         }
-    }, [deliveryType, form]);
+    }, [deliveryType, form, deliveryPrice, lastDeliveryPrice]);
 
     const handleDeliveryPriceChange = (price: number) => {
         setDeliveryPrice(price);
