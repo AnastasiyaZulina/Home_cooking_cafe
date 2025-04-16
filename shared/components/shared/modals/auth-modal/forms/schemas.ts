@@ -16,7 +16,7 @@ export const formRegisterSchema = formLoginSchema.merge(z.object({
     name: z.string().min(2, 'Введите имя'),
     phone: z.string()
       .regex(/^$|^\+7\d{10}$/, "Формат: +7XXXXXXXXXX") // Разрешаем пустую строку или корректный номер
-      .optional(),
+      .optional().nullable(),
     confirmPassword: passwordSchema,
   }));
   
@@ -24,10 +24,10 @@ export const formRegisterSchema = formLoginSchema.merge(z.object({
     name: z.string().min(2, 'Введите имя'),
     phone: z.string()
       .regex(/^$|^\+7\d{10}$/, "Формат: +7XXXXXXXXXX")
-      .optional(),
+      .optional().nullable(),
     currentPassword: z.string().min(1, 'Текущий пароль обязателен'), // Обязательное поле
-    newPassword: z.string().optional(),
-    confirmPassword: z.string().optional(),
+    newPassword: passwordSchema.optional(),
+    confirmPassword: passwordSchema.optional(),
   }).refine(data => {
     if (data.newPassword) {
       return data.newPassword === data.confirmPassword;
@@ -42,9 +42,9 @@ export const formUpdateGoogleUserSchema = z.object({
   name: z.string().min(2, 'Введите имя'),
   phone: z.string()
     .regex(/^$|^\+7\d{10}$/, "Формат: +7XXXXXXXXXX")
-    .optional(),
-  newPassword: z.string().min(1, 'Новый пароль обязателен'), // Обязательное поле
-  confirmPassword: z.string().min(1, 'Подтверждение пароля обязательно'),
+    .optional().nullable(),
+  newPassword: passwordSchema.min(1, 'Новый пароль обязателен'), // Обязательное поле
+  confirmPassword: passwordSchema.min(1, 'Подтверждение пароля обязательно'),
   }).refine(data => {
     if (data.newPassword) {
       return data.newPassword === data.confirmPassword;

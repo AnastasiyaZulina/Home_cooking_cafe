@@ -50,7 +50,6 @@ export const ProfileForm: React.FC<Props> = ({ data }) => {
     },
   });
 
-  // Объединяем обработчик сабмита
   const onSubmit = async (formData: any) => {
     try {
       const updateData: any = {
@@ -60,6 +59,7 @@ export const ProfileForm: React.FC<Props> = ({ data }) => {
 
       // Для пользователей с паролем
       if (hasPassword) {
+        updateData.currentPassword = formData.currentPassword;
         if (formData.newPassword) {
           updateData.password = formData.newPassword;
           updateData.currentPassword = formData.currentPassword;
