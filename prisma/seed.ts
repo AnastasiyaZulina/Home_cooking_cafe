@@ -20,7 +20,7 @@ async function up() {
                 role: 'ADMIN',
             },
             {
-                name: 'Володя',
+                name: 'Тест',
                 email: 'viktor.bahamut@bk.ru',
                 password: hashSync('199School', 10),
                 verified: new Date(),

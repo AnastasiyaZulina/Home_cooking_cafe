@@ -2,10 +2,14 @@ import { DeliveryType, PaymentMethod } from '@prisma/client';
 import { z } from 'zod';
 
 export const CheckoutFormSchema = z.object({
-    firstname: z.string().min(2, {message:'Имя должно содержать не менее двух символов'}),
-    email: z.string().email({message:'Введите корректную почту'}),
+    firstname: z.string()
+        .min(2, 'Имя должно содержать не менее двух символов')
+        .max(50, 'Имя не должно превышать 50 символов'),
+    email: z.string()
+        .email('Введите корректную почту')
+        .max(100, 'Почта не должна превышать 100 символов'),
     phone: z
-        .string()
+        .string().max(20, 'Телефон не должен превышать 20 символов')
         .refine((val) => /^\+7\d{10}$/.test(val), {
             message: 'Введите корректный номер телефона',
         }),
@@ -18,10 +22,16 @@ export const CheckoutFormSchema = z.object({
     deliveryTime: z.date(),
 }).superRefine((data, ctx) => {
     if (data.deliveryType === 'DELIVERY') {
-        if (!data.address || data.address.length < 5) {
+        if (!data.address || data.address.trim().length < 5) {
             ctx.addIssue({
                 code: z.ZodIssueCode.custom,
-                message: "Введите корректный адрес",
+                message: "Введите корректный адрес (минимум 5 символов)",
+                path: ["address"]
+            });
+        } else if (data.address.length > 255) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: "Адрес не должен превышать 255 символов",
                 path: ["address"]
             });
         }

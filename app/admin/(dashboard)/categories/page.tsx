@@ -101,9 +101,15 @@ const CategoryTable = () => {
 
   // Валидация
   const validateCategory = (category: Category) => {
-    return {
-      name: !category.name ? 'Название обязательно' : '',
-    };
+    const errors: Record<string, string | undefined> = {};
+    
+    if (!category.name) {
+      errors.name = 'Название обязательно';
+    } else if (category.name.length > 50) {
+      errors.name = 'Название не должно превышать 50 символов';
+    }
+    
+    return errors;
   };
 
   // Обработчик сохранения

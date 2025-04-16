@@ -237,18 +237,34 @@ const UserTable = () => {
 
   const validateForm = (values: UserFormValues) => {
     const errors: Partial<Record<keyof UserFormValues, string>> = {};
-    if (!values.name.trim()) errors.name = 'Обязательное поле';
+    if (!values.name.trim()) {
+      errors.name = 'Обязательное поле';
+    } else if (values.name.length > 50) {
+      errors.name = 'Имя не должно превышать 50 символов';
+    }
     
-    // Новое регулярное выражение для email
-    if (!values.email.match(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/)) {
+    if (!values.email) {
+      errors.email = 'Обязательное поле';
+    } else if (!values.email.match(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/)) {
       errors.email = 'Некорректный email';
+    } else if (values.email.length > 100) {
+      errors.email = 'Email не должен превышать 100 символов';
     }
     
-    if (values.bonusBalance < 0) errors.bonusBalance = 'Не может быть отрицательным';
-    if (values.phone && !validatePhone(values.phone)) {
-      errors.phone = 'Формат: +7XXXXXXXXXX';
+    if (values.bonusBalance < 0) {
+      errors.bonusBalance = 'Не может быть отрицательным';
+    } else if (!Number.isInteger(values.bonusBalance)) {
+      errors.bonusBalance = 'Должно быть целым числом';
     }
     
+    if (values.phone) {
+      if (!validatePhone(values.phone)) {
+        errors.phone = 'Формат: +7XXXXXXXXXX';
+      } else if (values.phone.length > 20) {
+        errors.phone = 'Телефон не должен превышать 20 символов';
+      }
+    }
+
     if (session?.user.role === 'ADMIN' && values.role === 'ADMIN') {
       errors.role = 'Недостаточно прав для назначения этой роли';
     }

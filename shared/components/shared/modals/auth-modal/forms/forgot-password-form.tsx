@@ -8,7 +8,7 @@ import toast from "react-hot-toast";
 import { z } from "zod";
 
 const forgotPasswordSchema = z.object({
-  email: z.string().email("Некорректный email"),
+  email: z.string().email('Введите корректную почту').max(100, 'Email не должен превышать 100 символов'),
 });
 
 type TForgotPasswordValues = z.infer<typeof forgotPasswordSchema>;

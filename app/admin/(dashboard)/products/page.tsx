@@ -445,14 +445,52 @@ const ProductTable = () => {
 
   const validateForm = (values: Omit<ProductFormValues, 'image'>) => {
     const errors: Partial<Record<keyof typeof values, string>> = {};
-
-    if (!values.name.trim()) errors.name = 'Обязательное поле';
-    if (values.price <= 0) errors.price = 'Цена должна быть больше 0';
-    if (values.weight <= 0) errors.weight = 'Вес должен быть больше 0';
-    if (values.eValue <= 0) errors.eValue = 'Энергетическая ценность должна быть больше 0';
-    if (values.stockQuantity < 0) errors.stockQuantity = 'Количество не может быть отрицательным';
-    if (values.categoryId === 0) errors.categoryId = 'Выберите категорию';
-
+  
+    // Name validation (max 50 chars as per DB schema)
+    if (!values.name.trim()) {
+      errors.name = 'Обязательное поле';
+    } else if (values.name.length > 50) {
+      errors.name = 'Название не должно превышать 50 символов';
+    }
+  
+    // Price validation (must be positive integer)
+    if (values.price <= 0) {
+      errors.price = 'Цена должна быть больше 0';
+    } else if (!Number.isInteger(values.price)) {
+      errors.price = 'Цена должна быть целым числом';
+    }
+  
+    // Weight validation (must be non-negative integer with default 0)
+    if (values.weight < 0) {
+      errors.weight = 'Вес не может быть отрицательным';
+    } else if (!Number.isInteger(values.weight)) {
+      errors.weight = 'Вес должен быть целым числом';
+    }
+  
+    // Energy value validation (must be non-negative integer with default 0)
+    if (values.eValue < 0) {
+      errors.eValue = 'Энергетическая ценность не может быть отрицательной';
+    } else if (!Number.isInteger(values.eValue)) {
+      errors.eValue = 'Энергетическая ценность должна быть целым числом';
+    }
+  
+    // Stock quantity validation (must be non-negative integer with default 0)
+    if (values.stockQuantity < 0) {
+      errors.stockQuantity = 'Количество не может быть отрицательным';
+    } else if (!Number.isInteger(values.stockQuantity)) {
+      errors.stockQuantity = 'Количество должно быть целым числом';
+    }
+  
+    // Category validation (required relation)
+    if (values.categoryId === 0) {
+      errors.categoryId = 'Выберите категорию';
+    }
+  
+    // Description is optional but if provided should be validated
+    if (values.description && values.description.length > 65535) { // Typical TEXT field limit
+      errors.description = 'Описание слишком длинное';
+    }
+  
     return errors;
   };
 

@@ -3,16 +3,16 @@ import { DeliveryType, PaymentMethod, OrderStatus } from '@prisma/client';
 
 export const OrderFormSchema = z.object({
   userId: z.number().optional(),
-  name: z.string().min(2, { message: 'Имя должно содержать не менее двух символов' }),
-  email: z.string().email({ message: 'Введите корректную почту' }),
-  phone: z.string().min(11, { message: 'Введите корректный номер телефона' }),
-  address: z.string().optional(),
+  name: z.string().min(2, { message: 'Имя должно содержать не менее двух символов' }).max(50, { message: 'Имя не должно превышать 50 символов' }),
+  email: z.string().email({ message: 'Введите корректную почту' }).max(100, { message: 'Почта не должна превышать 100 символов' }),
+  phone: z.string().min(11, { message: 'Введите корректный номер телефона' }).max(20, { message: 'Телефон не должен превышать 20 символов' }),
+  address: z.string().max(255, { message: 'Адрес не должен превышать 255 символов' }).optional().nullable(),
   deliveryType: z.nativeEnum(DeliveryType),
   paymentMethod: z.nativeEnum(PaymentMethod),
   deliveryPrice: z.number().optional().default(0),
-  paymentId: z.string().optional(),
+  paymentId: z.string().max(100, { message: 'ID платежа не должен превышать 100 символов' }).optional().nullable(),
   status: z.nativeEnum(OrderStatus),
-  comment: z.string().optional(),
+  comment: z.string().optional().nullable(),
   deliveryTime: z.preprocess(
     (arg) => {
       if (typeof arg === "string" || arg instanceof Date) return new Date(arg);
@@ -36,14 +36,14 @@ export const OrderFormSchema = z.object({
 
 export const OrderUpdateFormSchema = z.object({
   userId: z.number().optional().nullable(),
-  name: z.string().min(2, { message: 'Имя должно содержать не менее двух символов' }),
-  email: z.string().email({ message: 'Введите корректную почту' }),
-  phone: z.string().min(11, { message: 'Введите корректный номер телефона' }),
-  address: z.string().optional().nullable(),
+  name: z.string().min(2, { message: 'Имя должно содержать не менее двух символов' }).max(50, { message: 'Имя не должно превышать 50 символов' }),
+  email: z.string().email({ message: 'Введите корректную почту' }).max(100, { message: 'Почта не должна превышать 100 символов' }),
+  phone: z.string().min(11, { message: 'Введите корректный номер телефона' }).max(20, { message: 'Телефон не должен превышать 20 символов' }),
+  address: z.string().max(255, { message: 'Адрес не должен превышать 255 символов' }).optional().nullable(),
   deliveryType: z.nativeEnum(DeliveryType),
   paymentMethod: z.nativeEnum(PaymentMethod),
   deliveryPrice: z.number().optional().default(0),
-  paymentId: z.string().optional().nullable(),
+  paymentId: z.string().max(100, { message: 'ID платежа не должен превышать 100 символов' }).optional().nullable(),
   status: z.nativeEnum(OrderStatus, {message: "Выберите статус заказа"}),
   comment: z.string().optional().nullable(),
   deliveryTime: z.preprocess(
