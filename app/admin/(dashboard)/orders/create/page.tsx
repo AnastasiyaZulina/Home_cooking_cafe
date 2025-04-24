@@ -50,7 +50,7 @@ const CreateOrderPage = () => {
       deliveryType: 'DELIVERY',
       paymentMethod: 'ONLINE',
       status: 'PENDING',
-      deliveryPrice: 0,
+      deliveryCost: 0,
       deliveryTime: new Date(),
       bonusDelta: 0,
     },
@@ -234,7 +234,7 @@ const CreateOrderPage = () => {
                         setValue('paymentMethod', 'ONLINE');
                       } else {
                         resetField('address');
-                        resetField('deliveryPrice');
+                        resetField('deliveryCost');
                         resetField('status');
                       }
                     }}
@@ -273,7 +273,7 @@ const CreateOrderPage = () => {
                     />
 
                     <FormInput
-                      name="deliveryPrice"
+                      name="deliveryCost"
                       label="Стоимость доставки"
                       type="number"
                       placeholder="Введите стоимость"

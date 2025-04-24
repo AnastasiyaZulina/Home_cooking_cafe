@@ -5,8 +5,8 @@ export type Order = {
   status: OrderStatus;
   paymentMethod: PaymentMethod;
   deliveryType: DeliveryType;
-  deliveryTime: string;
-  deliveryCost?: number;
+  deliveryTime: Date;
+  deliveryCost: number;
   userId?: number;
   bonusDelta: number;
   name: string;
@@ -27,14 +27,14 @@ export type OrderItem = {
   productPrice: number;
 };
 
-export type OrderItemWithProduct = {
-  productId: number;
-  productQuantity: number;
+export type OrderItemWithProduct = OrderItem & {
   product: {
-      stockQuantity: number;
-      name: string;
-      price: number;
+    stockQuantity: number;
+    name: string;
+    price: number;
   };
-  productName: string;
-  productPrice: number;
+};
+
+export type OrderWithProducts = Omit<Order, 'items'> & {
+  items: OrderItemWithProduct[];
 };

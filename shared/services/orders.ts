@@ -1,6 +1,6 @@
-import { Order } from '@/@types/orders';
+import { Order, OrderWithProducts } from '@/@types/orders';
 import { axiosInstance } from './instance';
-import { OrderFormValues } from '@/app/admin/schemas/order-form-schema';
+import { OrderFormValues, OrderUpdateFormValues } from '@/app/admin/schemas/order-form-schema';
 
 export const getOrders = async () => {
   const { data } = await axiosInstance.get<Order[]>('/admin/orders');
@@ -8,8 +8,13 @@ export const getOrders = async () => {
 };
 
 export const getOrder = async (id: number) => {
-  const { data } = await axiosInstance.get<Order>(`/admin/orders/${id}`);
+  const { data } = await axiosInstance.get<OrderWithProducts>(`/admin/orders/${id}`);
   return data;
+};
+
+export const updateOrder = async (id: number, data: OrderUpdateFormValues) => {
+  const response = await axiosInstance.put(`/admin/orders/${id}`, data);
+  return response.data;
 };
 
 export const deleteOrder = async (id: number) => {

@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { DeliveryType, PaymentMethod, OrderStatus, Product, User } from '@prisma/client';
+import { DeliveryType, PaymentMethod, OrderStatus, User } from '@prisma/client';
 import { Controller, useFieldArray, useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -19,8 +19,9 @@ import { OrderUpdateFormSchema, OrderUpdateFormValues } from '@/app/admin/schema
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select';
 import { ProductSelectorEdit } from '@/app/admin/components/product-selector-edit';
 import toast from 'react-hot-toast';
-import { OrderItemWithProduct } from '@/@types/orders';
+import { OrderItem, OrderItemWithProduct } from '@/@types/orders';
 import { Api } from '@/shared/services/api-clients';
+import { Product } from '@/@types/product-types';
 
 type OrderDetails = OrderUpdateFormValues & {
     id: number;
@@ -79,20 +80,18 @@ export default function EditOrderPage() {
     useEffect(() => {
         const fetchOrder = async () => {
             try {
-                const orderRes = await fetch(`/api/admin/orders/${id}`);
-                if (!orderRes.ok) throw new Error('Ошибка загрузки заказа');
-                const orderData = await orderRes.json();
+                const orderData = await Api.orders.getOrder(Number(id));
+
                 if (orderData.userId) {
                     const userData = await Api.users.getUser(orderData.userId);
                     setOrderUser(userData);
                 }
-                const productsRes = fetch(`/api/admin/orders/${id}/products`);
-                if (!(await productsRes).ok) throw new Error('Ошибка загрузки данных');
-                const productsData = await (await productsRes).json();
+
+                const productsData = await Api.products.getProducts();
 
                 const existingItems = orderData.items || [];
-                const hasInvalidItems = existingItems.some((item: OrderItemWithProduct) => item.productId == null);
-                const allProductsExist = !hasInvalidItems && existingItems.every((item: OrderItemWithProduct) =>
+                const hasInvalidItems = existingItems.some((item: OrderItem) => item.productId == null);
+                const allProductsExist = !hasInvalidItems && existingItems.every((item: OrderItem) =>
                     productsData.some((p: Product) => p.id === item.productId)
                 );
 
@@ -118,7 +117,6 @@ export default function EditOrderPage() {
 
                 reset({
                     ...orderData,
-                    deliveryPrice: orderData.deliveryCost,
                     deliveryTime,
                     items: orderData.items.map((item: OrderItemWithProduct) => ({
                         ...item,
@@ -131,7 +129,17 @@ export default function EditOrderPage() {
                 });
                 setDeliveryType(orderData.deliveryType);
                 setPaymentMethod(orderData.paymentMethod);
-                setOrder(orderData);
+                setOrder({
+                    ...orderData,
+                    deliveryTime,
+                    items: orderData.items.map((item) => ({
+                        productId: item.productId,
+                        quantity: item.productQuantity,
+                        productName: item.productName,
+                        productPrice: item.productPrice,
+                        stockQuantity: item.product.stockQuantity,
+                    })),
+                });
                 setSpentBonuses(Math.abs(orderData.bonusDelta));
                 setBonusOption(orderData.bonusDelta >= 0 ? 'earn' : 'spend');
                 setFormLoading(false);
@@ -226,7 +234,7 @@ export default function EditOrderPage() {
         0
     );
 
-    const onSubmit = async (data: z.infer<typeof OrderUpdateFormSchema>) => {
+    const onSubmit = async (data: OrderUpdateFormValues) => {
         try {
             setLoading(true);
             if (!data.items || data.items.some(item => item.productId < 1) || data.items.length === 0) {
@@ -253,19 +261,7 @@ export default function EditOrderPage() {
                 }))
             };
 
-            const res = await fetch(`/api/admin/orders/${id}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(payload),
-            });
-
-            if (!res.ok) {
-                const err = await res.json();
-                console.error('Ошибка:', err);
-                return;
-            }
+            await Api.orders.updateOrder(Number(id), payload);
             toast.success('Заказ успешно обновлён!', { icon: '✅' });
             setLoading(false);
             await new Promise(resolve => setTimeout(resolve, 2000));
@@ -472,7 +468,7 @@ export default function EditOrderPage() {
                                         />
 
                                         <FormInput
-                                            name="deliveryPrice"
+                                            name="deliveryCost"
                                             label="Стоимость доставки"
                                             type="number"
                                             placeholder="Введите стоимость"

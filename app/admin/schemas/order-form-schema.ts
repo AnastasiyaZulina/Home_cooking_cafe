@@ -9,7 +9,7 @@ export const OrderFormSchema = z.object({
   address: z.string().max(255, { message: 'Адрес не должен превышать 255 символов' }).optional().nullable(),
   deliveryType: z.nativeEnum(DeliveryType),
   paymentMethod: z.nativeEnum(PaymentMethod),
-  deliveryPrice: z.number().optional().default(0),
+  deliveryCost: z.number().optional().default(0),
   paymentId: z.string().max(100, { message: 'ID платежа не должен превышать 100 символов' }).optional().nullable(),
   status: z.nativeEnum(OrderStatus, {message: "Выберите статус заказа"}),
   comment: z.string().optional().nullable(),
