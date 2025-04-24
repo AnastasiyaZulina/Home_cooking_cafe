@@ -50,14 +50,6 @@ export async function PATCH(
 
   try {
     const body = await request.json();
-    
-    // Валидация данных
-    if (!body.feedbackStatus || !['PENDING', 'APPROVED', 'REJECTED'].includes(body.feedbackStatus)) {
-      return NextResponse.json(
-        { error: "Некорректный статус отзыва" },
-        { status: 400 }
-      );
-    }
 
     const updatedFeedback = await prisma.feedback.update({
       where: { id: Number(id) },

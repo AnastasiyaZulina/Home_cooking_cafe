@@ -30,6 +30,7 @@ import dayjs from 'dayjs';
 import updateLocale from 'dayjs/plugin/updateLocale';
 import { type MRT_ColumnFiltersState } from 'material-react-table';
 import { Api } from '@/shared/services/api-clients';
+import { Feedback, FeedbackFormValues } from '@/@types/feedback';
 
 dayjs.extend(updateLocale);
 dayjs.locale('ru');
@@ -39,26 +40,6 @@ dayjs.updateLocale('ru', {
     timePicker: 'HH:mm',
   },
 });
-
-type Feedback = {
-  id: number;
-  userId: number;
-  user: {
-    name: string;
-    email: string;
-  };
-  feedbackText: string;
-  feedbackStatus: 'PENDING' | 'APPROVED' | 'REJECTED';
-  isVisible: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-};
-
-type FeedbackFormValues = {
-  feedbackText: string;
-  feedbackStatus: 'PENDING' | 'APPROVED' | 'REJECTED';
-  isVisible: boolean;
-};
 
 const FeedbackTable = () => {
   const queryClient = useQueryClient();

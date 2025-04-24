@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
 import { Button, FormInput } from "@/shared/components";
 import { z } from "zod";
+import { Api } from "@/shared/services/api-clients";
 
 const resetPasswordSchema = z.object({
     password: z.string()
@@ -37,18 +38,22 @@ export default function ResetPasswordForm() {
 
   const onSubmit = async (data: TResetPasswordValues) => {
     try {
-      const res = await fetch("/api/auth/reset-password/confirm", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token, password: data.password }),
-      });
-
-      if (!res.ok) throw new Error();
-
+      if (!token) {
+        toast.error("Недействительная ссылка для сброса пароля");
+        return;
+      }
+      
+      await Api.reset.confirmPasswordReset(data.password, token);
+      
       toast.success("Пароль успешно изменен!");
       setTimeout(() => router.push("/"), 2000);
     } catch (error) {
-      toast.error("Ошибка при смене пароля. Проверьте срок действия ссылки.");
+      const errorMessage = error instanceof Error && error.message 
+        ? error.message
+        : "Ошибка при смене пароля. Проверьте срок действия ссылки.";
+      
+      toast.error(errorMessage);
+      console.error("Password reset error:", error);
     }
   };
 

@@ -64,7 +64,8 @@ export async function POST(request: Request) {
       },
     });
 
-    const token = randomBytes(32).toString("hex");
+    if (isVerified) {
+    const token = randomBytes(16).toString("hex");
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 минут
     await prisma.passwordResetToken.upsert({
       where: { userId: newUser.id },
@@ -79,8 +80,7 @@ export async function POST(request: Request) {
         userId: newUser.id,
       },
     });
-    if (isVerified) {
-      const resetLink = `https://skatert-samobranka.shop/api/auth/reset-password?token=${token}`;
+      const resetLink = `https://skatert-samobranka.shop/reset-password?token=${token}`;
       await sendEmail(newUser.email, 'Скатерть-самобранка | 📝 Сброс пароля', Promise.resolve(ResetPasswordTemplate({ resetLink })));
     }
     else {

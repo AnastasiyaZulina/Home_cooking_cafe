@@ -1,11 +1,6 @@
 // services/categories.ts
+import { Category } from '@prisma/client';
 import { axiosInstance } from './instance';
-
-export type Category = {
-  id: number;
-  name: string;
-  isAvailable: boolean;
-};
 
 // Получить все категории
 export const getCategories = async () => {
@@ -14,10 +9,8 @@ export const getCategories = async () => {
 };
 
 // Создать новую категорию
-export const createCategory = async (name: string) => {
-  const { data } = await axiosInstance.post<Category>('/admin/categories', {
-    name,
-  });
+export const createCategory = async (payload: { name: string; isAvailable: boolean }) => {
+  const { data } = await axiosInstance.post<Category>('/admin/categories', payload);
   return data;
 };
 

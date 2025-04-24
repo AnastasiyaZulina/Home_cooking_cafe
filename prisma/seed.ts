@@ -21,7 +21,7 @@ async function up() {
             },
             {
                 name: 'Тест',
-                email: 'viktor.bahamut@bk.ru',
+                email: 'nzulina2016@bk.ru',
                 password: hashSync('199School', 10),
                 verified: new Date(),
                 role: 'USER',

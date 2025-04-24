@@ -14,7 +14,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false });
     }
 
-    const token = randomBytes(32).toString("hex");
+    const token = randomBytes(16).toString("hex");
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 минут
 
     // Обновляем или создаем новый токен

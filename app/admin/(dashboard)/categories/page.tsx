@@ -12,12 +12,7 @@ import { Edit, Delete, Add } from '@mui/icons-material';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { Api } from '@/shared/services/api-clients';
-
-type Category = {
-  id: number;
-  name: string;
-  isAvailable: boolean;
-};
+import { Category } from '@prisma/client';
 
 const CategoryTable = () => {
   const queryClient = useQueryClient();
@@ -32,26 +27,39 @@ const CategoryTable = () => {
 
   // Мутация для обновления
   const { mutateAsync: updateCategory } = useMutation({
-    mutationFn: ({ id, name }: { id: number; name: string }) =>
-      Api.categories.updateCategory(id, { name }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['categories'] }),
+    mutationFn: ({ id, data }: { id: number; data: Partial<Category> }) => 
+      Api.categories.updateCategory(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['categories'] });
+      toast.success('Категория успешно обновлена');
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Ошибка при обновлении категории');
+    },
   });
 
   // Мутация для создания
   const { mutateAsync: createCategory } = useMutation({
-    mutationFn: Api.categories.createCategory,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['categories'] }),
+    mutationFn: (data: { name: string; isAvailable: boolean }) => 
+      Api.categories.createCategory(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['categories'] });
+      toast.success('Категория успешно создана');
+    },
     onError: (error: Error) => {
-      toast.error(error.message);
+      toast.error(error.message || 'Ошибка при создании категории');
     },
   });
 
   // Мутация для удаления
   const { mutateAsync: deleteCategory } = useMutation({
-    mutationFn: Api.categories.deleteCategory,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['categories'] }),
-    onError: (error) => {
-      toast.error(error.message || 'Произошла ошибка при удалении');
+    mutationFn: (id: number) => Api.categories.deleteCategory(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['categories'] });
+      toast.success('Категория успешно удалена');
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Ошибка при удалении категории');
     },
   });
 
@@ -59,14 +67,8 @@ const CategoryTable = () => {
   const handleDeleteCategory = async (row: MRT_Row<Category>) => {
     if (window.confirm(`Вы уверены, что хотите удалить категорию "${row.original.name}"? Будут удалены все товары в этой категории!`)) {
       try {
-        await toast.promise(
-          deleteCategory(row.original.id),
-          {
-            loading: 'Удаление категории...',
-            success: 'Категория успешно удалена!',
-            error: (err) => err.message || 'Ошибка при удалении',
-          }
-        );
+        await 
+          deleteCategory(row.original.id);
       } catch (error) {
         console.error('[ERROR]:', error);
         throw error;
@@ -74,28 +76,19 @@ const CategoryTable = () => {
     }
   };
 
-  const handleCreateCategory: MRT_TableOptions<Category>['onCreatingRowSave'] = async ({ values, table }) => {
+  const handleCreateCategory: MRT_TableOptions<Category>['onCreatingRowSave'] = async ({ values }) => {
     const newValidationErrors = validateCategory(values);
     if (Object.values(newValidationErrors).some(Boolean)) {
       setValidationErrors(newValidationErrors);
-      toast.error('Пожалуйста, исправьте ошибки');
       return;
     }
-    setValidationErrors({});
-    
     try {
-      await toast.promise(
-        createCategory(values.name),
-        {
-          loading: 'Создание категории...',
-          success: 'Категория успешно создана!',
-          error: (err) => err.message || 'Ошибка при создании',
-        }
-      );
-      table.setCreatingRow(null);
+      await createCategory({
+        name: values.name,
+        isAvailable: values.isAvailable
+      });
     } catch (error) {
       console.error('[ERROR]:', error);
-      throw error;
     }
   };
 
@@ -117,23 +110,18 @@ const CategoryTable = () => {
     const newValidationErrors = validateCategory(values);
     if (Object.values(newValidationErrors).some(Boolean)) {
       setValidationErrors(newValidationErrors);
-      toast.error('Пожалуйста, исправьте ошибки');
       return;
     }
-    setValidationErrors({});
-    
     try {
-      await toast.promise(
-        updateCategory({ id: row.original.id, name: values.name }),
-        {
-          loading: 'Обновление категории...',
-          success: 'Категория успешно обновлена!',
-          error: (err) => err.message || 'Ошибка при обновлении',
+      await updateCategory({
+        id: row.original.id,
+        data: {
+          name: values.name,
+          isAvailable: values.isAvailable
         }
-      );
+      });
     } catch (error) {
       console.error('[ERROR]:', error);
-      throw error;
     }
   };
 

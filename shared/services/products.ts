@@ -1,28 +1,8 @@
-import { Category } from '@prisma/client';
 import { axiosInstance } from './instance';
-
-export type Product = {
-    id: number;
-    name: string;
-    image: string;
-    description?: string;
-    price: number;
-    weight: number;
-    eValue: number;
-    isAvailable: boolean;
-    stockQuantity: number;
-    createdAt: string;
-    updatedAt: string;
-    category: Category;
-};
+import { Product } from '@/@types/product-types';
 
 export const getProducts = async () => {
     const { data } = await axiosInstance.get<Product[]>('/admin/products');
-    return data;
-};
-
-export const getCategories = async () => {
-    const { data } = await axiosInstance.get<Category[]>('/admin/categories');
     return data;
 };
 

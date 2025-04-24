@@ -11,6 +11,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/shared/constants/auth-options';
 import * as bcrypt from 'bcrypt';
 import { chooseAndSendEmail } from '@/shared/components/shared/email-templates/choose-and-send-email';
+import { FeedbackWithUser } from '@/@types/feedback';
 
 async function clearCart(cartId: number) {
   await prisma.cartItem.deleteMany({
@@ -389,15 +390,6 @@ export async function registerUser(body: Prisma.UserCreateInput) {
     throw error;
   }
 }
-
-export type FeedbackWithUser = {
-  id: number;
-  feedbackText: string;
-  createdAt: Date;
-  user: {
-    name: string;
-  };
-};
 
 export async function createFeedback(feedbackText: string) {
   try {

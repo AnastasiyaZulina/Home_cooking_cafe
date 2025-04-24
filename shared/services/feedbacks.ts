@@ -1,19 +1,5 @@
+import { Feedback } from '@/@types/feedback';
 import { axiosInstance } from './instance';
-
-export type Feedback = {
-  id: number;
-  userId: number;
-  user: {
-    name: string;
-    email: string;
-  };
-  feedbackText: string;
-  feedbackStatus: 'PENDING' | 'APPROVED' | 'REJECTED';
-  isVisible: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-};
-
 
 export const getFeedbacks = async () => {
   const { data } = await axiosInstance.get<Feedback[]>('/admin/feedbacks');

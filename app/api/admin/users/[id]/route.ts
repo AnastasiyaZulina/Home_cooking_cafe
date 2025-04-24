@@ -112,7 +112,7 @@ export async function DELETE(
         updateData.verified = isVerified ? new Date() : null;
       }
   
-      // 3. Обновляем только если есть изменения
+      // Обновляем только если есть изменения
       const updatedUser = await prisma.user.update({
         where: { id: Number(id) },
         data: updateData,

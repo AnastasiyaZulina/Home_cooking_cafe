@@ -3,6 +3,8 @@ import * as auth from './auth';
 import * as categories from './categories';
 import * as feedbacks from './feedbacks';
 import * as products from './products';
+import * as users from './users';
+import * as reset from './reset-password';
 
 export const Api = {
   cart,
@@ -10,4 +12,6 @@ export const Api = {
   categories,
   feedbacks,
   products,
+  users,
+  reset,
 };

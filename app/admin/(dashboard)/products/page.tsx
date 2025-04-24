@@ -31,38 +31,9 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
 import Image from 'next/image';
 import { Api } from '@/shared/services/api-clients';
+import { Category } from '@prisma/client';
+import { Product, ProductFormValues } from '@/@types/product-types';
 
-type Category = {
-  id: number;
-  name: string;
-};
-
-type Product = {
-  id: number;
-  name: string;
-  image: string;
-  description?: string;
-  price: number;
-  weight: number;
-  eValue: number;
-  isAvailable: boolean;
-  stockQuantity: number;
-  createdAt: string;
-  updatedAt: string;
-  category: Category;
-};
-
-type ProductFormValues = {
-  name: string;
-  description: string;
-  price: number;
-  weight: number;
-  eValue: number;
-  isAvailable: boolean;
-  stockQuantity: number;
-  categoryId: number;
-  image?: File;
-};
 
 const ProductTable = () => {
   const queryClient = useQueryClient();
@@ -76,6 +47,7 @@ const ProductTable = () => {
   const [editPreviewUrl, setEditPreviewUrl] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [newStockQuantity, setNewStockQuantity] = useState<number>(0);
+  const [previewContentType, setPreviewContentType] = useState<'image' | 'description' | null>(null);
 
   const [createFormValues, setCreateFormValues] = useState<Omit<ProductFormValues, 'image'>>({
     name: '',
@@ -106,7 +78,7 @@ const ProductTable = () => {
 
   const { data: categories } = useQuery<Category[]>({
     queryKey: ['categories'],
-    queryFn: Api.products.getCategories,
+    queryFn: Api.categories.getCategories,
   });
 
   useEffect(() => {
@@ -163,7 +135,7 @@ const ProductTable = () => {
   });
 
   const { mutateAsync: updateProduct } = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: FormData }) => 
+    mutationFn: ({ id, data }: { id: number; data: FormData }) =>
       Api.products.updateProduct(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
@@ -445,52 +417,52 @@ const ProductTable = () => {
 
   const validateForm = (values: Omit<ProductFormValues, 'image'>) => {
     const errors: Partial<Record<keyof typeof values, string>> = {};
-  
+
     // Name validation (max 50 chars as per DB schema)
     if (!values.name.trim()) {
       errors.name = 'Обязательное поле';
     } else if (values.name.length > 50) {
       errors.name = 'Название не должно превышать 50 символов';
     }
-  
+
     // Price validation (must be positive integer)
     if (values.price <= 0) {
       errors.price = 'Цена должна быть больше 0';
     } else if (!Number.isInteger(values.price)) {
       errors.price = 'Цена должна быть целым числом';
     }
-  
+
     // Weight validation (must be non-negative integer with default 0)
     if (values.weight < 0) {
       errors.weight = 'Вес не может быть отрицательным';
     } else if (!Number.isInteger(values.weight)) {
       errors.weight = 'Вес должен быть целым числом';
     }
-  
+
     // Energy value validation (must be non-negative integer with default 0)
     if (values.eValue < 0) {
       errors.eValue = 'Энергетическая ценность не может быть отрицательной';
     } else if (!Number.isInteger(values.eValue)) {
       errors.eValue = 'Энергетическая ценность должна быть целым числом';
     }
-  
+
     // Stock quantity validation (must be non-negative integer with default 0)
     if (values.stockQuantity < 0) {
       errors.stockQuantity = 'Количество не может быть отрицательным';
     } else if (!Number.isInteger(values.stockQuantity)) {
       errors.stockQuantity = 'Количество должно быть целым числом';
     }
-  
+
     // Category validation (required relation)
     if (values.categoryId === 0) {
       errors.categoryId = 'Выберите категорию';
     }
-  
+
     // Description is optional but if provided should be validated
     if (values.description && values.description.length > 65535) { // Typical TEXT field limit
       errors.description = 'Описание слишком длинное';
     }
-  
+
     return errors;
   };
 
@@ -524,6 +496,23 @@ const ProductTable = () => {
       { accessorKey: 'weight', header: 'Вес (г)' },
       { accessorKey: 'eValue', header: 'Энерг. ценность' },
       {
+        accessorKey: 'description',
+        header: 'Описание',
+        Cell: ({ cell }) => (
+          <Button
+            variant="outlined"
+            onClick={() => {
+              setSelectedProduct(cell.row.original);
+              setPreviewContentType('description');
+              setDetailsDialogOpen(true);
+            }}
+            disabled={!cell.getValue<string>()}
+          >
+            {cell.getValue<string>() ? 'Посмотреть' : 'Нет описания'}
+          </Button>
+        ),
+      },
+      {
         accessorKey: 'image',
         header: 'Изображение',
         size: 200,
@@ -531,10 +520,8 @@ const ProductTable = () => {
           <Button
             variant="outlined"
             onClick={() => {
-              setSelectedProduct({
-                ...cell.row.original,
-                image: cell.getValue() as string,
-              });
+              setSelectedProduct(cell.row.original);
+              setPreviewContentType('image');
               setDetailsDialogOpen(true);
             }}
           >
@@ -934,27 +921,72 @@ const ProductTable = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Image Preview Dialog */}
-      <Dialog open={detailsDialogOpen} onClose={() => setDetailsDialogOpen(false)}>
-        <DialogTitle>Изображение товара</DialogTitle>
-        <DialogContent>
-          {selectedProduct && (
-            <Image
-              src={selectedProduct.image}
-              alt={selectedProduct.name}
-              fill
-              style={{
-                objectFit: 'contain',
-                maxHeight: '70vh'
-              }}
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            />
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDetailsDialogOpen(false)}>Закрыть</Button>
-        </DialogActions>
-      </Dialog>
+      {/* Preview Dialog */}
+<Dialog
+  open={detailsDialogOpen}
+  onClose={() => setDetailsDialogOpen(false)}
+  maxWidth="md"
+  fullWidth
+>
+  <DialogTitle>
+    {previewContentType === 'image' 
+      ? 'Изображение товара' 
+      : 'Описание товара'}
+  </DialogTitle>
+  <DialogContent 
+    sx={{ 
+      p: 3,
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center'
+    }}
+  >
+    {previewContentType === 'image' ? (
+      <Box
+        sx={{
+          position: 'relative',
+          width: '100%',
+          height: '70vh',
+          maxHeight: '600px',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center'
+        }}
+      >
+        {selectedProduct?.image && (
+          <Image
+            src={selectedProduct.image}
+            alt={selectedProduct.name}
+            fill
+            style={{
+              objectFit: 'contain',
+              padding: '16px',
+            }}
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          />
+        )}
+      </Box>
+    ) : (
+      <Box sx={{
+        p: 3,
+        border: '1px solid #eee',
+        borderRadius: 1,
+        bgcolor: '#f9f9f9',
+        width: '100%',
+        maxWidth: '800px',
+        maxHeight: '400px',
+        overflow: 'auto'
+      }}>
+        <Typography variant="body1" whiteSpace="pre-wrap">
+          {selectedProduct?.description || 'Описание отсутствует'}
+        </Typography>
+      </Box>
+    )}
+  </DialogContent>
+  <DialogActions>
+    <Button onClick={() => setDetailsDialogOpen(false)}>Закрыть</Button>
+  </DialogActions>
+</Dialog>
     </LocalizationProvider>
   );
 };

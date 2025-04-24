@@ -31,6 +31,9 @@ import dayjs from 'dayjs';
 import updateLocale from 'dayjs/plugin/updateLocale';
 import { useSession } from 'next-auth/react';
 import { type MRT_ColumnFiltersState } from 'material-react-table';
+import { User } from '@prisma/client';
+import { UserFormValues } from '@/@types/user';
+import { Api } from '@/shared/services/api-clients';
 
 dayjs.extend(updateLocale);
 dayjs.locale('ru');
@@ -40,34 +43,6 @@ dayjs.updateLocale('ru', {
     timePicker: 'HH:mm',
   },
 });
-
-type User = {
-  id: number;
-  name: string;
-  email: string;
-  bonusBalance: number;
-  phone?: string;
-  role: 'USER' | 'ADMIN' | 'SUPERADMIN';
-  provider?: string;
-  providerId?: string;
-  verified?: Date;
-  createdAt: Date;
-  updatedAt: Date;
-};
-
-type UserFormValues = {
-  name: string;
-  email: string;
-  bonusBalance: number;
-  phone?: string;
-  role: 'USER' | 'ADMIN' | 'SUPERADMIN';
-  isVerified: boolean;
-};
-
-type DateRange = {
-  from?: string;
-  to?: string;
-};
 
 const UserTable = () => {
   const queryClient = useQueryClient();
@@ -79,24 +54,9 @@ const UserTable = () => {
 
   // Fetch users data with filters
   const { data: users, isLoading } = useQuery<User[]>({
-    queryKey: ['users', columnFilters],
-    queryFn: async () => {
-      const params = new URLSearchParams();
-
-      columnFilters.forEach(filter => {
-        if (filter.id === 'createdAt' || filter.id === 'updatedAt') {
-          const value = filter.value as DateRange;
-
-          if (value?.from) params.append(`${filter.id}[gte]`, value.from);
-          if (value?.to) params.append(`${filter.id}[lte]`, value.to);
-        } else {
-          params.append(filter.id, String(filter.value));
-        }
-      });
-
-      const response = await fetch(`/api/admin/users?${params.toString()}`);
-      if (!response.ok) throw new Error('Failed to fetch users');
-      return response.json();
+    queryKey: ['users'],
+    queryFn: () => {
+      return Api.users.getUsers();
     },
   });
 
@@ -126,71 +86,34 @@ const UserTable = () => {
     isVerified: false,
   });
 
-  // Mutations
   const { mutateAsync: deleteUser } = useMutation({
-    mutationFn: async (id: number) => {
-      const response = await fetch(`/api/admin/users/${id}`, {
-        method: 'DELETE',
-      });
-      if (!response.ok) throw new Error('Failed to delete user');
-      return response.json();
-    },
+    mutationFn: (id: number) => Api.users.deleteUser(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
       toast.success('Пользователь успешно удален');
     },
   });
 
-  const { mutateAsync: createUser } = useMutation({
-    mutationFn: async (data: UserFormValues) => {
-      const response = await fetch('/api/admin/users', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...data,
-          phone: data.phone && data.phone !== '+7' ? data.phone.trim() : null,
-          verified: data.isVerified ? new Date() : null
-        }),
-      });
-      if (!response.ok) throw new Error('Failed to create user');
-      return response.json();
+  const { mutateAsync: updateUser } = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Partial<UserFormValues> }) =>
+      Api.users.updateUser(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      toast.success('Пользователь обновлен');
     },
+  });
+
+
+  const { mutateAsync: createUser } = useMutation({
+    mutationFn: (data: UserFormValues) => Api.users.createUser(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
       toast.success('Пользователь успешно создан');
     },
   });
 
-  const { mutateAsync: updateUser } = useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: Partial<UserFormValues> }) => {
-      const response = await fetch(`/api/admin/users/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...data,
-          phone: data.phone && data.phone !== '+7' ? data.phone.trim() : null,
-          verified: data.isVerified ? new Date() : null
-        }),
-      });
-      if (!response.ok) throw new Error('Failed to update user');
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['users'] });
-      toast.success('Пользователь успешно обновлен');
-    },
-  });
-
   const { mutateAsync: resetPassword } = useMutation({
-    mutationFn: async (email: string) => {
-      const response = await fetch('/api/auth/reset-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-      });
-      if (!response.ok) throw new Error('Ошибка при сбросе пароля');
-      return response.json();
-    },
+    mutationFn: (email: string) => Api.reset.requestPasswordReset(email),
     onSuccess: () => {
       toast.success('Ссылка для сброса пароля отправлена на почту пользователя');
     },

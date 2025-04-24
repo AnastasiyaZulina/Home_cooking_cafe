@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Button, FormInput, Title } from "@/shared/components";
 import toast from "react-hot-toast";
 import { z } from "zod";
+import { Api } from "@/shared/services/api-clients";
 
 const forgotPasswordSchema = z.object({
   email: z.string().email('Введите корректную почту').max(100, 'Email не должен превышать 100 символов'),
@@ -26,22 +27,16 @@ export const ForgotPasswordForm: React.FC<Props> = ({ onClose, onBack }) => {
 
   const onSubmit = async (data: TForgotPasswordValues) => {
     try {
-      const res = await fetch('/api/auth/reset-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: data.email }),
-      });
-  
-      const responseData = await res.json();
-  
-      if (!res.ok || !responseData.success) {
-        throw new Error(responseData.error || 'Ошибка запроса');
-      }
-  
+      await Api.reset.requestPasswordReset(data.email);
+      
       toast.success("Письмо с инструкциями отправлено на вашу почту");
       onClose?.();
     } catch (error) {
-      toast.error("Произошла ошибка при отправке письма");
+      toast.error(
+        error instanceof Error 
+          ? error.message 
+          : "Произошла ошибка при отправке письма"
+      );
       console.error("Ошибка при отправке письма:", error);
     }
   };
