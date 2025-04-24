@@ -25,6 +25,8 @@ import { useRouter } from 'next/navigation';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import updateLocale from 'dayjs/plugin/updateLocale';
 import dayjs from 'dayjs';
+import { Order, OrderItem } from '@/@types/orders';
+import { Api } from '@/shared/services/api-clients';
 
 dayjs.extend(updateLocale);
 dayjs.locale('ru');
@@ -34,33 +36,6 @@ dayjs.updateLocale('ru', {
     timePicker: 'HH:mm',
   },
 });
-
-type Order = {
-  id: number;
-  status: 'PENDING' | 'SUCCEEDED' | 'READY' | 'DELIVERY' | 'CANCELLED' | 'COMPLETED';
-  paymentMethod: 'ONLINE' | 'OFFLINE';
-  deliveryType: 'PICKUP' | 'DELIVERY';
-  deliveryTime: string;
-  deliveryCost?: number;
-  userId?: number;
-  bonusDelta: number;
-  name: string;
-  address?: string;
-  email: string;
-  phone: string;
-  comment?: string;
-  paymentId?: string;
-  createdAt: string;
-  updatedAt: string;
-  items: OrderItem[];
-};
-
-type OrderItem = {
-  productId: number;
-  productName: string;
-  productQuantity: number;
-  productPrice: number;
-};
 
 const getStatusText = (
   status: Order['status'],
@@ -92,25 +67,15 @@ const OrderTable = () => {
   const router = useRouter();
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
-  const { data, isLoading } = useQuery<Order[]>({
+  const { data: orders, isLoading } = useQuery<Order[]>({
     queryKey: ['orders'],
-    queryFn: async () => {
-      const response = await fetch('/api/admin/orders');
-      return response.json();
+    queryFn: () => {
+      return Api.orders.getOrders();
     },
   });
 
   const { mutateAsync: deleteOrder } = useMutation({
-    mutationFn: async (id: number) => {
-      const response = await fetch(`/api/admin/orders/${id}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        throw new Error('Ошибка при удалении заказа');
-      }
-      return response.json();
-    },
+    mutationFn: (id: number) => Api.orders.deleteOrder(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['orders'] });
     },
@@ -273,7 +238,7 @@ const OrderTable = () => {
 
   const table = useMaterialReactTable({
     columns,
-    data: data || [],
+    data: orders || [],
     state: { isLoading },
     enableEditing: true,
     initialState: { columnOrder: columns.map(col => col.accessorKey as string) },
@@ -290,7 +255,7 @@ const OrderTable = () => {
     renderRowActions: ({ row }) => (
       <Box sx={{ display: 'flex', gap: '8px' }}>
         <Tooltip title="Редактировать">
-          <IconButton onClick={() => router.push(`/admin/orders/${row.original.id}/edit`)}>
+          <IconButton onClick={() => router.push(`/admin/orders/${row.original.id}`)}>
             <Edit />
           </IconButton>
         </Tooltip>

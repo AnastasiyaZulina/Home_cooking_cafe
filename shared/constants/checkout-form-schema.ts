@@ -2,7 +2,7 @@ import { DeliveryType, PaymentMethod } from '@prisma/client';
 import { z } from 'zod';
 
 export const CheckoutFormSchema = z.object({
-    firstname: z.string()
+    name: z.string()
         .min(2, 'Имя должно содержать не менее двух символов')
         .max(50, 'Имя не должно превышать 50 символов'),
     email: z.string()

@@ -104,7 +104,7 @@ function CheckoutContent() {
         resolver: zodResolver(CheckoutFormSchema),
         defaultValues: {
             email: '',
-            firstname: '',
+            name: '',
             phone: '',
             address: '',
             comment: '',
@@ -118,9 +118,9 @@ function CheckoutContent() {
     React.useEffect(() => {
         async function fetchUserInfo() {
             const data = await Api.auth.getMe();
-            const firstName = data.name;
+            const name = data.name;
 
-            form.setValue('firstname', firstName);
+            form.setValue('name', name);
             form.setValue('email', data.email);
             form.setValue('phone', data.phone || '');
         }

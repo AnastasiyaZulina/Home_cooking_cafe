@@ -1,0 +1,32 @@
+import { Order } from '@/@types/orders';
+import { axiosInstance } from './instance';
+import { OrderFormValues } from '@/app/admin/schemas/order-form-schema';
+
+export const getOrders = async () => {
+  const { data } = await axiosInstance.get<Order[]>('/admin/orders');
+  return data;
+};
+
+export const getOrder = async (id: number) => {
+  const { data } = await axiosInstance.get<Order>(`/admin/orders/${id}`);
+  return data;
+};
+
+export const deleteOrder = async (id: number) => {
+  const { data } = await axiosInstance.delete(`/admin/orders/${id}`);
+  return data;
+};
+
+export const createOrder = async (orderData: OrderFormValues) => {
+    const { data } = await axiosInstance.post<Order>('/admin/orders', {
+      ...orderData,
+      items: orderData.items as Array<{
+        productId: number;
+        quantity: number;
+        productName: string;
+        productPrice: number;
+        stockQuantity: number;
+      }>
+    });
+    return data;
+  };

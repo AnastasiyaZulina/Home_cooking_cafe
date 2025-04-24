@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
-import { DeliveryType, PaymentMethod } from '@prisma/client';
+import { DeliveryType, PaymentMethod, User } from '@prisma/client';
 import { Controller, useFieldArray, useForm } from 'react-hook-form';
 import { Button } from '@/shared/components/ui/button';
 import * as RadioGroup from '@radix-ui/react-radio-group';
@@ -18,22 +18,8 @@ import { ProductSelector } from '@/app/admin/components/product-selector';
 import { OrderSummary } from '@/app/admin/components/order-summary';
 import { OrderFormSchema, OrderFormValues } from '@/app/admin/schemas/order-form-schema';
 import toast from 'react-hot-toast';
-
-type Product = {
-  id: number;
-  name: string;
-  stockQuantity: number;
-  price: number;
-};
-
-type User = {
-  id: number;
-  name: string;
-  email: string;
-  phone?: string;
-  bonusBalance: number;
-  verified?: Date | null;
-};
+import { Api } from '@/shared/services/api-clients';
+import { Product } from '@/@types/product-types';
 
 const CreateOrderPage = () => {
   const [deliveryType, setDeliveryType] = useState<DeliveryType>('DELIVERY');
@@ -78,30 +64,27 @@ const CreateOrderPage = () => {
   });
 
   useEffect(() => {
-    const fetchProducts = async () => {
+    const fetchAvailableProducts = async () => {
       try {
-        const response = await fetch('/api/admin/orders/products');
-        if (!response.ok) throw new Error('Ошибка загрузки товаров');
-        const data = await response.json();
-        setProducts(data);
+        const products = await Api.products.getAvailableProducts();
+        setProducts(products);
       } catch (error) {
-        console.error('Ошибка:', error);
+        console.error('Ошибка загрузки товаров:', error);
       }
     };
-    fetchProducts();
+    fetchAvailableProducts();
   }, []);
 
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await fetch('/api/admin/users');
-        if (!response.ok) throw new Error('Ошибка загрузки пользователей');
-        const data = await response.json();
-        setUsers(data);
+        const users = await Api.users.getUsers();
+        setUsers(users);
       } catch (error) {
         console.error('Ошибка загрузки пользователей:', error);
       }
     };
+
     fetchUsers();
   }, []);
 
@@ -134,44 +117,35 @@ const CreateOrderPage = () => {
 
   const onSubmit = async (data: OrderFormValues) => {
     setLoading(true);
-    const payload = {
-      ...data,
-      deliveryTime: new Date(data.deliveryTime),
-      bonusDelta: data.userId === undefined || data.userId === null
-        ? 0
-        : bonusOption === 'earn'
-          ? Math.round(totalAmount * GLOBAL_CONSTANTS.BONUS_MULTIPLIER)
-          : -spentBonuses,
-      items: data.items.map(item => ({
-        productId: item.productId,
-        quantity: item.quantity,
-        productName: item.productName,
-        productPrice: item.productPrice,
-        stockQuantity: item.stockQuantity
-      }))
-    };
 
-    console.log('Order data:', payload);
     try {
-      const res = await fetch('/api/admin/orders', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      });
-  
-      if (!res.ok) {
-        const err = await res.json();
-        console.error('Ошибка:', err);
-        return;
-      }
+      const payload = {
+        ...data,
+        deliveryTime: new Date(data.deliveryTime),
+        bonusDelta: data.userId === undefined || data.userId === null
+          ? 0
+          : bonusOption === 'earn'
+            ? Math.round(totalAmount * GLOBAL_CONSTANTS.BONUS_MULTIPLIER)
+            : -spentBonuses,
+        items: data.items.map(item => ({
+          productId: item.productId,
+          quantity: item.quantity,
+          productName: item.productName,
+          productPrice: item.productPrice,
+          stockQuantity: item.stockQuantity
+        }))
+      };
+
+      await Api.orders.createOrder(payload as OrderFormValues);
       toast.success('Заказ успешно оформлен!', { icon: '✅' });
-      setLoading(false);
+
       await new Promise(resolve => setTimeout(resolve, 2000));
       location.href = '/admin/orders';
-    } catch (err) {
-      console.error('Ошибка при отправке заказа:', err);
+
+    } catch (error) {
+      console.error('ошибка:', error);
+    } finally {
+      setLoading(false);
     }
   };
 

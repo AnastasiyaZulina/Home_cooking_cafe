@@ -5,6 +5,7 @@ import * as feedbacks from './feedbacks';
 import * as products from './products';
 import * as users from './users';
 import * as reset from './reset-password';
+import * as orders from './orders';
 
 export const Api = {
   cart,
@@ -14,4 +15,5 @@ export const Api = {
   products,
   users,
   reset,
+  orders
 };

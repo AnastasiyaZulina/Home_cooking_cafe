@@ -52,7 +52,6 @@ const UserTable = () => {
   const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>([]);
   const { data: session } = useSession();
 
-  // Fetch users data with filters
   const { data: users, isLoading } = useQuery<User[]>({
     queryKey: ['users'],
     queryFn: () => {
@@ -61,10 +60,9 @@ const UserTable = () => {
   });
 
   const filteredUsers = useMemo(() => {
-    if (session?.user.role === 'SUPERADMIN') {
+    if (session) {
       return users?.filter(u => u.id !== session.user.id);
     }
-    return users;
   }, [users, session]);
 
   // Form states

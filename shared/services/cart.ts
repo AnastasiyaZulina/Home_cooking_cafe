@@ -1,4 +1,3 @@
-import { Cart } from '@prisma/client';
 import { axiosInstance } from './instance';
 import { CartDTO, CreateCartItemValues } from './dto/cart.dto';
 

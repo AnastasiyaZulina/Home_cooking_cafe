@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { DeliveryType, PaymentMethod, OrderStatus } from '@prisma/client';
+import { DeliveryType, PaymentMethod, OrderStatus, Product, User } from '@prisma/client';
 import { Controller, useFieldArray, useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -14,49 +14,13 @@ import { PhoneInput } from '@/shared/components/shared/phone-input';
 import moment from 'moment';
 import dynamic from 'next/dynamic';
 import { GLOBAL_CONSTANTS } from '@/shared/constants';
-import { UserSelect } from '@/app/admin/components/user-select';
 import { OrderSummary } from '@/app/admin/components/order-summary';
 import { OrderUpdateFormSchema, OrderUpdateFormValues } from '@/app/admin/schemas/order-form-schema';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select';
 import { ProductSelectorEdit } from '@/app/admin/components/product-selector-edit';
 import toast from 'react-hot-toast';
-
-type ApiOrderItem = {
-    productId: number;
-    productQuantity: number;
-    product: {
-        stockQuantity: number;
-        name: string;
-        price: number;
-    };
-    productName: string;
-    productPrice: number;
-};
-
-type Product = {
-    id: number;
-    name: string;
-    stockQuantity: number;
-    price: number;
-    isAvailable: boolean;
-};
-
-type OrderItem = {
-    productId: number;
-    quantity: number;
-    productName: string;
-    stockQuantity: number;
-    productPrice: number;
-};
-
-type User = {
-    id: number;
-    name: string;
-    email: string;
-    phone?: string;
-    bonusBalance: number;
-    verified?: Date | null;
-};
+import { OrderItemWithProduct } from '@/@types/orders';
+import { Api } from '@/shared/services/api-clients';
 
 type OrderDetails = OrderUpdateFormValues & {
     id: number;
@@ -68,9 +32,9 @@ export default function EditOrderPage() {
     const [loading, setLoading] = useState(false);
     const [formloading, setFormLoading] = useState(true);
     const [order, setOrder] = useState<OrderDetails | null>(null);
+    const [orderUser, setOrderUser] = useState<User | null>(null);
     const [originalProducts, setOriginalProducts] = useState<Product[]>([]);
     const [currentProducts, setCurrentProducts] = useState<Product[]>([]);
-    const [users, setUsers] = useState<User[]>([]);
     const [bonusOption, setBonusOption] = useState<'earn' | 'spend'>('earn');
     const [spentBonuses, setSpentBonuses] = useState(0);
     const [userBonuses, setUserBonuses] = useState(0);
@@ -97,7 +61,7 @@ export default function EditOrderPage() {
         resolver: zodResolver(OrderUpdateFormSchema),
         defaultValues: {
             status: 'SUCCEEDED',
-            deliveryPrice: 0,
+            deliveryCost: 0,
             deliveryTime: new Date(),
             bonusDelta: 0,
             items: [],
@@ -115,33 +79,31 @@ export default function EditOrderPage() {
     useEffect(() => {
         const fetchOrder = async () => {
             try {
-                const usersRes = await fetch('/api/admin/orders/users');
-                const usersData = await usersRes.json();
-                setUsers(usersData);
-
                 const orderRes = await fetch(`/api/admin/orders/${id}`);
                 if (!orderRes.ok) throw new Error('Ошибка загрузки заказа');
                 const orderData = await orderRes.json();
-
+                if (orderData.userId) {
+                    const userData = await Api.users.getUser(orderData.userId);
+                    setOrderUser(userData);
+                }
                 const productsRes = fetch(`/api/admin/orders/${id}/products`);
                 if (!(await productsRes).ok) throw new Error('Ошибка загрузки данных');
                 const productsData = await (await productsRes).json();
 
                 const existingItems = orderData.items || [];
-                const hasInvalidItems = existingItems.some((item: OrderItem) => item.productId == null);
-                const allProductsExist = !hasInvalidItems && existingItems.every((item: OrderItem) =>
+                const hasInvalidItems = existingItems.some((item: OrderItemWithProduct) => item.productId == null);
+                const allProductsExist = !hasInvalidItems && existingItems.every((item: OrderItemWithProduct) =>
                     productsData.some((p: Product) => p.id === item.productId)
                 );
 
                 const isCancelledOrSucceeded = ['CANCELLED', 'COMPLETED'].includes(orderData.status);
                 const editable = !isCancelledOrSucceeded && allProductsExist;
 
-                if (!editable) {setFormLoading(false); return;}
+                if (!editable) { setFormLoading(false); return; }
 
                 setOriginalProducts(productsData);
                 setCurrentProducts(productsData);
 
-                const orderUser = usersData.find((u: User) => u.id === orderData.userId);
                 if (orderUser) {
                     setUserBonuses(orderUser.bonusBalance);
                 }
@@ -149,7 +111,7 @@ export default function EditOrderPage() {
                 const deliveryTime = new Date(orderData.deliveryTime);
 
                 const initialStock: Record<number, number> = {};
-                orderData.items.forEach((item: ApiOrderItem) => {
+                orderData.items.forEach((item: OrderItemWithProduct) => {
                     initialStock[item.productId] = item.product.stockQuantity + item.productQuantity;
                 });
                 setOriginalProductsStock(initialStock);
@@ -158,7 +120,7 @@ export default function EditOrderPage() {
                     ...orderData,
                     deliveryPrice: orderData.deliveryCost,
                     deliveryTime,
-                    items: orderData.items.map((item: ApiOrderItem) => ({
+                    items: orderData.items.map((item: OrderItemWithProduct) => ({
                         ...item,
                         productId: item.productId,
                         quantity: item.productQuantity,
@@ -192,14 +154,6 @@ export default function EditOrderPage() {
         }
     }, [deliveryType, setValue]);
 
-    const handleUserSelect = (userId: number | undefined) => {
-        const selectedUser = users.find(u => u.id === userId);
-        if (selectedUser) {
-            setUserBonuses(selectedUser.bonusBalance);
-        } else {
-            setUserBonuses(0);
-        }
-    };
     const getAvailableStatuses = useCallback((): OrderStatus[] => {
         if (deliveryType === 'DELIVERY') {
             return ['PENDING', 'SUCCEEDED', 'DELIVERY', 'COMPLETED', 'CANCELLED'];
@@ -219,7 +173,7 @@ export default function EditOrderPage() {
         }
     }, [getAvailableStatuses, deliveryType, paymentMethod, setValue, form]);
 
-    const [originalItems, setOriginalItems] = useState<OrderItem[]>([]);
+    const [originalItems, setOriginalItems] = useState<OrderUpdateFormValues['items']>([]);
     const handleEditItems = () => {
         const currentItems = form.getValues('items');
         setOriginalItems([...currentItems]);
@@ -349,38 +303,35 @@ export default function EditOrderPage() {
                 })}>
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         <WhiteBlock title="Основная информация" className="p-6">
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-medium mb-2">Клиент</label>
-                                    <UserSelect
-                                        users={users}
-                                        onUserSelect={handleUserSelect}
-                                        disabled={true}
-                                    />
-                                </div>
+                            {orderUser && <><div className="text-sm">
+                                <label className="block text-sm font-medium mb-2">Клиент</label>
+                                <p>ID: #{orderUser?.id}</p>
+                                <p>Имя: {orderUser?.name}</p>
+                                <p>Email: {orderUser?.email}</p>
+                                <p>Бонусы: {orderUser?.bonusBalance}</p>
+                            </div><br /></>}
 
-                                <FormInput
-                                    name="name"
-                                    label="Имя"
-                                    placeholder="Введите имя"
-                                    required
-                                />
+                            <FormInput
+                                name="name"
+                                label="Имя"
+                                placeholder="Введите имя"
+                                required
+                            />
 
-                                <FormInput
-                                    name="email"
-                                    label="Email"
-                                    placeholder="Введите email"
-                                    type="email"
-                                    required
-                                />
+                            <FormInput
+                                name="email"
+                                label="Email"
+                                placeholder="Введите email"
+                                type="email"
+                                required
+                            />
 
-                                <PhoneInput
-                                    name="phone"
-                                    label="Телефон"
-                                    placeholder="+7(xxx)xxx-xx-xx"
-                                    required
-                                />
-                            </div>
+                            <PhoneInput
+                                name="phone"
+                                label="Телефон"
+                                placeholder="+7(xxx)xxx-xx-xx"
+                                required
+                            />
                         </WhiteBlock>
 
                         {!isEditingItems ? (
@@ -478,7 +429,7 @@ export default function EditOrderPage() {
                                                 setValue('paymentMethod', 'ONLINE');
                                             } else {
                                                 setValue('address', '');
-                                                setValue('deliveryPrice', 0);
+                                                setValue('deliveryCost', 0);
                                             }
 
                                             // Принудительно обновляем статус

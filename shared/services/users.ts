@@ -7,6 +7,11 @@ export const getUsers = async () => {
   return data;
 };
 
+export const getUser = async (id: number) => {
+  const { data } = await axiosInstance.get<User>(`/admin/users/${id}`);
+  return data;
+};
+
 export const updateUser = async (id: number, payload: Partial<UserFormValues>) => {
     const transformedData = {
       ...payload,

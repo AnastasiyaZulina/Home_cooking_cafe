@@ -4,7 +4,7 @@ import Link from 'next/link';
 import React, { useState } from 'react';
 import { Title } from './title';
 import { Button } from '../ui';
-import { Loader2, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { useCartStore } from '@/shared/store';
 import toast from 'react-hot-toast';
 import { CountButtonProduct } from './count-button-product';

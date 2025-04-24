@@ -6,6 +6,16 @@ export const getProducts = async () => {
     return data;
 };
 
+export const getAvailableProducts = async () => {
+    const { data } = await axiosInstance.get<Product[]>('/admin/products', {
+      params: {
+        isAvailable: true,
+        stockQuantity: { gt: 0 }
+      }
+    });
+    return data;
+  };
+
 export const deleteProduct = async (id: number) => {
     await axiosInstance.delete(`/admin/products/${id}`);
 };
