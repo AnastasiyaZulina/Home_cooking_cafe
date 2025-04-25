@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import path from 'path';
 import fs from 'fs/promises';
+import { Prisma } from "@prisma/client";
 
 export async function GET(request: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -16,7 +17,7 @@ export async function GET(request: NextRequest) {
   const isAvailable = searchParams.get('isAvailable') === 'true';
   const stockQuantityGt = Number(searchParams.get('stockQuantity[gt]'));
 
-  const where: any = {};
+  const where: Prisma.ProductWhereInput = {};
   if (isAvailable) {
     where.isAvailable = true;
   }

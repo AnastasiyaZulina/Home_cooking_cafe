@@ -1,6 +1,6 @@
 import { PaymentCallbackData } from "@/@types/yookassa";
 import { prisma } from "@/prisma/prisma-client";
-import { chooseAndSendEmail } from "@/shared/components/shared/email-templates/choose-and-send-email";
+import { chooseAndSendEmail } from "@/shared/components/email-templates/choose-and-send-email";
 import { OrderStatus } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 

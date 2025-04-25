@@ -9,7 +9,7 @@ import { VerificationUserTemplate } from '@/shared/components';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/shared/constants/auth-options';
 import * as bcrypt from 'bcrypt';
-import { chooseAndSendEmail } from '@/shared/components/shared/email-templates/choose-and-send-email';
+import { chooseAndSendEmail } from '@/shared/components/email-templates/choose-and-send-email';
 import { CheckoutFormValues } from '@/shared/schemas/checkout-form-schema';
 
 export async function validateCart() {

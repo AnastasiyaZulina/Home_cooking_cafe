@@ -1,6 +1,6 @@
-import { Container, Title, ProductsGroupList, TopBar } from "@/shared/components/shared"
+import { Container, Title, ProductsGroupList, TopBar } from "@/shared/components"
 import { prisma } from "@/prisma/prisma-client";
-import { VerifyToastHandler } from "@/shared/components/shared/verify-toast-handler";
+import { VerifyToastHandler } from "@/shared/components";
 import { Suspense } from "react";
 
 export default async function Home() {

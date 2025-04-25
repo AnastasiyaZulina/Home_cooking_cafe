@@ -1,5 +1,5 @@
 import React from 'react';
-import { Container, Title } from '@/shared/components/shared';
+import { Container, Title } from '@/shared/components';
 import { GLOBAL_CONSTANTS } from '@/shared/constants';
 
 export default function PrivacyPolicyPage() {

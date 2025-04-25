@@ -4,13 +4,12 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { DeliveryType, PaymentMethod, OrderStatus, User } from '@prisma/client';
 import { Controller, useFieldArray, useForm } from 'react-hook-form';
-import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/shared/components/ui/button';
 import * as RadioGroup from '@radix-ui/react-radio-group';
 import { FormInput, FormTextarea, WhiteBlock } from '@/shared/components';
 import { FormProvider } from 'react-hook-form';
-import { PhoneInput } from '@/shared/components/shared/phone-input';
+import { PhoneInput } from '@/shared/components';
 import moment from 'moment';
 import dynamic from 'next/dynamic';
 import { GLOBAL_CONSTANTS } from '@/shared/constants';
@@ -150,7 +149,7 @@ export default function EditOrderPage() {
         };
 
         fetchOrder();
-    }, [id, reset]);
+    }, [id, reset, orderUser]);
 
     const prevDeliveryTypeRef = useRef<DeliveryType>(deliveryType);
 

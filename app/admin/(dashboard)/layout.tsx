@@ -1,4 +1,4 @@
-import { Header } from '@/shared/components/shared';
+import { Header } from '@/shared/components';
 import { getUserSession } from '@/shared/lib/get-user-session';
 import { Metadata } from 'next';
 import { redirect } from 'next/navigation';

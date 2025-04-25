@@ -5,7 +5,7 @@ import { authOptions } from '@/shared/constants/auth-options';
 import { z } from 'zod';
 import { createPayment } from '@/shared/lib';
 import { decrementProductStockAdmin } from '@/app/admin/lib/functions';
-import { chooseAndSendEmail } from '@/shared/components/shared/email-templates/choose-and-send-email';
+import { chooseAndSendEmail } from '@/shared/components/email-templates/choose-and-send-email';
 import { OrderFormSchema } from '@/shared/schemas/order-form-schema';
 
 export async function GET() {

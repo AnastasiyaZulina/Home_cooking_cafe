@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 
-import { Header } from "@/shared/components/shared";
+import { Header } from "@/shared/components";
 import { Suspense } from "react";
-import { Footer } from "@/shared/components/shared/footer";
+import { Footer } from "@/shared/components";
 
 export const metadata: Metadata = {
   title: "Скатерть-самобранка | Главная",

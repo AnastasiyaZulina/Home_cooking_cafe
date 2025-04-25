@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/prisma/prisma-client';
 import { getServerSession } from "next-auth";
 import { authOptions } from '@/shared/constants/auth-options';
+import { Prisma } from '@prisma/client';
 
 export async function GET(request: NextRequest) {
   try {
@@ -9,12 +10,13 @@ export async function GET(request: NextRequest) {
     const isVisible = searchParams.get('isVisible');
     const feedbackStatus = searchParams.get('feedbackStatus');
 
-    const where: any = {};
+    const where: Prisma.FeedbackWhereInput = {};
+    
     if (isVisible !== null) {
       where.isVisible = isVisible === 'true';
     }
     if (feedbackStatus) {
-      where.feedbackStatus = feedbackStatus;
+      where.feedbackStatus = feedbackStatus as Prisma.EnumFeedbackStatusFilter; // Cast to enum type
     }
 
     const feedbacks = await prisma.feedback.findMany({

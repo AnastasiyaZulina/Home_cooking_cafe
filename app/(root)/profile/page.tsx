@@ -1,5 +1,5 @@
 import { prisma } from '@/prisma/prisma-client';
-import { ProfileLayout } from '@/shared/components/shared/profile-layout';
+import { ProfileLayout } from '@/shared/components';
 import { getUserSession } from '@/shared/lib/get-user-session';
 import { redirect } from 'next/navigation';
 

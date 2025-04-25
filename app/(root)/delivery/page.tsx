@@ -1,9 +1,9 @@
 'use client';
 
 import { Container, WhiteBlock } from "@/shared/components";
-import YandexSuggestLoader from "@/shared/components/shared/yandex-suggest-loader";
+import {YandexSuggestLoader} from "@/shared/components";
 import { useState } from 'react';
-import AddressCheckout from '@/shared/components/shared/address-checkout';
+import {AddressCheckout} from '@/shared/components';
 import { GLOBAL_CONSTANTS } from "@/shared/constants";
 
 export default function DeliveryPage() {

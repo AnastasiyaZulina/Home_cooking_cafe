@@ -1,6 +1,6 @@
 import { prisma } from '@/prisma/prisma-client';
 import { VerificationUserTemplate } from '@/shared/components';
-import { ResetPasswordTemplate } from '@/shared/components/shared/email-templates/reset-password';
+import { ResetPasswordTemplate } from '@/shared/components/email-templates/reset-password';
 import { authOptions } from '@/shared/constants/auth-options';
 import { sendEmail } from '@/shared/lib';
 import { Prisma } from '@prisma/client';

@@ -2,7 +2,7 @@ import { prisma } from "@/prisma/prisma-client";
 import { NextResponse } from "next/server";
 import { randomBytes } from "crypto";
 import { sendEmail } from "@/shared/lib";
-import { ResetPasswordTemplate } from "@/shared/components/shared/email-templates/reset-password";
+import { ResetPasswordTemplate } from "@/shared/components/email-templates/reset-password";
 
 
 export async function POST(req: Request) {

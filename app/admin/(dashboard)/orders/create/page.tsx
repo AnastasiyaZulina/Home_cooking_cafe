@@ -9,7 +9,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { FormInput, FormTextarea, WhiteBlock } from '@/shared/components';
 import 'react-datetime/css/react-datetime.css';
 import { FormProvider } from 'react-hook-form';
-import { PhoneInput } from '@/shared/components/shared/phone-input';
+import { PhoneInput } from '@/shared/components';
 import moment from 'moment';
 import dynamic from 'next/dynamic';
 import { GLOBAL_CONSTANTS } from '@/shared/constants';

@@ -12,13 +12,11 @@ import toast from "react-hot-toast";
 import React, { useState } from "react";
 import { useSession } from "next-auth/react";
 import { Api } from "@/shared/services/api-clients";
-import { DeliveryType, PaymentMethod } from "@prisma/client";
 import { useRouter } from "next/navigation";
-import { PaymentMethodOptions } from "@/shared/components/shared/payment-method-options";
-import { BonusOptions } from "@/shared/components/shared/bonus-options";
+import { PaymentMethodOptions, BonusOptions, DeliveryTimePicker, generateTimeSlots } from "@/shared/components";
 import { GLOBAL_CONSTANTS } from '@/shared/constants';
-import { DeliveryTimePicker, generateTimeSlots } from "@/shared/components/shared/delivery-time-picker";
 import { CheckoutFormSchema, CheckoutFormValues } from "@/shared/schemas/checkout-form-schema";
+import { DeliveryType, PaymentMethod } from "@prisma/client";
 
 export default function CheckoutPage() {
     const { items, loading, fetchCartItems } = useCart();

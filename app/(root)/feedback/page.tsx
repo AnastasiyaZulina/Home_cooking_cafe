@@ -1,15 +1,15 @@
 'use client';
 
 import { Container, FormInput, FormTextarea, Title } from "@/shared/components";
-import { Button } from "@/shared/components/ui";
+import { Button } from "@/shared/components";
 import { useSession } from "next-auth/react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, FormProvider } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useEffect, useState } from "react";
-import { Skeleton } from "@/shared/components/ui/skeleton";
+import { Skeleton } from "@/shared/components";
 import { FeedbackWithUser } from "@/@types/feedback";
-import { GrayBlock } from "@/shared/components/shared/gray-block";
+import { GrayBlock } from "@/shared/components";
 import { Api } from "@/shared/services/api-clients";
 import { FeedbackFormSchema, FeedbackUserFormValues } from "@/shared/schemas/feedback";
 

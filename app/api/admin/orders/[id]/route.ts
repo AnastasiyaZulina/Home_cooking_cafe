@@ -2,7 +2,7 @@ import { prisma } from '@/prisma/prisma-client';
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from "next-auth";
 import { authOptions } from '@/shared/constants/auth-options';
-import { chooseAndSendEmail } from '@/shared/components/shared/email-templates/choose-and-send-email';
+import { chooseAndSendEmail } from '@/shared/components/email-templates/choose-and-send-email';
 
 export async function GET(
   request: NextRequest,
