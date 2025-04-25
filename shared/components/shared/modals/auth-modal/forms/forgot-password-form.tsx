@@ -5,14 +5,8 @@ import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button, FormInput, Title } from "@/shared/components";
 import toast from "react-hot-toast";
-import { z } from "zod";
 import { Api } from "@/shared/services/api-clients";
-
-const forgotPasswordSchema = z.object({
-  email: z.string().email('Введите корректную почту').max(100, 'Email не должен превышать 100 символов'),
-});
-
-type TForgotPasswordValues = z.infer<typeof forgotPasswordSchema>;
+import { forgotPasswordSchema, TForgotPasswordValues } from "@/shared/schemas/reset-password";
 
 interface Props {
   onClose?: VoidFunction;

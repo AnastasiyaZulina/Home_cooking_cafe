@@ -6,7 +6,6 @@ import { Button, Skeleton } from "@/shared/components/ui";
 import { ArrowRight, Package, Truck } from "lucide-react";
 import { FormProvider, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CheckoutFormSchema, CheckoutFormValues } from "@/shared/constants";
 import { cn } from "@/shared/lib/utils";
 import { createOrderUser, validateCart } from "@/app/actions";
 import toast from "react-hot-toast";
@@ -19,6 +18,7 @@ import { PaymentMethodOptions } from "@/shared/components/shared/payment-method-
 import { BonusOptions } from "@/shared/components/shared/bonus-options";
 import { GLOBAL_CONSTANTS } from '@/shared/constants';
 import { DeliveryTimePicker, generateTimeSlots } from "@/shared/components/shared/delivery-time-picker";
+import { CheckoutFormSchema, CheckoutFormValues } from "@/shared/schemas/checkout-form-schema";
 
 export default function CheckoutPage() {
     const { items, loading, fetchCartItems } = useCart();

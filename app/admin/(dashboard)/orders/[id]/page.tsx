@@ -15,13 +15,13 @@ import moment from 'moment';
 import dynamic from 'next/dynamic';
 import { GLOBAL_CONSTANTS } from '@/shared/constants';
 import { OrderSummary } from '@/app/admin/components/order-summary';
-import { OrderUpdateFormSchema, OrderUpdateFormValues } from '@/app/admin/schemas/order-form-schema';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select';
 import { ProductSelectorEdit } from '@/app/admin/components/product-selector-edit';
 import toast from 'react-hot-toast';
 import { OrderItem, OrderItemWithProduct } from '@/@types/orders';
 import { Api } from '@/shared/services/api-clients';
 import { Product } from '@/@types/product-types';
+import { OrderUpdateFormSchema, OrderUpdateFormValues } from '@/shared/schemas/order-form-schema';
 
 type OrderDetails = OrderUpdateFormValues & {
     id: number;

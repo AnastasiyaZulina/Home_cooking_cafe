@@ -16,10 +16,10 @@ import { GLOBAL_CONSTANTS } from '@/shared/constants';
 import { UserSelect } from '@/app/admin/components/user-select';
 import { ProductSelector } from '@/app/admin/components/product-selector';
 import { OrderSummary } from '@/app/admin/components/order-summary';
-import { OrderFormSchema, OrderFormValues } from '@/app/admin/schemas/order-form-schema';
 import toast from 'react-hot-toast';
 import { Api } from '@/shared/services/api-clients';
 import { Product } from '@/@types/product-types';
+import { OrderFormSchema, OrderFormValues } from '@/shared/schemas/order-form-schema';
 
 const CreateOrderPage = () => {
   const [deliveryType, setDeliveryType] = useState<DeliveryType>('DELIVERY');

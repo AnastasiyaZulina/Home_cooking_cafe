@@ -3,10 +3,10 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from "next-auth";
 import { authOptions } from '@/shared/constants/auth-options';
 import { z } from 'zod';
-import { OrderFormSchema } from '@/app/admin/schemas/order-form-schema';
 import { createPayment } from '@/shared/lib';
 import { decrementProductStockAdmin } from '@/app/admin/lib/functions';
 import { chooseAndSendEmail } from '@/shared/components/shared/email-templates/choose-and-send-email';
+import { OrderFormSchema } from '@/shared/schemas/order-form-schema';
 
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -130,8 +130,6 @@ export async function POST(request: Request) {
 
       chooseAndSendEmail(createdOrder, totalAmount, paymentUrl);
     }
-
-    
 
     await decrementProductStockAdmin(
       items.map(({ productId, quantity }) => ({ productId, quantity }))

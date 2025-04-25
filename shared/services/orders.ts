@@ -1,6 +1,6 @@
 import { Order, OrderWithProducts } from '@/@types/orders';
 import { axiosInstance } from './instance';
-import { OrderFormValues, OrderUpdateFormValues } from '@/app/admin/schemas/order-form-schema';
+import { OrderFormValues, OrderUpdateFormValues } from '../schemas/order-form-schema';
 
 export const getOrders = async () => {
   const { data } = await axiosInstance.get<Order[]>('/admin/orders');

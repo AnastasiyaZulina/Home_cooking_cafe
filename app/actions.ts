@@ -1,5 +1,4 @@
 'use server';
-import { CheckoutFormValues } from '@/shared/constants';
 import { prisma } from '@/prisma/prisma-client';
 import { cookies } from 'next/headers';
 import { OrderStatus, Prisma } from '@prisma/client';
@@ -11,6 +10,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/shared/constants/auth-options';
 import * as bcrypt from 'bcrypt';
 import { chooseAndSendEmail } from '@/shared/components/shared/email-templates/choose-and-send-email';
+import { CheckoutFormValues } from '@/shared/schemas/checkout-form-schema';
 
 export async function validateCart() {
   const cookieStore = cookies();

@@ -5,24 +5,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter, useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
 import { Button, FormInput } from "@/shared/components";
-import { z } from "zod";
 import { Api } from "@/shared/services/api-clients";
-
-const resetPasswordSchema = z.object({
-    password: z.string()
-    .min(6, 'Пароль должен содержать не менее 6 символов')
-    .max(100, 'Пароль не должен превышать 100 символов')
-    .regex(/[A-Z]/, 'Пароль должен содержать хотя бы одну заглавную букву')
-    .regex(/[a-z]/, 'Пароль должен содержать хотя бы одну строчную букву')
-    .regex(/[0-9]/, 'Пароль должен содержать хотя бы одну цифру')
-    .regex(/^[a-zA-Z0-9]+$/, 'Пароль должен содержать только латинские буквы и цифры'),
-    confirmPassword: z.string(),
-  }).refine(data => data.password === data.confirmPassword, {
-    message: "Пароли не совпадают",
-    path: ["confirmPassword"],
-  });
-
-type TResetPasswordValues = z.infer<typeof resetPasswordSchema>;
+import { resetPasswordSchema, TResetPasswordValues } from "@/shared/schemas/reset-password";
 
 export default function ResetPasswordForm() {
   const searchParams = useSearchParams();
