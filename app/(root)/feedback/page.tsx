@@ -15,17 +15,17 @@ import { createFeedback, getFeedbacks } from "@/app/actions";
 import { GrayBlock } from "@/shared/components/shared/gray-block";
 
 const FeedbackFormSchema = z.object({
-    feedbackText: z.string().min(10, "Отзыв должен содержать минимум 10 символов")
+    feedbackText: z.string().min(10, "Отзыв должен содержать минимум 10 символов").max(1000, "Отзыв может содержать максимум 1000 символов")
 });
 
 type FeedbackFormValues = z.infer<typeof FeedbackFormSchema>;
 
 export default function FeedbackPage() {
-    const { status } = useSession();
+    const { data: session, status } = useSession();
     const [feedbacks, setFeedbacks] = useState<FeedbackWithUser[]>([]);
     const [loading, setLoading] = useState(true);
 
-    
+
     useEffect(() => {
         const loadFeedbacks = async () => {
             try {
@@ -58,9 +58,18 @@ export default function FeedbackPage() {
                 </GrayBlock>
             )}
 
-            {/* Форма для авторизованных */}
-            {status === 'authenticated' && (
+            {status === 'authenticated' && session?.user.role === 'USER' && (
                 <FeedbackForm />
+            )}
+
+            {status === 'authenticated' && session?.user.role !== 'USER' && (
+                <GrayBlock className="mb-8 p-6 text-center">
+                    <div className="space-y-4">
+                        <p className="text-lg font-medium">
+                            Только обычные пользователи могут оставлять отзывы
+                        </p>
+                    </div>
+                </GrayBlock>
             )}
 
             {/* Список отзывов */}

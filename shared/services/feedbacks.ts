@@ -2,7 +2,17 @@ import { Feedback } from '@/@types/feedback';
 import { axiosInstance } from './instance';
 
 export const getFeedbacks = async () => {
-  const { data } = await axiosInstance.get<Feedback[]>('/admin/feedbacks');
+  const { data } = await axiosInstance.get<Feedback[]>('/feedbacks');
+  return data;
+};
+
+export const getVisibleFeedbacks = async () => {
+  const { data } = await axiosInstance.get<Feedback[]>('/feedbacks', {
+    params: {
+      isVisible: true,
+      feedbackStatus: 'APPROVED'
+    }
+  });
   return data;
 };
 

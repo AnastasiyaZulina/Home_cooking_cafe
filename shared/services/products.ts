@@ -20,7 +20,7 @@ export const deleteProduct = async (id: number) => {
     await axiosInstance.delete(`/admin/products/${id}`);
 };
 
-export const bulkUpdateStock = async (data: { ids: number[]; quantity: number }) => {
+export const updateStock = async (data: { ids: number[]; quantity: number }) => {
     await axiosInstance.patch('/admin/products/stock', data);
 };
 

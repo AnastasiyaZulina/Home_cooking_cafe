@@ -25,13 +25,7 @@ export const removeCartItem = async (id: number): Promise<CartDTO> => {
   return data;
 };
 
-export const mergeCarts =  async (data: { cartToken: string }) => {
-      const response = await fetch('/api/cart/merge', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(data)
-      });
-      return response.json();
+export const mergeCarts = async (data: { cartToken: string }): Promise<CartDTO> => {
+  const { data: responseData } = await axiosInstance.post<CartDTO>('/cart/merge', data);
+  return responseData;
 };

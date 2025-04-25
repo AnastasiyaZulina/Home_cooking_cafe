@@ -112,8 +112,8 @@ const ProductTable = () => {
     },
   });
 
-  const { mutateAsync: bulkUpdateStock } = useMutation({
-    mutationFn: Api.products.bulkUpdateStock,
+  const { mutateAsync: updateStock } = useMutation({
+    mutationFn: Api.products.updateStock,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
       toast.success('Наличие успешно обновлено');
@@ -148,7 +148,7 @@ const ProductTable = () => {
 
   // Handlers
 
-  const handleBulkUpdate = async () => {
+  const handleUpdateStock = async () => {
     if (selectedIds.length === 0) {
       toast.error('Выберите товары для обновления');
       return;
@@ -159,14 +159,14 @@ const ProductTable = () => {
     }
 
     try {
-      await bulkUpdateStock({
+      await updateStock({
         ids: selectedIds,
         quantity: newStockQuantity
       });
       setSelectedIds([]);
       setNewStockQuantity(0);
     } catch (error) {
-      console.error('Bulk update error:', error);
+      console.error('Stock update error:', error);
     }
   };
 
@@ -594,7 +594,7 @@ const ProductTable = () => {
 
         <Button
           variant="outlined"
-          onClick={handleBulkUpdate}
+          onClick={handleUpdateStock}
           disabled={selectedIds.length === 0 || newStockQuantity < 0}
         >
           Обновить наличие

@@ -5,21 +5,34 @@ import { NextRequest, NextResponse } from "next/server";
 import path from 'path';
 import fs from 'fs/promises';
 
-export async function GET() {
-    const session = await getServerSession(authOptions);
+export async function GET(request: NextRequest) {
+  const session = await getServerSession(authOptions);
 
-    if (!session?.user || session.user.role == "USER") {
-        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
+  if (!session?.user || session.user.role == "USER") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
-    const products = await prisma.product.findMany({
-        orderBy: { name: 'asc' },
-        include: {
-          category: true,
-        },
-      });
+  const searchParams = request.nextUrl.searchParams;
+  const isAvailable = searchParams.get('isAvailable') === 'true';
+  const stockQuantityGt = Number(searchParams.get('stockQuantity[gt]'));
 
-    return NextResponse.json(products);
+  const where: any = {};
+  if (isAvailable) {
+    where.isAvailable = true;
+  }
+  if (!isNaN(stockQuantityGt)) {
+    where.stockQuantity = { gt: stockQuantityGt };
+  }
+
+  const products = await prisma.product.findMany({
+    where,
+    orderBy: { name: 'asc' },
+    include: {
+      category: true,
+    },
+  });
+
+  return NextResponse.json(products);
 }
 
 export async function POST(req: NextRequest) {
