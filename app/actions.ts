@@ -11,15 +11,6 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/shared/constants/auth-options';
 import * as bcrypt from 'bcrypt';
 import { chooseAndSendEmail } from '@/shared/components/shared/email-templates/choose-and-send-email';
-import { FeedbackWithUser } from '@/@types/feedback';
-
-async function clearCart(cartId: number) {
-  await prisma.cartItem.deleteMany({
-    where: {
-      cartId: cartId,
-    },
-  });
-}
 
 export async function validateCart() {
   const cookieStore = cookies();
@@ -90,68 +81,15 @@ export async function validateCart() {
   return { adjustments };
 }
 
-export async function updateProductStock(cartId: number) {
-  const userCart = await prisma.cart.findUnique({
-    include: {
-      user: true,
-      items: {
-        include: { product: true },
-      },
-    },
-    where: { id: cartId },
-  });
-
-  /*Если корзина не найдена, возвращаем ошибку*/
-  if (!userCart) {
-    throw new Error('Cart not found');
-  }
-
-  /*Если корзина пустая, возвращаем ошибку*/
-  if (userCart.items.length === 0) {
-    throw new Error('Cart is empty');
-  }
-
-  for (const item of userCart.items) {
-    const updatedProduct = await prisma.product.update({
-      where: { id: item.productId },
-      data: {
-        stockQuantity: {
-          decrement: item.quantity
-        },
-        isAvailable: {
-          // Устанавливаем isAvailable в false, если stockQuantity после обновления <= 0
-          set: item.product.stockQuantity - item.quantity > 0
-        }
-      }
-    });
-
-    // Дополнительная проверка на отрицательный остаток (на всякий случай)
-    if (updatedProduct.stockQuantity < 0) {
-      await prisma.product.update({
-        where: { id: item.productId },
-        data: {
-          isAvailable: false
-        }
-      });
-      console.warn(`Negative stock quantity for product ${item.productId}`);
-    }
-  }
-
-  /*Очищаем корзину*/
-  clearCart(userCart.id);
-}
-
-export async function createOrder(data: CheckoutFormValues) {
+export async function createOrderUser(data: CheckoutFormValues) {
   try {
     const cookieStore = cookies();
     const cartToken = (await cookieStore).get('cartToken')?.value;
-    
     const session = await getUserSession();
 
     if (data.bonusDelta !== 0 && !session) {
       throw new Error('Unauthorized bonus operation');
     }
-
     if (data.deliveryType === 'DELIVERY' && data.paymentMethod === 'OFFLINE') {
       throw new Error("Оплата при получении недоступна для доставки");
     }
@@ -174,7 +112,6 @@ export async function createOrder(data: CheckoutFormValues) {
     if (!userCart) {
       throw new Error('Корзина не найдена');
     }
-
     /*Если корзина пустая, возвращаем ошибку*/
     if (userCart.items.length === 0) {
       throw new Error('Cart is empty');
@@ -183,7 +120,6 @@ export async function createOrder(data: CheckoutFormValues) {
     const unavailableItems = userCart.items.filter(item => !item.product.isAvailable);
 
     if (unavailableItems.length > 0) {
-      // Удаляем недоступные товары из корзины
       await prisma.cartItem.deleteMany({
         where: {
           id: {
@@ -251,7 +187,30 @@ export async function createOrder(data: CheckoutFormValues) {
       })),
     });
 
-    updateProductStock(userCart.id);
+    await prisma.$transaction(async (tx) => {
+      for (const item of userCart.items) {
+        const updatedProduct = await tx.product.update({
+          where: { id: item.productId },
+          data: {
+            stockQuantity: { decrement: item.quantity },
+            isAvailable: { 
+              set: item.product.stockQuantity - item.quantity > 0 
+            }
+          }
+        });
+
+        if (updatedProduct.stockQuantity < 0) {
+          await tx.product.update({
+            where: { id: item.productId },
+            data: { isAvailable: false }
+          });
+        }
+      }
+
+      await tx.cartItem.deleteMany({
+        where: { cartId: userCart.id }
+      });
+    });
 
     if (order.userId) {
       await prisma.user.update({
@@ -388,55 +347,5 @@ export async function registerUser(body: Prisma.UserCreateInput) {
   } catch (error) {
     console.log('Error [CREATE_USER]', error);
     throw error;
-  }
-}
-
-export async function createFeedback(feedbackText: string) {
-  try {
-    const session = await getUserSession();
-
-    if (!session?.id) {
-      throw new Error('Для отправки отзыва необходимо авторизоваться');
-    }
-
-    const newFeedback = await prisma.feedback.create({
-      data: {
-        feedbackText,
-        userId: Number(session.id),
-        feedbackStatus: 'PENDING',
-        isVisible: false
-      }
-    });
-
-    return newFeedback;
-  } catch (error) {
-    console.error('[CREATE_FEEDBACK_ERROR]:', error);
-    throw error;
-  }
-}
-
-export async function getFeedbacks(): Promise<FeedbackWithUser[]> {
-  try {
-    const feedbacks = await prisma.feedback.findMany({
-      where: {
-        isVisible: true,
-        feedbackStatus: 'APPROVED'
-      },
-      include: {
-        user: {
-          select: {
-            name: true
-          }
-        }
-      },
-      orderBy: {
-        createdAt: 'desc'
-      }
-    });
-
-    return feedbacks as FeedbackWithUser[];
-  } catch (error) {
-    console.error('[GET_FEEDBACKS_ERROR]:', error);
-    return [];
   }
 }

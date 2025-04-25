@@ -7,10 +7,8 @@ import toast from 'react-hot-toast';
 import { User } from '@prisma/client';
 import { signOut } from 'next-auth/react';
 import {
-  formRegisterSchema,
   formUpdateGoogleUserSchema,
   formUpdateUserWithPasswordSchema,
-  TFormRegisterValues,
   TFormUpdateGoogleValues,
   TFormUpdateUserWithPasswordValues
 } from './modals/auth-modal/forms/schemas';
@@ -23,7 +21,6 @@ import { Gift, X } from 'lucide-react';
 import PhoneInput from 'react-phone-number-input/react-hook-form-input';
 import { cn } from '@/shared/lib/utils';
 import { ErrorText } from './error-text';
-import { z } from 'zod';
 
 interface Props {
   data: User;

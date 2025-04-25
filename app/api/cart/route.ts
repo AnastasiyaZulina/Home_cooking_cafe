@@ -50,7 +50,6 @@ export async function GET(req: NextRequest) {
     }
   }
 
-// app/api/cart/route.ts
 export async function POST(req: NextRequest) {
     try {
       const sessionUser = await getUserSession();

@@ -8,7 +8,7 @@ import { FormProvider, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CheckoutFormSchema, CheckoutFormValues } from "@/shared/constants";
 import { cn } from "@/shared/lib/utils";
-import { createOrder, validateCart } from "@/app/actions";
+import { createOrderUser, validateCart } from "@/app/actions";
 import toast from "react-hot-toast";
 import React, { useState } from "react";
 import { useSession } from "next-auth/react";
@@ -262,7 +262,7 @@ function CheckoutContent() {
                 deliveryTime,
             };
 
-            const url = await createOrder(formData);
+            const url = await createOrderUser(formData);
 
             if (url) {
                 if (paymentMethod == "ONLINE") {

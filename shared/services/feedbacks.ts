@@ -27,3 +27,10 @@ export const updateFeedback = async (id: number, payload: Partial<Feedback>) => 
 export const deleteFeedback = async (id: number) => {
   await axiosInstance.delete(`/admin/feedbacks/${id}`);
 };
+
+export const createFeedback = async (feedbackText: string) => {
+  const { data } = await axiosInstance.post<Feedback>('/feedbacks', {
+    feedbackText
+  });
+  return data;
+};

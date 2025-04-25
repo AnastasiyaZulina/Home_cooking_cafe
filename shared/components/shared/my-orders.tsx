@@ -8,6 +8,7 @@ import { Button } from '../ui';
 import toast from 'react-hot-toast';
 import { useCart } from '@/hooks';
 import { Title } from './title';
+import { Api } from '@/shared/services/api-clients';
 
 interface MyOrdersProps {
   orders: (Order & {
@@ -42,56 +43,20 @@ export const MyOrders = ({ orders }: MyOrdersProps) => {
     setIsReordering(prev => ({ ...prev, [orderId]: true }));
   
     const toastId = toast.loading('Добавляем товары в корзину...');
-    let successCount = 0;
-    const failedProducts: string[] = [];
-    const adjustedProducts: {name: string, originalQty: number, newQty: number}[] = [];
   
     try {
-      for (const item of items) {
-        try {
-          // Проверяем доступность товара
-          const checkResponse = await fetch(`/api/products/${item.productId}`);
-          if (!checkResponse.ok) {
-            failedProducts.push(item.productName);
-            continue;
-          }
+      const itemsToRepeat = items
+        .filter(item => item.productId !== null)
+        .map(item => ({
+          productId: item.productId as number,
+          quantity: item.productQuantity,
+        }));
   
-          const product = await checkResponse.json();
-          if (!product.isAvailable) {
-            failedProducts.push(item.productName);
-            continue;
-          }
+      const response = await Api.cart.repeatOrder(itemsToRepeat);
   
-          // Проверяем доступное количество
-          const availableQuantity = product.stockQuantity;
-          const quantityToAdd = Math.min(item.productQuantity, availableQuantity);
-  
-          // Если количество пришлось уменьшить, добавляем в список скорректированных
-          if (quantityToAdd < item.productQuantity) {
-            adjustedProducts.push({
-              name: item.productName,
-              originalQty: item.productQuantity,
-              newQty: quantityToAdd
-            });
-          }
-
-          if (item.productId){
-          // Добавляем товар с учетом доступного количества
-          await addCartItem({
-            productId: item.productId,
-            quantity: quantityToAdd
-          });
-          }
-          successCount++;
-        } catch (error) {
-          console.error(`Error adding product ${item.productId} to cart:`, error);
-          failedProducts.push(item.productName);
-        }
-      }
-  
-      // Показываем уведомления о скорректированных количествах
-      if (adjustedProducts.length > 0) {
-        adjustedProducts.forEach(adj => {
+      // Если есть скорректированные количества — показываем тосты
+      if (response.adjusted.length > 0) {
+        response.adjusted.forEach(adj => {
           toast.error(
             `Количество "${adj.name}" уменьшено с ${adj.originalQty} до ${adj.newQty} (максимально доступное)`,
             { id: `adjusted-${adj.name}`, duration: 5000 }
@@ -99,7 +64,10 @@ export const MyOrders = ({ orders }: MyOrdersProps) => {
         });
       }
   
-      // Формируем финальное уведомление
+      const successCount = response.success.length;
+      const failedProducts = response.removed.map(p => p.name);
+  
+      // Финальный тост
       if (successCount > 0 && failedProducts.length > 0) {
         toast.success(
           `Успешно добавлено ${successCount} товаров. Не добавлено: ${failedProducts.join(', ')}`,
@@ -110,15 +78,16 @@ export const MyOrders = ({ orders }: MyOrdersProps) => {
       } else {
         toast.error(`Не удалось добавить товары: ${failedProducts.join(', ')}`, { id: toastId });
       }
+  
     } catch (error) {
-      console.error('Error repeating order:', error);
+      console.error('Ошибка при повторном заказе:', error);
       toast.error('Произошла ошибка при добавлении товаров', { id: toastId });
     } finally {
       setIsReordering(prev => ({ ...prev, [orderId]: false }));
-      // Обновляем данные корзины после всех операций
       fetchCartItems();
     }
   };
+  
 
   const getStatusColor = (status: OrderStatus) => {
     switch (status) {

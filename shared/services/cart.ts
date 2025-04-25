@@ -1,5 +1,5 @@
 import { axiosInstance } from './instance';
-import { CartDTO, CreateCartItemValues } from './dto/cart.dto';
+import { CartDTO, CreateCartItemValues, RepeatOrderResponse } from './dto/cart.dto';
 
 export const getCart = async (): Promise<CartDTO> => {
   const { data } = await axiosInstance.get<CartDTO>('/cart');
@@ -29,3 +29,11 @@ export const mergeCarts = async (data: { cartToken: string }): Promise<CartDTO> 
   const { data: responseData } = await axiosInstance.post<CartDTO>('/cart/merge', data);
   return responseData;
 };
+
+export const repeatOrder = async (
+  items: Array<{ productId: number, quantity: number }>
+): Promise<RepeatOrderResponse> => {
+  const { data } = await axiosInstance.post<RepeatOrderResponse>('/cart/repeat', items);
+  return data;
+};
+

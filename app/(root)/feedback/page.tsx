@@ -6,19 +6,12 @@ import { useSession } from "next-auth/react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, FormProvider } from "react-hook-form";
 import toast from "react-hot-toast";
-
-import { z } from "zod";
 import { useEffect, useState } from "react";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import { FeedbackWithUser } from "@/@types/feedback";
-import { createFeedback, getFeedbacks } from "@/app/actions";
 import { GrayBlock } from "@/shared/components/shared/gray-block";
-
-const FeedbackFormSchema = z.object({
-    feedbackText: z.string().min(10, "Отзыв должен содержать минимум 10 символов").max(1000, "Отзыв может содержать максимум 1000 символов")
-});
-
-type FeedbackFormValues = z.infer<typeof FeedbackFormSchema>;
+import { Api } from "@/shared/services/api-clients";
+import { FeedbackFormSchema, FeedbackUserFormValues } from "@/shared/schemas/feedback";
 
 export default function FeedbackPage() {
     const { data: session, status } = useSession();
@@ -29,7 +22,7 @@ export default function FeedbackPage() {
     useEffect(() => {
         const loadFeedbacks = async () => {
             try {
-                const data = await getFeedbacks();
+                const data = await Api.feedbacks.getVisibleFeedbacks();
                 setFeedbacks(data);
             } catch (error) {
                 console.error('Ошибка загрузки отзывов:', error);
@@ -100,31 +93,31 @@ export default function FeedbackPage() {
 
 function FeedbackForm() {
     const { data: session } = useSession();
-    const form = useForm<FeedbackFormValues>({
+    const form = useForm<FeedbackUserFormValues>({
         resolver: zodResolver(FeedbackFormSchema),
         defaultValues: { feedbackText: '' }
     });
 
-    const handleSubmit = async (values: FeedbackFormValues) => {
+    const handleSubmit = async (values: FeedbackUserFormValues) => {
         try {
-            await createFeedback(values.feedbackText);
-
-            toast.success(
-                <div className="flex items-center">
-                    <span>Ваш отзыв отправлен на проверку. После проверки он будет опубликован</span>
-                </div>,
-                { duration: 5000 }
-            );
-
-            form.reset();
+          await Api.feedbacks.createFeedback(values.feedbackText);
+      
+          toast.success(
+            <div className="flex items-center">
+              <span>Ваш отзыв отправлен на проверку...</span>
+            </div>,
+            { duration: 5000 }
+          );
+      
+          form.reset();
         } catch (error) {
-            if (error instanceof Error) {
-                toast.error(error.message);
-            } else {
-                toast.error('Не удалось отправить отзыв');
-            }
+          if (error instanceof Error) {
+            toast.error(error.message);
+          } else {
+            toast.error('Не удалось отправить отзыв');
+          }
         }
-    };
+      };
 
 
     return (

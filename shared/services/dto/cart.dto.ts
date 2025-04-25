@@ -10,3 +10,9 @@ export interface CreateCartItemValues {
   productId: number;
   quantity?: number;
 }
+
+export interface RepeatOrderResponse {
+  success: { name: string }[];
+  removed: { name: string }[];
+  adjusted: { name: string, originalQty: number, newQty: number }[];
+}
