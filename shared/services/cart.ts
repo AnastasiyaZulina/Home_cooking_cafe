@@ -30,7 +30,7 @@ export const mergeCarts = async (data: { cartToken: string }): Promise<CartDTO> 
   return responseData;
 };
 
-export const repeatOrder = async (
+export const repeatCart = async (
   items: Array<{ productId: number, quantity: number }>
 ): Promise<RepeatOrderResponse> => {
   const { data } = await axiosInstance.post<RepeatOrderResponse>('/cart/repeat', items);

@@ -52,7 +52,7 @@ export const MyOrders = ({ orders }: MyOrdersProps) => {
           quantity: item.productQuantity,
         }));
   
-      const response = await Api.cart.repeatOrder(itemsToRepeat);
+      const response = await Api.cart.repeatCart(itemsToRepeat);
   
       // Если есть скорректированные количества — показываем тосты
       if (response.adjusted.length > 0) {

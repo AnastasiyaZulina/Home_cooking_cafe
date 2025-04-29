@@ -17,10 +17,6 @@ export const formRegisterSchema = formLoginSchema.merge(z.object({
   name: z.string()
     .min(2, 'Имя должно содержать не менее 2 символов')
     .max(50, 'Имя не должно превышать 50 символов'),
-  phone: z.string()
-    .max(20, 'Телефон не должен превышать 20 символов')
-    .regex(/^$|^\+7\d{10}$/, "Формат: +7XXXXXXXXXX")
-    .optional().nullable(),
   confirmPassword: passwordSchema,
 }));
 

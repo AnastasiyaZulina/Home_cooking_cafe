@@ -46,7 +46,7 @@ async function up() {
             {
                 name: 'Шаурма',
                 description: 'Состав: окорочок замаринованный в соусе и обжаренный, капуста белокочанная, корейская морковь, огурец свежий, помидор свежий, сыр, лаваш',
-                image: '/images/items/1/product-1.jpg',
+                image: '/images/items/product-1.jpg',
                 price: 280,
                 categoryId: 1,
                 weight: 300,
@@ -57,7 +57,7 @@ async function up() {
             {
                 name: 'Каша рисовая с маслом',
                 description: 'Состав: крупа рисовая, молоко, соль сахар, масло сливочное',
-                image: '/images/items/2/product-2.jpg',
+                image: '/images/items/product-2.jpg',
                 price: 65,
                 categoryId: 1,
                 weight: 180,
@@ -68,7 +68,7 @@ async function up() {
             {
                 name: 'Сэндвич с ветчиной и сыром',
                 description: 'Состав: тост, соус (майонез, аджика), пекинская капуста, ветчина, сыр',
-                image: '/images/items/3/product-3.jpg',
+                image: '/images/items/product-3.jpg',
                 price: 180,
                 categoryId: 1,
                 weight: 140,
@@ -79,7 +79,7 @@ async function up() {
             {
                 name: 'Гамбургер с котлетой',
                 description: 'Состав: булочка, соус Гамбургер, лист салата, котлета куриная, помидор свежий, огурчик консервированный, сыр',
-                image: '/images/items/4/product-4.jpg',
+                image: '/images/items/product-4.jpg',
                 price: 230,
                 categoryId: 1,
                 weight: 160,
@@ -90,7 +90,7 @@ async function up() {
             {
                 name: 'Гамбургер с курицей',
                 description: 'Состав: булочка, соус Гамбургер, лист салата, помидор свежий, филе куриное, огурчик консервированный, сыр',
-                image: '/images/items/5/product-5.jpg',
+                image: '/images/items/product-5.jpg',
                 price: 195,
                 categoryId: 1,
                 weight: 150,
@@ -101,7 +101,7 @@ async function up() {
             {
                 name: 'Сэндвич с котлетой',
                 description: 'Состав: тост, соус Гамбургер, пекинская капуста, котлета куриная, сыр ломтик',
-                image: '/images/items/6/product-6.jpg',
+                image: '/images/items/product-6.jpg',
                 price: 230,
                 categoryId: 1,
                 weight: 180,
@@ -112,7 +112,7 @@ async function up() {
             {
                 name: 'Блинчик с яблоком',
                 description: 'Состав: блинчик (мука, молоко, яйцо, сахар, соль, масло растительное), фарш: яблоко, сахар',
-                image: '/images/items/7/product-7.jpg',
+                image: '/images/items/product-7.jpg',
                 price: 65,
                 categoryId: 1,
                 weight: 100,
@@ -123,7 +123,7 @@ async function up() {
             {
                 name: 'Блинчик с творогом',
                 description: 'Состав: блинчик (мука, молоко, яйцо, сахар, соль, масло растительное), фарш: творог, яйцо, мука, ванилин, сахар',
-                image: '/images/items/8/product-8.jpg',
+                image: '/images/items/product-8.jpg',
                 price: 65,
                 categoryId: 1,
                 weight: 100,
@@ -134,7 +134,7 @@ async function up() {
             {
                 name: 'Блинчик с мясом и рисом',
                 description: 'Состав: блинчик (мука, молоко, яйцо, сахар, соль, масло растительное), фарш: свинина, говядина, лук, рис, соль, специи, яйцо куриное',
-                image: '/images/items/9/product-9.jpg',
+                image: '/images/items/product-9.jpg',
                 price: 75,
                 categoryId: 1,
                 weight: 100,
@@ -145,7 +145,7 @@ async function up() {
             {
                 name: 'Блинчик с ветчиной и сыром',
                 description: 'Состав: блинчик (мука, молоко, яйцо, сахар, соль, масло растительное), фарш: ветчина, сыр, яйцо, специи',
-                image: '/images/items/10/product-10.jpg',
+                image: '/images/items/product-10.jpg',
                 price: 75,
                 categoryId: 1,
                 weight: 100,
@@ -156,7 +156,7 @@ async function up() {
             {
                 name: 'Сэндвич с курицей и сыром',
                 description: 'Состав: тост, соус Гамбургер, пекинская капуста, обжаренное куриное филе, сыр ломтик',
-                image: '/images/items/11/product-11.jpg',
+                image: '/images/items/product-11.jpg',
                 price: 190,
                 categoryId: 1,
                 weight: 140,
@@ -167,7 +167,7 @@ async function up() {
             {
                 name: 'Кесадия с мясом',
                 description: 'Состав: свинина, говядина, лук репчатый, специи (орегано, базилик, аджика, перец черный молотый), томатная паста, помидор, масло растительное, сыр, лепешка тортилья (мука, вода, масло растительное, сахар, соль, разрыхлитель, эмульгаторы)',
-                image: '/images/items/12/product-12.jpg',
+                image: '/images/items/product-12.jpg',
                 price: 185,
                 categoryId: 1,
                 weight: 180,
@@ -178,7 +178,7 @@ async function up() {
             {
                 name: 'Горячий бутерброд с колбасой и помидором',
                 description: 'Состав: сервелат, помидор, майонез, сыр, хлеб (батон)',
-                image: '/images/items/13/product-13.jpg',
+                image: '/images/items/product-13.jpg',
                 price: 78,
                 categoryId: 1,
                 weight: 70,
@@ -189,7 +189,7 @@ async function up() {
             {
                 name: 'Бутерброд с горбушей',
                 description: 'Состав: батон, горбуша слабосоленая, масло сливочное, зелень',
-                image: '/images/items/14/product-14.jpg',
+                image: '/images/items/product-14.jpg',
                 price: 78,
                 categoryId: 1,
                 weight: 50,
@@ -200,7 +200,7 @@ async function up() {
             {
                 name: 'Блинчики 2 шт',
                 description: 'Состав: яйцо, молоко, мука, сахар, соль, масло растительное',
-                image: '/images/items/15/product-15.jpg',
+                image: '/images/items/product-15.jpg',
                 price: 65,
                 categoryId: 1,
                 weight: 100,
@@ -211,7 +211,7 @@ async function up() {
             {
                 name: 'Сосиска отварная или обжаренная',
                 description: '',
-                image: '/images/items/16/product-16.jpg',
+                image: '/images/items/product-16.jpg',
                 price: 60,
                 categoryId: 1,
                 weight: 60,
@@ -222,7 +222,7 @@ async function up() {
             {
                 name: 'Биг Салат овощной с моцареллой, кунжутом',
                 description: 'Состав: лист салата, пекинская капуста, помидор, огурец, сыр Моцарелла (шарики), заправка (растительное масло, бальзамический уксус, горчица, мед, соль, орегано), кунжут, микрозелень',
-                image: '/images/items/17/product-17.jpg',
+                image: '/images/items/product-17.jpg',
                 price: 165,
                 categoryId: 2,
                 weight: 135,
@@ -233,7 +233,7 @@ async function up() {
             {
                 name: 'Биг Салат "Овощной Бум"',
                 description: 'Состав: лист салата, помидор черри, огурец свежий, сельдерей стебель, сыр "Фета", заправка на основе растительного масла со специями, бальзамический соус.',
-                image: '/images/items/18/product-18.jpg',
+                image: '/images/items/product-18.jpg',
                 price: 175,
                 categoryId: 2,
                 weight: 160,
@@ -244,7 +244,7 @@ async function up() {
             {
                 name: 'Борщ с говядиной и чесночными гренками',
                 description: 'Состав: бульон говяжий, говядина, картофель, лук, морковь, капуста б/х, свекла, томатная паста, уксус, соль, сахар, перец черный молотый, лавровый лист, чеснок. Подаётся со сметаной, зеленью, чесночными гренками.',
-                image: '/images/items/19/product-19.jpg',
+                image: '/images/items/product-19.jpg',
                 price: 249,
                 categoryId: 3,
                 weight: 350,
@@ -255,7 +255,7 @@ async function up() {
             {
                 name: 'Борщ с говядиной и салом',
                 description: 'Состав: бульон говяжий, говядина, картофель, лук, морковь, капуста б/х, свекла, томатная паста, уксус, соль, сахар, перец черный молотый, лавровый лист, чеснок. Подаётся со сметаной, зеленью, салом. 40 гр - Сало солёное / Сало Бабушкины рецепты.',
-                image: '/images/items/20/product-20.jpg',
+                image: '/images/items/product-20.jpg',
                 price: 249,
                 categoryId: 3,
                 weight: 350,
@@ -266,7 +266,7 @@ async function up() {
             {
                 name: 'Борщ с говядиной',
                 description: 'Состав: бульон говяжий, говядина, картофель, лук, морковь, капуста б/х, свекла, томатная паста, уксус, соль, сахар, перец черный молотый, лавровый лист, чеснок. Подаётся со сметаной и зеленью.',
-                image: '/images/items/21/product-21.jpg',
+                image: '/images/items/product-21.jpg',
                 price: 135,
                 categoryId: 3,
                 weight: 350,
@@ -277,7 +277,7 @@ async function up() {
             {
                 name: 'Солянка домашняя',
                 description: 'Состав: бульон из копченостей, сервелат, свинина, курица копченая, сосиски, картофель, огурец консервированный, томатная паста, лук, лимон, маслины, соль, перец черный молотый, лавровый лист. Подаётся со сметаной и зеленью.',
-                image: '/images/items/22/product-22.jpg',
+                image: '/images/items/product-22.jpg',
                 price: 135,
                 categoryId: 3,
                 weight: 250,
@@ -288,7 +288,7 @@ async function up() {
             {
                 name: 'Филе куриное, запеченное с помидором',
                 description: 'Состав: филе куриное, соль, перец черный молотый, приправа для курицы, помидор, сыр, масло растительное, зелень',
-                image: '/images/items/23/product-23.jpg',
+                image: '/images/items/product-23.jpg',
                 price: 190,
                 categoryId: 4,
                 weight: 100,
@@ -299,7 +299,7 @@ async function up() {
             {
                 name: 'Стейк из свинины',
                 description: 'Состав: свинина шея, соль, перец черный молотый, приправа для мяса, соевый соус, масло растительное, лук маринованный (соль, сахар, уксус, масло растительное), зелень',
-                image: '/images/items/24/product-24.jpg',
+                image: '/images/items/product-24.jpg',
                 price: 249,
                 categoryId: 4,
                 weight: 120,
@@ -310,7 +310,7 @@ async function up() {
             {
                 name: 'Буженина',
                 description: 'Состав: свинина, соль, перец черный молотый, чеснок, масло растительное, лавровый лист, аджика, зелень.',
-                image: '/images/items/25/product-25.jpg',
+                image: '/images/items/product-25.jpg',
                 price: 249,
                 categoryId: 4,
                 weight: 120,
@@ -321,7 +321,7 @@ async function up() {
             {
                 name: 'Минтай с сыром и морковью под майонезом',
                 description: 'Состав: минтай, соль, специи, лук, морковь, майонез, сыр, масло растительное',
-                image: '/images/items/26/product-26.jpg',
+                image: '/images/items/product-26.jpg',
                 price: 195,
                 categoryId: 4,
                 weight: 140,
@@ -332,7 +332,7 @@ async function up() {
             {
                 name: 'Горбуша с помидором под майонезом',
                 description: 'Состав: филе горбуши, приправа для рыбы, соль, перец, помидор, майонез, сыр, масло растительное, зелень',
-                image: '/images/items/27/product-27.jpg',
+                image: '/images/items/product-27.jpg',
                 price: 225,
                 categoryId: 4,
                 weight: 130,
@@ -343,7 +343,7 @@ async function up() {
             {
                 name: 'Каша гречневая',
                 description: 'Состав: крупа гречневая, соль, масло растительное, масло сливочное',
-                image: '/images/items/28/product-28.jpg',
+                image: '/images/items/product-28.jpg',
                 price: 70,
                 categoryId: 5,
                 weight: 180,
@@ -354,7 +354,7 @@ async function up() {
             {
                 name: 'Картофельные дольки',
                 description: 'Состав: картофель, соль, перец черный молотый, масло растительное, зелень',
-                image: '/images/items/29/product-29.jpg',
+                image: '/images/items/product-29.jpg',
                 price: 95,
                 categoryId: 5,
                 weight: 180,
@@ -365,7 +365,7 @@ async function up() {
             {
                 name: 'Тост',
                 description: 'Состав: хлеб пшеничный тостовый',
-                image: '/images/items/30/product-30.jpg',
+                image: '/images/items/product-30.jpg',
                 price: 95,
                 categoryId: 6,
                 weight: 35,
@@ -376,7 +376,7 @@ async function up() {
             {
                 name: 'Хлеб Черный',
                 description: '',
-                image: '/images/items/31/product-31.jpg',
+                image: '/images/items/product-31.jpg',
                 price: 25,
                 categoryId: 6,
                 weight: 25,
@@ -387,7 +387,7 @@ async function up() {
             {
                 name: 'Майонез',
                 description: '',
-                image: '/images/items/32/product-32.jpg',
+                image: '/images/items/product-32.jpg',
                 price: 15,
                 categoryId: 7,
                 weight: 20,
@@ -398,7 +398,7 @@ async function up() {
             {
                 name: 'Соус Сырный',
                 description: 'Состав: сыр, соус майонез, чеснок, зелень',
-                image: '/images/items/33/product-33.jpg',
+                image: '/images/items/product-33.jpg',
                 price: 25,
                 categoryId: 7,
                 weight: 30,
@@ -409,7 +409,7 @@ async function up() {
             {
                 name: 'Горчица',
                 description: 'Состав: горчица порошок, соль, сахар, уксус, растительное масло',
-                image: '/images/items/34/product-34.jpg',
+                image: '/images/items/product-34.jpg',
                 price: 10,
                 categoryId: 7,
                 weight: 10,
@@ -420,7 +420,7 @@ async function up() {
             {
                 name: 'Сметана',
                 description: '',
-                image: '/images/items/35/product-35.jpg',
+                image: '/images/items/product-35.jpg',
                 price: 10,
                 categoryId: 7,
                 weight: 20,

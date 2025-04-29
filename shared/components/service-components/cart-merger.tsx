@@ -32,7 +32,7 @@ export const CartMerger = () => {
                     localStorage.removeItem('pendingCartMerge');
                     document.cookie = 'cartToken=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
                 } catch (error) {
-                    console.error('Ошибка слияния корзин:', error);
+                    console.error('Ошибка обновления корзины:', error);
                 }
             }
         };

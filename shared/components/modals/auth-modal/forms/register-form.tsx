@@ -13,7 +13,7 @@ interface Props {
   onClickLogin?: VoidFunction;
 }
 
-export const RegisterForm: React.FC<Props> = ({ onClose, onClickLogin }) => {
+export const RegisterForm: React.FC<Props> = ({ onClose }) => {
   const form = useForm<TFormRegisterValues>({
     resolver: zodResolver(formRegisterSchema),
     defaultValues: {
@@ -32,7 +32,7 @@ export const RegisterForm: React.FC<Props> = ({ onClose, onClickLogin }) => {
         password: data.password,
       });
 
-      toast.error('Регистрация успешна 📝. Подтвердите свою почту', {
+      toast.success('Регистрация успешна 📝. Подтвердите свою почту', {
         icon: '✅',
       });
       localStorage.setItem('isNewRegistration', 'true');

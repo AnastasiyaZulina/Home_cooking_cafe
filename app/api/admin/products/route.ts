@@ -2,8 +2,7 @@ import { prisma } from "@/prisma/prisma-client";
 import { authOptions } from "@/shared/constants/auth-options";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
-import path from 'path';
-import fs from 'fs/promises';
+import { del, put } from "@vercel/blob";
 import { Prisma } from "@prisma/client";
 
 export async function GET(request: NextRequest) {
@@ -26,14 +25,18 @@ export async function GET(request: NextRequest) {
   }
 
   const products = await prisma.product.findMany({
-    where,
     orderBy: { name: 'asc' },
     include: {
       category: true,
     },
   });
 
-  return NextResponse.json(products);
+  const productsWithBlobUrls = products.map(product => ({
+    ...product,
+    image: process.env.BLOB_URL + product.image
+  }));
+
+  return NextResponse.json(productsWithBlobUrls);
 }
 
 export async function POST(req: NextRequest) {
@@ -44,6 +47,7 @@ export async function POST(req: NextRequest) {
   }
 
   let newProduct;
+  let newBlobUrl: string | null = null;
   try {
     const formData = await req.formData();
 
@@ -80,37 +84,38 @@ export async function POST(req: NextRequest) {
     });
 
     // Создаем структуру папок
-    const productId = newProduct.id;
     const ext = image.type.split('/')[1] === 'svg+xml' ? 'svg' : image.type.split('/')[1];
-    const uploadDir = path.join(process.cwd(), 'public', 'images', 'items', productId.toString());
-    const filename = `product-${productId}.${ext}`;
-    const fullPath = path.join(uploadDir, filename);
-
-    // Сохраняем изображение
-    await fs.mkdir(uploadDir, { recursive: true });
+    const basePath = `/images/items/product-${newProduct.id}`;
     const buffer = Buffer.from(await image.arrayBuffer());
-    await fs.writeFile(fullPath, buffer);
+
+    const { url, pathname } = await put(`${basePath}.${ext}`, buffer, {
+      access: 'public',
+      addRandomSuffix: true // Генерирует уникальный суффикс
+    });
+
+    newBlobUrl = url;
 
     // Обновляем продукт с новым путем
     const updatedProduct = await prisma.product.update({
-      where: { id: productId },
-      data: {
-        image: `/images/items/${productId}/${filename}`
-      }
+      where: { id: newProduct.id },
+      data: { image: `/${pathname}` } // Сохраняем путь с суффиксом
     });
 
-    return NextResponse.json(updatedProduct);
+    return NextResponse.json({
+      ...updatedProduct,
+      image: url // Возвращаем полный URL
+    });
 
   } catch (error) {
     // Удаляем продукт при ошибке
-    if (newProduct) {
-      await prisma.product.delete({ where: { id: newProduct.id } });
-    }
+    if (newProduct) await prisma.product.delete({ where: { id: newProduct.id }});
+    if (newBlobUrl) await del(newBlobUrl);
+
     console.error('Error:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
     const errorStack = error instanceof Error ? error.stack : undefined;
     return NextResponse.json(
-      { 
+      {
         error: 'Внутренняя ошибка сервера',
         message: errorMessage,
         stack: process.env.NODE_ENV === 'development' ? errorStack : undefined

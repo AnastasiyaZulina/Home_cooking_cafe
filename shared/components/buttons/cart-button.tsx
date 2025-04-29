@@ -12,11 +12,9 @@ interface Props {
 }
 
 export const CartButton: React.FC<Props> = ({ className }) => {
-   // const totalAmount=100;
     const totalAmount=useCartStore(state=>state.totalAmount);
     const loading=useCartStore(state=>state.loading);
     const items=useCartStore(state=>state.items);
-   // const totalAmount = useCart();
     return (
     <CartDrawer>
     <Button loading={loading} className={cn('group relative', {'w-[105px]':loading}, className)}>

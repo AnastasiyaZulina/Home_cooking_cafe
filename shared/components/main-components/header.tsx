@@ -17,6 +17,7 @@ import { getOrderAcceptanceTime, getWorkingTime } from '@/shared/lib/calc-time';
 import { AuthModal } from '../modals';
 import { CartButton, ProfileButton } from '../buttons';
 import { MobileDashboardMenu } from './mobile-dashboard-menu';
+import { GLOBAL_CONSTANTS } from '@/shared/constants';
 
 interface Props {
     hasCart?: boolean;
@@ -102,6 +103,7 @@ export const Header: React.FC<Props> = ({ hasCart = true, className }) => {
                             <div className="hidden lg:flex flex-col text-sm text-gray-400">
                                 <span>Работаем: {workingTime}</span>
                                 <span>Прием заказов: {orderAcceptanceTime}</span>
+                                <span>Телефон: {GLOBAL_CONSTANTS.CONTACTS.PHONE}</span>
                             </div>
                         </div>
                     )}

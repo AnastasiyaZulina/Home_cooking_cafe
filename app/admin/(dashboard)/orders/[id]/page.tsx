@@ -84,6 +84,7 @@ export default function EditOrderPage() {
                 if (orderData.userId) {
                     const userData = await Api.users.getUser(orderData.userId);
                     setOrderUser(userData);
+                    setUserBonuses(userData.bonusBalance);
                 }
 
                 const productsData = await Api.products.getProducts();
@@ -101,10 +102,6 @@ export default function EditOrderPage() {
 
                 setOriginalProducts(productsData);
                 setCurrentProducts(productsData);
-
-                if (orderUser) {
-                    setUserBonuses(orderUser.bonusBalance);
-                }
 
                 const deliveryTime = new Date(orderData.deliveryTime);
 
@@ -149,7 +146,7 @@ export default function EditOrderPage() {
         };
 
         fetchOrder();
-    }, [id, reset, orderUser]);
+    }, [id, reset]);
 
     const prevDeliveryTypeRef = useRef<DeliveryType>(deliveryType);
 
