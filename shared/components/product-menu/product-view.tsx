@@ -11,7 +11,7 @@ export const ProductView = ({ product }: ProductViewProps) => {
     return (
         <Container className="flex flex-col my-10">
         <SeeProductForm 
-          image={String(process.env.BLOB_URL + product.image)}
+          image={product.image}
           name={product.name}
           description={product.description ?? ''}
           price={product.price}

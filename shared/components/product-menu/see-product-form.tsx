@@ -87,7 +87,7 @@ export const SeeProductForm: React.FC<Props> = ({
             {/* Блок с картинкой */}
             <div className="flex items-center justify-center w-full xl:w-[50%] mb-4 xl:mb-0">
                 <img
-                    src={image}
+                    src={`${process.env.NEXT_PUBLIC_BLOB_URL}${image}`}
                     alt={name}
                     className="relative transition-all z-10 duration-300 w-full max-w-[400px] h-auto"
                 />
