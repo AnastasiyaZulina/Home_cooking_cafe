@@ -7,9 +7,9 @@ import { del, put } from "@vercel/blob";
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = params;
+  const { id } = await params;
   const session = await getServerSession(authOptions);
   
   if (!session?.user || session.user.role == "USER") {
@@ -81,6 +81,15 @@ export async function PATCH(
 
   try {
     const formData = await request.formData();
+    const name = formData.get('name')?.toString();
+    const description = formData.get('description')?.toString();
+    const price = Number(formData.get('price'));
+    const weight = Number(formData.get('weight'));
+    const eValue = Number(formData.get('eValue'));
+    const isAvailable = formData.get('isAvailable') === 'true';
+    const stockQuantity = Number(formData.get('stockQuantity'));
+    const categoryId = Number(formData.get('categoryId'));
+    const image = formData.get('image') as File | null;
 
     // Получаем текущий продукт
     const currentProduct = await prisma.product.findUnique({
@@ -95,7 +104,7 @@ export async function PATCH(
     let newBlobPath = currentProduct.image; // Сохраняем текущее изображение по умолчанию
 
     // Обработка нового изображения
-    if (formData.has('image')) {
+    if (image) {
       const image = formData.get('image') as File;
       const ext = image.type.split('/')[1] === 'svg+xml' ? 'svg' : image.type.split('/')[1];
       const basePath = `/images/items/product-${productId}`;
@@ -110,23 +119,20 @@ export async function PATCH(
       newBlobPath = `/${pathname}`;
     }
 
-    // Извлекаем остальные поля формы
-    const updateData: any = {
-      name: formData.get('name')?.toString(),
-      description: formData.get('description')?.toString(),
-      price: Number(formData.get('price')),
-      weight: Number(formData.get('weight')),
-      eValue: Number(formData.get('eValue')),
-      stockQuantity: Number(formData.get('stockQuantity')),
-      isAvailable: formData.get('isAvailable') === 'true',
-      categoryId: Number(formData.get('categoryId')),
-      image: newBlobPath,
-    };
-
     // Обновляем продукт
     updatedProduct = await prisma.product.update({
       where: { id: productId },
-      data: updateData,
+      data: {
+        name,
+        description,
+        price,
+        weight,
+        eValue,
+        isAvailable,
+        stockQuantity,
+        categoryId,
+        image: newBlobPath
+      },
     });
 
     // Удаляем старое изображение только если было загружено новое
