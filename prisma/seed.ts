@@ -7,14 +7,14 @@ async function up() {
         data: [
             {
                 name: 'SuperAdmin',
-                email: 'nzulina2016@gmail.com',
+                email: 'nzulina2016@mail.com',
                 password: hashSync('199School', 10),
                 verified: new Date(),
                 role: 'SUPERADMIN',
             },
             {
                 name: 'Admin',
-                email: 'nzulina2016@mail.ru',
+                email: 'nzulina2016@gmail.ru',
                 password: hashSync('199School', 10),
                 verified: new Date(),
                 role: 'ADMIN',
@@ -459,7 +459,7 @@ async function up() {
                 paymentMethod: 'ONLINE',
                 bonusDelta: 50,
                 deliveryType: 'DELIVERY',
-                deliveryTime: new Date(Date.now() - 86400000), // Вчера
+                deliveryTime: new Date,
                 deliveryCost: 150,
                 name: 'Владимир',
                 address: 'ул. Ленина, 10, кв. 5',
@@ -473,7 +473,7 @@ async function up() {
                 paymentMethod: 'OFFLINE',
                 bonusDelta: 0,
                 deliveryType: 'PICKUP',
-                deliveryTime: new Date(Date.now() + 3600000), // Через час
+                deliveryTime: new Date,
                 name: 'Владимир',
                 email: 'viktor.bahamut@bk.ru',
                 phone: '+79123456789'

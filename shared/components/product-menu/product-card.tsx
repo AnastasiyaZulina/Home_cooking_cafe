@@ -95,7 +95,7 @@ export const ProductCard: React.FC<Props> = ({
                 <Link href={`/product/${productId}`} className="relative w-full h-full">
                     <img
                         className="absolute inset-0 w-full h-full object-contain"
-                        src={image}
+                        src={`${process.env.NEXT_PUBLIC_BLOB_URL}${image}`}
                         alt={name}
                     />
                 </Link>
