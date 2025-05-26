@@ -3,6 +3,7 @@ import { prisma } from '@/prisma/prisma-client';
 import { getServerSession } from "next-auth";
 import { authOptions } from '@/shared/constants/auth-options';
 import { Prisma } from '@prisma/client';
+import { FeedbackFormSchema } from '@/shared/schemas/feedback';
 
 export async function GET(request: NextRequest) {
   try {
@@ -38,17 +39,28 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
-  
+
   // Проверка авторизации
-  if (!session?.user?.id) {
+  if (!session?.user?.id || session.user.role !== 'USER') {
     return NextResponse.json(
-      { error: "Для отправки отзыва необходимо авторизоваться" },
+      { error: "Для отправки отзыва необходимо авторизоваться как пользователь" },
       { status: 401 }
     );
   }
 
   try {
-    const { feedbackText } = await request.json();
+    const rawData = await request.json();
+    
+    const validationResult = FeedbackFormSchema.safeParse(rawData);
+
+    if (!validationResult.success) {
+      return NextResponse.json(
+        { error: validationResult.error.errors[0].message },
+        { status: 400 }
+      );
+    }
+
+    const { feedbackText } = validationResult.data;
 
     const newFeedback = await prisma.feedback.create({
       data: { 

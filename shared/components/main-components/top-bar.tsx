@@ -8,6 +8,7 @@ import { useScrollDirection } from '@/hooks/use-scroll-direction';
 import { useBreakpoint } from '@/hooks';
 import { Categories } from '../product-menu';
 import { CartButton, ProfileButton } from '../buttons';
+import { AuthModal } from '../modals';
 
 interface Props {
   categories: Category[];
@@ -20,7 +21,8 @@ export const TopBar: React.FC<Props> = ({ categories, className }) => {
   const buttonsRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const isLargeScreen = useBreakpoint('lg');
-
+  const [openAuthModal, setOpenAuthModal] = React.useState(false);
+  
   const updateCategoriesWidth = useCallback(() => {
     setTimeout(() => {
       if (containerRef.current) {
@@ -55,12 +57,13 @@ export const TopBar: React.FC<Props> = ({ categories, className }) => {
           </div>
           {!isHeaderVisible && isLargeScreen && (
             <div ref={buttonsRef} className="flex items-center gap-2 sm:gap-3 shrink-0">
-              <ProfileButton />
+              <AuthModal open={openAuthModal} onClose={() => setOpenAuthModal(false)} />
+              <ProfileButton onClickSignIn={() => setOpenAuthModal(true)} />
               <CartButton />
             </div>
           )}
         </div>
       </Container>
     </div>
-);
+  );
 };

@@ -1,5 +1,6 @@
 import { Feedback } from '@/@types/feedback';
 import { axiosInstance } from './instance';
+import { FeedbackUserFormValues } from '../schemas/feedback';
 
 export const getFeedbacks = async () => {
   const { data } = await axiosInstance.get<Feedback[]>('/feedbacks');
@@ -28,9 +29,7 @@ export const deleteFeedback = async (id: number) => {
   await axiosInstance.delete(`/admin/feedbacks/${id}`);
 };
 
-export const createFeedback = async (feedbackText: string) => {
-  const { data } = await axiosInstance.post<Feedback>('/feedbacks', {
-    feedbackText
-  });
+export const createFeedback = async (values: FeedbackUserFormValues) => {
+  const { data } = await axiosInstance.post<Feedback>('/feedbacks', values);
   return data;
 };

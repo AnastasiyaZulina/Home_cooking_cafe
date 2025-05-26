@@ -100,7 +100,7 @@ function FeedbackForm() {
 
     const handleSubmit = async (values: FeedbackUserFormValues) => {
         try {
-          await Api.feedbacks.createFeedback(values.feedbackText);
+          await Api.feedbacks.createFeedback(values);
       
           toast.success(
             <div className="flex items-center">
